@@ -1,0 +1,9 @@
+
+# need 18 cm for MEGP
+/control/alias SPECT_LENGTH_CM  18
+
+# /control/execute mac/spect_head.mac
+# /control/execute mac/spect_collimator_megp.mac
+# /control/execute mac/spect_digitizer_In111.mac
+# /control/execute mac/spect_translation.mac
+

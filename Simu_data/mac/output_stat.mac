@@ -1,0 +1,7 @@
+
+/gate/actor/addActor               SimulationStatisticActor stat
+/gate/actor/stat/save              {OUTPUT_FOLDER}/stats.txt
+/gate/actor/stat/saveEveryNSeconds 120
+/gate/verbose Actor      2
+
+

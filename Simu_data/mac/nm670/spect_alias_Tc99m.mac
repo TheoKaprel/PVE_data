@@ -1,0 +1,7 @@
+
+
+# need 16 cm for LEHR
+/control/alias COLLIMATOR lehr
+/control/alias SPECT_LENGTH_CM  16
+
+

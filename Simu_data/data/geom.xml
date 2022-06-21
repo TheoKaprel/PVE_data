@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<!DOCTYPE RTKGEOMETRY>
+<RTKThreeDCircularGeometry version="3">
+    <ProjectionOffsetX>-273</ProjectionOffsetX>
+    <ProjectionOffsetY>-203</ProjectionOffsetY>
+  <Projection>
+    <GantryAngle>0</GantryAngle>
+    <Matrix>
+                        1                   0                   0                 273
+                        0                   1                   0                 203
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+</RTKThreeDCircularGeometry>

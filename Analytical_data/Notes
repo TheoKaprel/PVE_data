@@ -1,0 +1,106 @@
+Quelques notes sur la génération de projections analytique :
+
+1) Purpose
+
+Afin d'avoir un jeu de données contenant des paires de projections AVEC/SANS Effet de Volume Partiel (PVE), on souhaite ici créer ce jeu de données de manière ANALYTIQUE.
+
+L'idée étant de générer des carte d'activités 'aléatoires' : ie des spheres de rayon et de position aléatoires avec une activité de 1 dans les spheres et 0 autour.
+Puis de projeter ces cartes sur deux types de detecteurs : un avec une PSF 'idéale' et un autre avec une PSF 'classique'
+
+Etapes :
+        a)  Creation d'un CT homogene (de l'air par défaut) en HSU  : create_vox_phantom_source avec --type ct
+        b) à convertir en attenuation_map avec faf_ACF_image (syd_algo). Exemple :
+        python faf_ACF_image.py -ct {ct}.mhd -c "0.2068007,0.57384408" -s "0.0001668,0.15459051,0.28497715" -o {output}.mhd -p None
+        c) On peut alors générer successivement : des src d'activité aléatoires (sphere(centre,rayon)) puis leur forward projection (rtk) avec un detecteur de PSF ideale (FWHM = 0 partout) et réaliste (cf parametres par défaut du module 'forwardprojection')
+        -> c'est la function 'generate_random_dataset'
+        d) On peut alors les comparer (comp_projections) ou les utiliser dans un dataset
+
+
+
+2) Parametres utilisés
+    Unités en mm
+
+    Forwardprojection :
+        - Une seule projection sur un detecteur plat, angle 0.
+        - Pas sûr si le detecteur en en haut ou en bas de la source (z>0 OU z<0, cf warnings) mais en tout cas, projection selon l'axe z (donc dans le plan XY)
+
+        - Zeng projector
+
+        - --sigmazero et  --alphapsf sont les deux paremetres qui reglent le comportement du detecteur et donc la PSF et le PVE :
+
+            PSF(x,y,z) = 1/(2*pi*(sigma_z**2)) * exp( -(x**2+y**2)/sigma_z**2)
+
+            avec sigma_z = alphapsf * z + sigmazero
+
+            Pour determiner alphapsd et sigmazero cf Chery2012 (~p.222) :
+	        FWHM = d * (l_eff + z ) / l_eff
+
+            sigma_z = FWHM / (2*sqrt(2*ln(2))) 
+            avec
+            d = diametre des holes du colli
+            leff = l - 2/mu avec l longueur des holes et mu le coeff d'attenuation linéaire du matériau utilisé pour le colli
+            z = distance avec le colli selon l'axe de proj
+
+	    donc sigmazero = d /(2*sqrt(2*ln(2)))
+		 alphapsf = d /(2*sqrt(2*ln(2))*l_eff) = simgazero/l_eff
+	
+
+        - output : dans le dossier spécifié, 3 images par data sont crées :
+            - ${ref}.mhd/raw pour la source (image 3D)
+            - ${ref}_PVfree.mhd/raw pour la projection sans PVE (sigmazero=0 et alpha = 0) (image 2D)
+            - ${ref}_PVE.mhd/raw pour la projection avec PVE (sigma et alpha def par defaut ou par l'utilisateur)
+
+            Les ${ref} sont des chaines de caractères contenant 5 lettres majuscules choisies aléatoirement
+
+
+3) Warnings
+    *** Random Sources ***
+        Les sphères ne sont pas toujours très symétriques : il doit y avoir des problemes de bords de pixels ou de spacing à décaler pour avec de belles spheres "rondes" même si c'est pas évident avec une source voxelisée
+
+
+
+    *** Geometrie ***
+        cf http://www.openrtk.org/Doxygen/DocGeo3D.html
+        Malgré une distance source to detecteur positive, et selon la doc ci-dessus le detecteur devrait être en dessous de la source (i.e. z<0)
+        mais dans les projections on voit que les sphères ayant des z>0 sont moins floues que les z<0 donc surement que le detecteur est en haut
+
+        Ex pour générer geometrie :
+        rtksimulatedgeometry -o geom.xml -f 0 -n 1 -a 0 --sdd 0 --sid 380 --proj_iso_x -280.54680999999999 --proj_iso_y -280.54680999999999
+        /!\ c'est bien le sid qui doit être non nul et pas le sdd comme je le croyais auparavant /!\
+
+
+
+
+    *** ForwardProjection ***
+        Les autres projecteur proposés par RTK (Joseph, JosephAttenuated) me donnent des artefact très étranges mais à retester
+
+
+4) A améliorer
+
+    a) & b) faire automatiquement la conversion ct->acf
+    c) ajouter les parametres (optionnels) : algo forward, geometrie, acf ...
+    c) changer forwardprojection pour qu'il ne fasse qu'une seule proj selon les param sigma/alpha mais faire dans generate_random_dataset deux appels à forwardprojection. Ainsi, on pourra forward
+    c) dans generate_random_dataset : verifier que la clé de ref (nom de la source) choisie aléatoirement ne soit pas dejà prise meme si y'a 11 millions de possibilités
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<!DOCTYPE RTKGEOMETRY>
+<RTKThreeDCircularGeometry version="3">
+    <SourceToIsocenterDistance>380</SourceToIsocenterDistance>
+    <ProjectionOffsetX>-280.54681</ProjectionOffsetX>
+    <ProjectionOffsetY>-280.54681</ProjectionOffsetY>
+  <Projection>
+    <GantryAngle>0</GantryAngle>
+    <Matrix>
+                        1                   0                   0           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+</RTKThreeDCircularGeometry>

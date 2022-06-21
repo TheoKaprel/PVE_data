@@ -1,0 +1,7 @@
+/gate/source/addSource                          PhS_src phaseSpace
+/gate/source/PhS_src/addPhaseSpaceFile          {phase_space_file}
+/gate/source/PhS_src/setParticleType            gamma
+/gate/source/PhS_src/attachTo                   PhSpace
+/gate/source/PhS_src/useRandomSymmetry          true
+/gate/source/PhS_src/ignoreTime					true
+/gate/application/setTotalNumberOfPrimaries {ACTIVITY}

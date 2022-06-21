@@ -1,0 +1,93 @@
+
+# -----------------------------------------------------------------------------
+# Alias
+
+# Need alias RADIONUCLIDE  => In111 or Tc99m or Lu177 or I131
+# Need alias N             => ion activity in Bq 
+# Need alias SPECT_RADIUS  => in cm (25 for example)
+# Need alias NB_HEAD       => Nb of camera head 1 or 2
+
+/control/alias RADIONUCLIDE Tc99m
+/control/alias HEAD_NB 1
+/control/alias SPECT_RADIUS 49
+/control/alias START_ANGLE 0
+/control/alias SPEED 6
+
+/control/alias N 1e7
+
+/control/alias TIME_START 0
+/control/alias TIME_SLICE 1
+/control/alias TIME_STOP 1
+
+/control/alias CT data/ct_air.mhd
+/control/alias SOURCE_IMAGE data/src_0.25_norm.mhd
+
+
+/control/alias phase_space_file output/phase_space.root
+
+
+
+/control/alias ARF_PT_FILE data/pth/arf_Tc99m
+
+
+/control/alias OUTPUT_FOLDER output_from_PhS
+
+
+/control/execute mac/alias.mac
+
+
+# -----------------------------------------------------------------------------
+# Geometry definition
+
+
+/control/execute mac/verbose.mac
+/control/execute mac/world.mac
+
+
+#/control/execute mac/phantom_ct.mac
+/control/execute mac/phase_space_volume.mac
+
+
+#/control/execute mac/spect.mac
+/control/execute mac/spect_arf_nn.mac
+
+
+# -----------------------------------------------------------------------------
+# Physics
+
+/control/execute mac/physics_list.mac
+/control/execute mac/physics_cuts_world.mac
+#/control/execute mac/physics_cuts_phantom.mac
+/control/execute mac/physics_cuts_spect.mac
+
+# -----------------------------------------------------------------------------
+# OUTPUT
+
+/control/execute mac/output_stat.mac
+
+#/control/execute mac/phase_space_actor.mac
+
+# output projections for real spect or arf_nn
+#/control/execute mac/output_listmode.mac
+#/control/execute mac/nm670/output_projections_{RADIONUCLIDE}.mac
+/control/execute mac/output_projections_arf_nn.mac
+
+
+/control/listAlias
+
+# -----------------------------------------------------------------------------
+# INITIALISATION
+
+/gate/run/initialize
+#/control/execute mac/visu.mac
+
+# -----------------------------------------------------------------------------
+# SOURCE
+
+#/control/execute mac/source_vox.mac
+/control/execute mac/source_Phase_Space.mac
+
+# -----------------------------------------------------------------------------
+# START
+
+/control/execute mac/start_time.mac

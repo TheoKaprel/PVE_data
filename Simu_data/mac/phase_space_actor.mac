@@ -1,0 +1,17 @@
+#Phase space storage
+/gate/actor/addActor	PhaseSpaceActor PhS
+/gate/actor/PhS/attachTo	PhSpace
+/gate/actor/PhS/save	{OUTPUT_FOLDER}/phase_space.root
+/gate/actor/PhS/enableEkine              true
+/gate/actor/PhS/enableXPosition          true
+/gate/actor/PhS/enableYPosition          true
+/gate/actor/PhS/enableZPosition          true
+/gate/actor/PhS/enableXDirection         true
+/gate/actor/PhS/enableYDirection         true
+/gate/actor/PhS/enableZDirection         true
+/gate/actor/PhS/enableProductionVolume   False
+/gate/actor/PhS/enableProductionProcess  False
+/gate/actor/PhS/enableParticleName       False
+/gate/actor/PhS/enableWeight             true
+/gate/actor/PhS/enableTrackLength        true
+/gate/actor/PhS/setMaxFileSize	5 GB

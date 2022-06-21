@@ -1,0 +1,8 @@
+# Construct the physical phase space
+/gate/world/daughters/name	PhSpace
+/gate/world/daughters/insert	sphere
+/gate/PhSpace/setMaterial	Air
+/gate/PhSpace/geometry/setRmin	450 mm
+/gate/PhSpace/geometry/setRmax	451 mm
+/gate/PhSpace/vis/setVisible 1
+/gate/PhSpace/vis/setColor red
