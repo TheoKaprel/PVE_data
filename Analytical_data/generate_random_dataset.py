@@ -14,13 +14,14 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--size', type = int, default = 128, help = 'Size of the desired image i.e. number of voxels per dim', show_default=True)
 @click.option('--spacing', type = float, default = 4, help = 'Spacing of the desired image i.e phyisical length of a voxels (mm)', show_default=True)
 @click.option('--like', default = None, help = "Instead of specifying spacing/size, you can specify a .mhd image as a metadata model", show_default=True)
-@click.option('--min_radius', default = 4, help = 'minimum radius of the random spheres')
-@click.option('--max_radius', default = 128, help = 'max radius of the random spheres')
+@click.option('--min_radius', default = 4, help = 'minimum radius of the random spheres', show_default = True)
+@click.option('--max_radius', default = 128, help = 'max radius of the random spheres', show_default = True)
 @click.option('--nspheres', default = 1, help = 'max number of spheres to generate on each source')
+@click.option('--geom', '-g', default = None, help = 'geometry file to forward project. Default is the proj on one detector')
 @click.option('--output_folder','-o', default = './dataset', help = " Absolute or relative path to the output folder", show_default=True)
 @click.option('--sigma0pve', default = forwardprojection.sigma0pve_default,type = float, help = 'sigma at distance 0 of the detector', show_default=True)
 @click.option('--alphapve', default = forwardprojection.alphapve_default, type = float, help = 'Slope of the PSF against the detector distance', show_default=True)
-def generate(nb_data, output_folder,size, spacing, like,min_radius, max_radius, nspheres, sigma0pve, alphapve):
+def generate(nb_data, output_folder,size, spacing, like,min_radius, max_radius, nspheres,geom, sigma0pve, alphapve):
     # get output image parameters
     if like:
         im_like = itk.imread(like)
@@ -63,11 +64,15 @@ def generate(nb_data, output_folder,size, spacing, like,min_radius, max_radius, 
         # saving of source 3D image
         source_path = os.path.join(output_folder,f'{randomfn}.mhd')
         itk.imwrite(src_img,source_path)
+        
+        if geom == None:
+            geom = './data/geom_1.xml'
+        
 
         #compute the foward projection :
         print(source_path)
-        forwardprojection.forwardproject(inputsrc=source_path, output_folder=output_folder,geom='./data/geom_1.xml', nproj=1,projtype='pve', sigma0pve=sigma0pve, alphapve=alphapve)
-        forwardprojection.forwardproject(inputsrc=source_path, output_folder=output_folder,geom='./data/geom_1.xml', nproj=1,projtype='pvfree')
+        forwardprojection.forwardproject(inputsrc=source_path, output_folder=output_folder,geom=geom, nproj=1,projtype='pve', sigma0pve=sigma0pve, alphapve=alphapve)
+        forwardprojection.forwardproject(inputsrc=source_path, output_folder=output_folder,geom=geom, nproj=1,projtype='pvfree')
 
 
 if __name__ == '__main__':
