@@ -28,18 +28,18 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--output_folder', '-o', help = 'output folder. The output files will be ${inputsrc}_PVE.mhd and ${inputsrc}_PVfree.mhd')
 @click.option('--geom', '-g', default = None, help = 'If the geometry file you want to use is already created, precise here the path to the xml file')
 @click.option('--nproj',type=int, default = None, help = 'Precise the number of projections needed')
-@click.option('--pve', 'projtype', flag_value='pve', default = True, help = 'To project the input source without partial volume effect')
-@click.option('--pvfree', 'projtype', flag_value='pvfree', default = False,  help = 'To project the input source without partial volume effect')
+@click.option('--pve',is_flag = True, default = False, help = 'To project the input source without partial volume effect')
+@click.option('--pvfree', is_flag = True, default = False, help = 'To project the input source without partial volume effect')
 @click.option('--sigma0pve', default = sigma0pve_default,type = float, help = 'sigma at distance 0 of the detector', show_default=True)
 @click.option('--alphapve', default = alphapve_default, type = float, help = 'Slope of the PSF against the detector distance', show_default=True)
 @click.option('--output_ref', default = None, type = str, help = 'ref to append to output_filename')
 @click.option('--output_name', type=str, help='if no ref, name of the output')
-def forwardproject_click(inputsrc, output_folder,geom, nproj,projtype, sigma0pve, alphapve, output_ref,output_name):
-    forwardproject(inputsrc, output_folder,geom, nproj,projtype, sigma0pve, alphapve, output_ref,output_name)
+def forwardproject_click(inputsrc, output_folder,geom, nproj,pve, pvfree, sigma0pve, alphapve, output_ref,output_name):
+    forwardproject(inputsrc, output_folder,geom, nproj,pve, pvfree, sigma0pve, alphapve, output_ref,output_name)
 
 
 
-def forwardproject(inputsrc, output_folder,geom, nproj,projtype, sigma0pve=sigma0pve_default, alphapve=alphapve_default, output_ref=None,output_name=None):
+def forwardproject(inputsrc, output_folder,geom, nproj,pve, pvfree, sigma0pve=sigma0pve_default, alphapve=alphapve_default, output_ref=None,output_name=None):
     # projection parameters
     if nproj and not(geom):
         geom_fn = f'./data/geom_{nproj}.xml'
@@ -69,7 +69,7 @@ def forwardproject(inputsrc, output_folder,geom, nproj,projtype, sigma0pve=sigma
         output_ref=''
 
 
-    if projtype=='pvfree':
+    if pvfree:
         sigma0PVfree = 0
         alphapsfPVfree = 0
         outputPVfree = f'{output_folder}/{filename}{output_ref}_PVfree.mhd'
@@ -81,7 +81,7 @@ def forwardproject(inputsrc, output_folder,geom, nproj,projtype, sigma0pve=sigma
             print(resPVfree.stdout)
             print(resPVfree.stderr)
             exit()
-    elif projtype=='pve':
+    if  pve:
 
         outputPVE = f'{output_folder}/{filename}{output_ref}_PVE.mhd'
 
