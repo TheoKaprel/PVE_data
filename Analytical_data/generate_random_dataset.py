@@ -16,12 +16,13 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--like', default = None, help = "Instead of specifying spacing/size, you can specify a .mhd image as a metadata model", show_default=True)
 @click.option('--min_radius', default = 4, help = 'minimum radius of the random spheres', show_default = True)
 @click.option('--max_radius', default = 128, help = 'max radius of the random spheres', show_default = True)
-@click.option('--nspheres', default = 1, help = 'max number of spheres to generate on each source')
+@click.option('--max_activity', default = 1, help = 'max activity in spheres', show_default = True)
+@click.option('--nspheres', default = 1, help = 'max number of spheres to generate on each source', show_default= True)
 @click.option('--geom', '-g', default = None, help = 'geometry file to forward project. Default is the proj on one detector')
 @click.option('--output_folder','-o', default = './dataset', help = " Absolute or relative path to the output folder", show_default=True)
 @click.option('--sigma0pve', default = forwardprojection.sigma0pve_default,type = float, help = 'sigma at distance 0 of the detector', show_default=True)
 @click.option('--alphapve', default = forwardprojection.alphapve_default, type = float, help = 'Slope of the PSF against the detector distance', show_default=True)
-def generate(nb_data, output_folder,size, spacing, like,min_radius, max_radius, nspheres,geom, sigma0pve, alphapve):
+def generate(nb_data, output_folder,size, spacing, like,min_radius, max_radius,max_activity, nspheres,geom, sigma0pve, alphapve):
     # get output image parameters
     if like:
         im_like = itk.imread(like)
@@ -45,11 +46,14 @@ def generate(nb_data, output_folder,size, spacing, like,min_radius, max_radius, 
     for n in range(nb_data):
         src_array = np.zeros_like(X)
         random_nb_of_sphers = np.random.randint(1,nspheres+1)
+
         for s  in range(random_nb_of_sphers):
+            random_activity = np.random.randint(1, max_activity)
+
             # random radius and center
             radius = np.random.rand()*(max_radius-min_radius) + min_radius
             center = (2*np.random.rand(3)-1)*(lengths/2-radius) # the sphere borders remain inside the phantom
-            src_array += ( ( ((X-center[0]) / radius) ** 2 + ((Y-center[1]) / radius) ** 2 + ((Z-center[2])/ radius) ** 2  ) < 1).astype(float)
+            src_array += random_activity  * ( ( ((X-center[0]) / radius) ** 2 + ((Y-center[1]) / radius) ** 2 + ((Z-center[2])/ radius) ** 2  ) < 1).astype(float)
 
 
         src_img = itk.image_from_array(src_array)
@@ -71,8 +75,7 @@ def generate(nb_data, output_folder,size, spacing, like,min_radius, max_radius, 
 
         #compute the foward projection :
         print(source_path)
-        forwardprojection.forwardproject(inputsrc=source_path, output_folder=output_folder,geom=geom, nproj=1,projtype='pve', sigma0pve=sigma0pve, alphapve=alphapve)
-        forwardprojection.forwardproject(inputsrc=source_path, output_folder=output_folder,geom=geom, nproj=1,projtype='pvfree')
+        forwardprojection.forwardproject(inputsrc=source_path, output_folder=output_folder,geom=geom, nproj=1,pve=True, pvfree=True, sigma0pve=sigma0pve, alphapve=alphapve)
 
 
 if __name__ == '__main__':
