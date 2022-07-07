@@ -18,11 +18,13 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--max_radius', default = 128, help = 'max radius of the random spheres', show_default = True)
 @click.option('--max_activity', default = 1, help = 'max activity in spheres', show_default = True)
 @click.option('--nspheres', default = 1, help = 'max number of spheres to generate on each source', show_default= True)
+@click.option('--background', default = None, help = 'If you want background activity specify the activity:background ratio. For example --background 10 for 1/10 background activity.')
+@click.option('--ellipse', is_flag = True, default= False, help = "if --ellipse, activity spheres are in fact ellipses")
 @click.option('--geom', '-g', default = None, help = 'geometry file to forward project. Default is the proj on one detector')
 @click.option('--output_folder','-o', default = './dataset', help = " Absolute or relative path to the output folder", show_default=True)
 @click.option('--sigma0pve', default = forwardprojection.sigma0pve_default,type = float, help = 'sigma at distance 0 of the detector', show_default=True)
 @click.option('--alphapve', default = forwardprojection.alphapve_default, type = float, help = 'Slope of the PSF against the detector distance', show_default=True)
-def generate(nb_data, output_folder,size, spacing, like,min_radius, max_radius,max_activity, nspheres,geom, sigma0pve, alphapve):
+def generate(nb_data, output_folder,size, spacing, like,min_radius, max_radius,max_activity, nspheres,background,ellipse, geom, sigma0pve, alphapve):
     # get output image parameters
     if like:
         im_like = itk.imread(like)
@@ -43,17 +45,32 @@ def generate(nb_data, output_folder,size, spacing, like,min_radius, max_radius,m
     X, Y, Z = np.meshgrid(lspaceX,lspaceY,lspaceZ)
 
 
+
+
     for n in range(nb_data):
         src_array = np.zeros_like(X)
+
+        if background:
+            bg_center = [0,0,0]
+            bg_radius = np.random.randint(180, 217)
+            src_array += (1/float(background)) * ((((X - bg_center[0]) / bg_radius) ** 2 + ((Y - bg_center[1]) / bg_radius) ** 2 + (
+                        (Z - bg_center[2]) / bg_radius) ** 2) < 1).astype(float)
+
+
         random_nb_of_sphers = np.random.randint(1,nspheres+1)
 
         for s  in range(random_nb_of_sphers):
-            random_activity = np.random.randint(1, max_activity)
+            random_activity = np.random.randint(1, max_activity+1)
 
             # random radius and center
-            radius = np.random.rand()*(max_radius-min_radius) + min_radius
-            center = (2*np.random.rand(3)-1)*(lengths/2-radius) # the sphere borders remain inside the phantom
-            src_array += random_activity  * ( ( ((X-center[0]) / radius) ** 2 + ((Y-center[1]) / radius) ** 2 + ((Z-center[2])/ radius) ** 2  ) < 1).astype(float)
+            if ellipse:
+                radius = np.random.rand(3)*(max_radius-min_radius) + min_radius
+            else:
+                radius = np.random.rand()*(max_radius-min_radius) + min_radius
+                radius = [radius, radius, radius]
+
+            center = (2*np.random.rand(3)-1)*(lengths/2-np.max(radius)) # the sphere borders remain inside the phantom
+            src_array += random_activity  * ( ( ((X-center[0]) / radius[0]) ** 2 + ((Y-center[1]) / radius[1]) ** 2 + ((Z-center[2])/ radius[2]) ** 2  ) < 1).astype(float)
 
 
         src_img = itk.image_from_array(src_array)

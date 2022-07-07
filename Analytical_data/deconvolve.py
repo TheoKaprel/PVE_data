@@ -12,7 +12,6 @@ img1DeepPVC = itk.array_from_image(itk.imread('./test_deconvolution/src1proj_Dee
 psf1Deep= restoration.richardson_lucy(img1PVE, img1DeepPVC, filter_epsilon=0.00001)
 
 
-
 img2PVE = itk.array_from_image(itk.imread('./test_deconvolution/src2proj_PVE.mhd'))[0,:,:]
 img2PVf = itk.array_from_image(itk.imread('./test_deconvolution/src2proj_PVfree.mhd'))[0,:,:]
 psf2 = restoration.richardson_lucy(img2PVE,img2PVf, filter_epsilon=0.00001)
