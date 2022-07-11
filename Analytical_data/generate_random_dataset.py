@@ -5,6 +5,7 @@ import os
 import random
 import string
 import forwardprojection
+from itk import RTK as rtk
 
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -24,7 +25,8 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--output_folder','-o', default = './dataset', help = " Absolute or relative path to the output folder", show_default=True)
 @click.option('--sigma0pve', default = forwardprojection.sigma0pve_default,type = float, help = 'sigma at distance 0 of the detector', show_default=True)
 @click.option('--alphapve', default = forwardprojection.alphapve_default, type = float, help = 'Slope of the PSF against the detector distance', show_default=True)
-def generate(nb_data, output_folder,size, spacing, like,min_radius, max_radius,max_activity, nspheres,background,ellipse, geom, sigma0pve, alphapve):
+@click.option('--save_src', is_flag = True, default = False, help = "if you want to also save the source that will be forward projected")
+def generate(nb_data, output_folder,size, spacing, like,min_radius, max_radius,max_activity, nspheres,background,ellipse, geom, sigma0pve, alphapve, save_src):
     # get output image parameters
     if like:
         im_like = itk.imread(like)
@@ -45,13 +47,46 @@ def generate(nb_data, output_folder,size, spacing, like,min_radius, max_radius,m
     X, Y, Z = np.meshgrid(lspaceX,lspaceY,lspaceZ)
 
 
+    # Prepare Forward Projection
+    xmlReader = rtk.ThreeDCircularProjectionGeometryXMLFileReader.New()
+    xmlReader.SetFilename(geom)
+    xmlReader.GenerateOutputInformation()
+    geometry = xmlReader.GetOutputObject()
+    nproj = len(geometry.GetGantryAngles())
+    attenuationmap = "./data/acf_ct_air.mhd"
+    attenuation_image = itk.imread(attenuationmap, itk.F)
+    size,spacing = 128,4.41806
+    pixelType = itk.F
+    imageType = itk.Image[pixelType, 3]
+    output_spacing = [spacing,spacing, 1]
+    offset = (-spacing * size + spacing) / 2
+    output_offset = [offset, offset, (-nproj+1)/2]
+    output_image = rtk.ConstantImageSource[imageType].New()
+    output_image.SetSpacing(output_spacing)
+    output_image.SetOrigin(output_offset)
+    output_image.SetSize([size, size, nproj])
+    output_image.SetConstant(0.)
+
+    forward_projector_PVfree = rtk.ZengForwardProjectionImageFilter.New()
+    forward_projector_PVfree.SetInput(0, output_image.GetOutput())
+    forward_projector_PVfree.SetInput(2, attenuation_image)
+    forward_projector_PVfree.SetGeometry(geometry)
+    forward_projector_PVfree.SetSigmaZero(0)
+    forward_projector_PVfree.SetAlpha(0)
+
+    forward_projector_PVE = rtk.ZengForwardProjectionImageFilter.New()
+    forward_projector_PVE.SetInput(0, output_image.GetOutput())
+    forward_projector_PVE.SetInput(2, attenuation_image)
+    forward_projector_PVE.SetGeometry(geometry)
+    forward_projector_PVE.SetSigmaZero(sigma0pve)
+    forward_projector_PVE.SetAlpha(alphapve)
 
 
     for n in range(nb_data):
         src_array = np.zeros_like(X)
 
         if background:
-            bg_center = [0,0,0]
+            bg_center = np.random.randint(-20,20,3)
             bg_radius = np.random.randint(180, 217)
             src_array += (1/float(background)) * ((((X - bg_center[0]) / bg_radius) ** 2 + ((Y - bg_center[1]) / bg_radius) ** 2 + (
                         (Z - bg_center[2]) / bg_radius) ** 2) < 1).astype(float)
@@ -73,26 +108,43 @@ def generate(nb_data, output_folder,size, spacing, like,min_radius, max_radius,m
             src_array += random_activity  * ( ( ((X-center[0]) / radius[0]) ** 2 + ((Y-center[1]) / radius[1]) ** 2 + ((Z-center[2])/ radius[2]) ** 2  ) < 1).astype(float)
 
 
-        src_img = itk.image_from_array(src_array)
+        src_img = itk.image_from_array(src_array.astype(np.float32))
         src_img.SetSpacing(vSpacing)
         src_img.SetOrigin(vOffset)
 
         # Random output filename
         letters = string.ascii_uppercase
         filenamelength = 5
-        randomfn = ''.join(random.choice(letters) for i in range(filenamelength))
+        source_ref = ''.join(random.choice(letters) for i in range(filenamelength))
+
 
         # saving of source 3D image
-        source_path = os.path.join(output_folder,f'{randomfn}.mhd')
-        itk.imwrite(src_img,source_path)
+        if save_src:
+            source_path = os.path.join(output_folder,f'{source_ref}.mhd')
+            itk.imwrite(src_img,source_path)
         
         if geom == None:
             geom = './data/geom_1.xml'
         
 
-        #compute the foward projection :
-        print(source_path)
-        forwardprojection.forwardproject(inputsrc=source_path, output_folder=output_folder,geom=geom, nproj=1,pve=True, pvfree=True, sigma0pve=sigma0pve, alphapve=alphapve)
+        #compute fowardprojections :
+        print(source_ref)
+
+        # proj PVfree
+        forward_projector_PVfree.SetInput(1, src_img)
+        forward_projector_PVfree.Update()
+        output_forward_PVfree = forward_projector_PVfree.GetOutput()
+        output_filename_PVfree = os.path.join(output_folder,f'{source_ref}_PVfree.mhd')
+        itk.imwrite(output_forward_PVfree,output_filename_PVfree)
+
+        # proj PVE
+        forward_projector_PVE.SetInput(1, src_img)
+        forward_projector_PVE.Update()
+        output_forward_PVE = forward_projector_PVE.GetOutput()
+        output_filename_PVE = os.path.join(output_folder,f'{source_ref}_PVE.mhd')
+        itk.imwrite(output_forward_PVE,output_filename_PVE)
+
+
 
 
 if __name__ == '__main__':
