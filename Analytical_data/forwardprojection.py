@@ -82,7 +82,6 @@ def forwardproject(inputsrc, output_folder,geom, nproj,pve, pvfree, sigma0pve=si
             print(resPVfree.stderr)
             exit()
     if  pve:
-
         outputPVE = f'{output_folder}/{filename}{output_ref}_PVE.mhd'
 
         # RTK computing of the PVE forwardprojection
