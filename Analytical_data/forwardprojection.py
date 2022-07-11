@@ -13,8 +13,6 @@ import click
 import os
 import itk
 import numpy as np
-import matplotlib.pyplot as plt
-import subprocess
 from itk import RTK as rtk
 
 sigma0pve_default = 0.9008418065898374
