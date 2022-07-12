@@ -28,7 +28,8 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--sigma0pve', default = forwardprojection.sigma0pve_default,type = float, help = 'sigma at distance 0 of the detector', show_default=True)
 @click.option('--alphapve', default = forwardprojection.alphapve_default, type = float, help = 'Slope of the PSF against the detector distance', show_default=True)
 @click.option('--save_src', is_flag = True, default = False, help = "if you want to also save the source that will be forward projected")
-def generate(nb_data, output_folder,size, spacing, like,min_radius, max_radius,max_activity, nspheres,background,ellipse, geom,attenuationmap, sigma0pve, alphapve, save_src):
+@click.option('--noise', is_flag = True, default = False, help = "Add Poisson noise ONLY to ProjPVE")
+def generate(nb_data, output_folder,size, spacing, like,min_radius, max_radius,max_activity, nspheres,background,ellipse, geom,attenuationmap, sigma0pve, alphapve, save_src, noise):
     t0 = time.time()
     # get output image parameters
     if like:
@@ -146,6 +147,15 @@ def generate(nb_data, output_folder,size, spacing, like,min_radius, max_radius,m
         forward_projector_PVE.SetInput(1, src_img)
         forward_projector_PVE.Update()
         output_forward_PVE = forward_projector_PVE.GetOutput()
+
+        if noise:
+            output_forward_PVE_array = itk.array_from_image(output_forward_PVE)
+            noisy_projection_array = np.random.poisson(lam=output_forward_PVE_array, size=output_forward_PVE_array.shape).astype(float)
+            output_forward_PVE_noisy = itk.image_from_array(noisy_projection_array)
+            output_forward_PVE_noisy.SetSpacing(output_forward_PVE.GetSpacing())
+            output_forward_PVE_noisy.SetOrigin(output_forward_PVE.GetOrigin())
+            output_forward_PVE = output_forward_PVE_noisy
+
         output_filename_PVE = os.path.join(output_folder,f'{source_ref}_PVE.mhd')
         itk.imwrite(output_forward_PVE,output_filename_PVE)
 
