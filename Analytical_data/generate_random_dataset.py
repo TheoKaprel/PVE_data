@@ -6,6 +6,7 @@ import random
 import string
 import forwardprojection
 from itk import RTK as rtk
+import time
 
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -28,6 +29,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--alphapve', default = forwardprojection.alphapve_default, type = float, help = 'Slope of the PSF against the detector distance', show_default=True)
 @click.option('--save_src', is_flag = True, default = False, help = "if you want to also save the source that will be forward projected")
 def generate(nb_data, output_folder,size, spacing, like,min_radius, max_radius,max_activity, nspheres,background,ellipse, geom,attenuationmap, sigma0pve, alphapve, save_src):
+    t0 = time.time()
     # get output image parameters
     if like:
         im_like = itk.imread(like)
@@ -147,7 +149,10 @@ def generate(nb_data, output_folder,size, spacing, like,min_radius, max_radius,m
         output_filename_PVE = os.path.join(output_folder,f'{source_ref}_PVE.mhd')
         itk.imwrite(output_forward_PVE,output_filename_PVE)
 
-
+    tf = time.time()
+    elapsed_time = round(tf - t0)
+    elapsed_time_min = round(elapsed_time/60)
+    print(f'Total time elapsed for data generation : {elapsed_time_min} min    (i.e. {elapsed_time} s)')
 
 
 if __name__ == '__main__':
