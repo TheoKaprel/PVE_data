@@ -31,14 +31,15 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--pvfree', is_flag = True, default = False, help = 'To project the input source without partial volume effect')
 @click.option('--sigma0pve', default = sigma0pve_default,type = float, help = 'sigma at distance 0 of the detector', show_default=True)
 @click.option('--alphapve', default = alphapve_default, type = float, help = 'Slope of the PSF against the detector distance', show_default=True)
+@click.option('--noise', is_flag = True, default = False, help= 'Apply poisson noise to the projection')
 @click.option('--output_ref', default = None, type = str, help = 'ref to append to output_filename')
-def forwardproject_click(inputsrc, output_folder,geometry_filename, nproj,pve, pvfree, sigma0pve, alphapve, output_ref):
+def forwardproject_click(inputsrc, output_folder,geometry_filename, nproj,pve, pvfree, sigma0pve, alphapve,noise, output_ref):
 
-    forwardprojectRTK(inputsrc, output_folder,geometry_filename, nproj,pve, pvfree, sigma0pve, alphapve, output_ref)
+    forwardprojectRTK(inputsrc, output_folder,geometry_filename, nproj,pve, pvfree, sigma0pve, alphapve,noise, output_ref)
 
 
 
-def forwardprojectRTK(inputsrc, output_folder,geometry_filename, nproj,pve, pvfree, sigma0pve=sigma0pve_default, alphapve=alphapve_default, output_ref=None):
+def forwardprojectRTK(inputsrc, output_folder,geometry_filename, nproj,pve, pvfree, sigma0pve=sigma0pve_default, alphapve=alphapve_default, noise=False, output_ref=None):
     # projection parameters
     if (geometry_filename and not nproj):
         xmlReader = rtk.ThreeDCircularProjectionGeometryXMLFileReader.New()
@@ -108,6 +109,14 @@ def forwardprojectRTK(inputsrc, output_folder,geometry_filename, nproj,pve, pvfr
         forward_projector.Update()
 
         output_forward_PVE = forward_projector.GetOutput()
+
+        if noise:
+            output_forward_PVE_array = itk.array_from_image(output_forward_PVE)
+            noisy_projection_array = np.random.poisson(lam=output_forward_PVE_array, size=output_forward_PVE_array.shape).astype(float)
+            output_forward_PVE_noisy = itk.image_from_array(noisy_projection_array)
+            output_forward_PVE_noisy.SetSpacing(output_forward_PVE.GetSpacing())
+            output_forward_PVE_noisy.SetOrigin(output_forward_PVE.GetOrigin())
+            output_forward_PVE = output_forward_PVE_noisy
 
         output_filename_PVE = os.path.join(output_folder,f'{output_ref}_PVE.mhd')
         itk.imwrite(output_forward_PVE,output_filename_PVE)

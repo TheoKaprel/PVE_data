@@ -6,18 +6,18 @@ import matplotlib.pyplot as plt
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
-@click.option('--projection', '-p', required = True)
+@click.option('--input', '-i', required = True)
 @click.option('--output', '-o', required = True)
-def apply_poisson_noise_click(projection, output):
-    apply_poisson_noise(projection, output)
+def apply_poisson_noise_click(input, output):
+    apply_poisson_noise(input, output)
 
 
 
 
-def apply_poisson_noise(projection, output):
-    print(f'Opening {projection}...')
+def apply_poisson_noise(input, output):
+    print(f'Opening {input}...')
 
-    projection_itk = itk.imread(projection)
+    projection_itk = itk.imread(input)
     vSpacing = np.array(projection_itk.GetSpacing())
     vOffset = np.array(projection_itk.GetOrigin())
 
