@@ -78,8 +78,7 @@ Etapes :
 4) A améliorer
 
     a) & b) faire automatiquement la conversion ct->acf
-    c) ajouter les parametres (optionnels) : algo forward, geometrie, acf ...
-    c) changer forwardprojection pour qu'il ne fasse qu'une seule proj selon les param sigma/alpha mais faire dans generate_random_dataset deux appels à forwardprojection. Ainsi, on pourra forward
+    b) ajouter les parametres (optionnels) : algo forward, geometrie, acf ...
     c) dans generate_random_dataset : verifier que la clé de ref (nom de la source) choisie aléatoirement ne soit pas dejà prise meme si y'a 11 millions de possibilités
 
 
