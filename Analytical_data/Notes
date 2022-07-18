@@ -41,6 +41,11 @@ Etapes :
             leff = l - 2/mu avec l longueur des holes et mu le coeff d'attenuation linéaire du matériau utilisé pour le colli
             z = distance avec le colli selon l'axe de proj
 
+            mu = linear attenuation coefficient (1/cm)
+            mu = mass att coeff (cm**2 / g) * rho ( g / cm**3)
+            For Lead (Pb) at 150keV, en 1/mm
+            mu = 1.91 *11.35 * 10
+
 	    donc sigmazero = d /(2*sqrt(2*ln(2)))
 		 alphapsf = d /(2*sqrt(2*ln(2))*l_eff) = simgazero/l_eff
 	

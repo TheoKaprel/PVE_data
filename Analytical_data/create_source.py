@@ -18,6 +18,16 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--output_folder', required = True, help = " Absolute or relative path to the output folder")
 @click.option('--output_name', required = True, help = "Name of the desired output_name.mhd/raw file")
 def create_source_click(size,spacing, value, like,n_source, center, radius, output_folder, output_name):
+    """
+    Creates source
+    Usage :
+    for One spherical source :
+    python create_source.py --size 128 --spacing 4 --n_source 1 --value 1 --radius 4 --center 0 0 0  --output_folder folder/ --output_name name
+
+    for multiple sources :
+    python create_source.py --size 128 --spacing 4 --n_source 2 --value 1 --radius 4 --center 0 0 0 --value 1 --radius 8 --center 128 0 0  --output_folder folder/ --output_name name
+
+    """
     create_source(size=size, spacing=spacing, like=like,n_source = n_source, value=value, center=center, radius=radius, output_folder=output_folder, output_name=output_name)
 
 
