@@ -18,9 +18,6 @@ from itk import RTK as rtk
 sigma0pve_default = 0.9008418065898374
 alphapve_default = 0.025745123547513887
 
-def get_filename(file_path):
-    return file_path[file_path.rfind('/')+1:][:-4]
-
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings = CONTEXT_SETTINGS)
 @click.option('--inputsrc', '-i', help = 'path to the input 3D image to forward project')
