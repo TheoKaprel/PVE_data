@@ -23,6 +23,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--inputsrc', '-i', help = 'path to the input 3D image to forward project')
 @click.option('--output_folder', '-o', help = 'output folder. The output files will be ${inputsrc}_PVE.mhd and ${inputsrc}_PVfree.mhd')
 @click.option('--geom', '-g', 'geometry_filename', default = None, help = 'If the geometry file you want to use is already created, precise here the path to the xml file')
+@click.option('--attmap', 'a', default = "./data/acf_ct_air.mhd",help = 'Path to the attenuation map if the default is not ok)')
 @click.option('--nproj',type=int, default = None, help = 'Precise the number of projections needed')
 @click.option('--pve',is_flag = True, default = False, help = 'To project the input source without partial volume effect')
 @click.option('--pvfree', is_flag = True, default = False, help = 'To project the input source without partial volume effect')
@@ -30,13 +31,13 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--alphapve', default = alphapve_default, type = float, help = 'Slope of the PSF against the detector distance', show_default=True)
 @click.option('--noise', is_flag = True, default = False, help= 'Apply poisson noise to the projection')
 @click.option('--output_ref', default = None, type = str, help = 'ref to append to output_filename')
-def forwardproject_click(inputsrc, output_folder,geometry_filename, nproj,pve, pvfree, sigma0pve, alphapve,noise, output_ref):
+def forwardproject_click(inputsrc, output_folder,geometry_filename,attmap, nproj,pve, pvfree, sigma0pve, alphapve,noise, output_ref):
 
-    forwardprojectRTK(inputsrc, output_folder,geometry_filename, nproj,pve, pvfree, sigma0pve, alphapve,noise, output_ref)
+    forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj,pve, pvfree, sigma0pve, alphapve,noise, output_ref)
 
 
 
-def forwardprojectRTK(inputsrc, output_folder,geometry_filename, nproj,pve, pvfree, sigma0pve=sigma0pve_default, alphapve=alphapve_default, noise=False, output_ref=None):
+def forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj,pve, pvfree, sigma0pve=sigma0pve_default, alphapve=alphapve_default, noise=False, output_ref=None):
     # projection parameters
     if (geometry_filename and not nproj):
         xmlReader = rtk.ThreeDCircularProjectionGeometryXMLFileReader.New()
@@ -67,8 +68,7 @@ def forwardprojectRTK(inputsrc, output_folder,geometry_filename, nproj,pve, pvfr
     source_image_reader.SetFileName(inputsrc)
     source_image_reader.Update()
 
-    attenuationmap = "./data/acf_ct_air.mhd"
-    attenuation_image = itk.imread(attenuationmap, itk.F)
+    attenuation_image = itk.imread(attmap, itk.F)
 
     size,spacing = 128,4.41806
 
