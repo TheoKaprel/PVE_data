@@ -1,0 +1,3847 @@
+<?xml version="1.0"?>
+<!DOCTYPE RTKGEOMETRY>
+<RTKThreeDCircularGeometry version="3">
+    <SourceToIsocenterDistance>380</SourceToIsocenterDistance>
+    <ProjectionOffsetX>-280.54681</ProjectionOffsetX>
+    <ProjectionOffsetY>-280.54681</ProjectionOffsetY>
+  <Projection>
+    <GantryAngle>0</GantryAngle>
+    <Matrix>
+                        1                   0                   0           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>0.75</GantryAngle>
+    <Matrix>
+        0.999914327574007                   0 -0.0130895955713444           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>1.5</GantryAngle>
+    <Matrix>
+        0.999657324975557                   0 -0.0261769483078732           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>2.25</GantryAngle>
+    <Matrix>
+        0.999229036240723                   0 -0.0392598157590686           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>3</GantryAngle>
+    <Matrix>
+        0.998629534754574                   0 -0.0523359562429438           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>3.75</GantryAngle>
+    <Matrix>
+        0.997858923238603                   0 -0.0654031292301431           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>4.5</GantryAngle>
+    <Matrix>
+        0.996917333733128                   0 -0.0784590957278449           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>5.25</GantryAngle>
+    <Matrix>
+        0.995804927574662                   0 -0.0915016186634024           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>6</GantryAngle>
+    <Matrix>
+        0.994521895368273                   0  -0.104528463267653           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>6.75</GantryAngle>
+    <Matrix>
+        0.993068456954926                   0  -0.117537397457838           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>7.5</GantryAngle>
+    <Matrix>
+         0.99144486137381                   0  -0.130526192220052           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>8.25</GantryAngle>
+    <Matrix>
+         0.98965138681967                   0  -0.143492621991179           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>9</GantryAngle>
+    <Matrix>
+        0.987688340595138                   0  -0.156434465040231           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>9.75</GantryAngle>
+    <Matrix>
+        0.985556059058078                   0  -0.169349503849025           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>10.5</GantryAngle>
+    <Matrix>
+        0.983254907563955                   0  -0.182235525492147           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>11.25</GantryAngle>
+    <Matrix>
+         0.98078528040323                   0  -0.195090322016128           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>12</GantryAngle>
+    <Matrix>
+        0.978147600733806                   0  -0.207911690817759           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>12.75</GantryAngle>
+    <Matrix>
+        0.975342320508513                   0  -0.220697435021501           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>13.5</GantryAngle>
+    <Matrix>
+        0.972369920397677                   0  -0.233445363855905           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>14.25</GantryAngle>
+    <Matrix>
+        0.969230909706754                   0  -0.246153293028993           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>15</GantryAngle>
+    <Matrix>
+        0.965925826289068                   0  -0.258819045102521           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>15.75</GantryAngle>
+    <Matrix>
+        0.962455236453647                   0  -0.271440449865074           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>16.5</GantryAngle>
+    <Matrix>
+        0.958819734868193                   0  -0.284015344703923           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>17.25</GantryAngle>
+    <Matrix>
+        0.955019944457187                   0  -0.296541574975571           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>18</GantryAngle>
+    <Matrix>
+        0.951056516295154                   0  -0.309016994374947           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>18.75</GantryAngle>
+    <Matrix>
+        0.946930129495106                   0  -0.321439465303162           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>19.5</GantryAngle>
+    <Matrix>
+        0.942641491092178                   0  -0.333806859233771           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>20.25</GantryAngle>
+    <Matrix>
+        0.938191335922484                   0  -0.346117057077493           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>21</GantryAngle>
+    <Matrix>
+        0.933580426497202                   0    -0.3583679495453           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>21.75</GantryAngle>
+    <Matrix>
+        0.928809552871924                   0  -0.370557437509836           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>22.5</GantryAngle>
+    <Matrix>
+        0.923879532511287                   0   -0.38268343236509           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>23.25</GantryAngle>
+    <Matrix>
+        0.918791210148898                   0  -0.394743856384267           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>24</GantryAngle>
+    <Matrix>
+        0.913545457642601                   0    -0.4067366430758           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>24.75</GantryAngle>
+    <Matrix>
+        0.908143173825081                   0  -0.418659737537428           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>25.5</GantryAngle>
+    <Matrix>
+        0.902585284349861                   0  -0.430511096808295           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>26.25</GantryAngle>
+    <Matrix>
+        0.896872741532688                   0  -0.442288690219001           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>27</GantryAngle>
+    <Matrix>
+        0.891006524188368                   0  -0.453990499739547           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>27.75</GantryAngle>
+    <Matrix>
+        0.884987637463042                   0  -0.465614520325111           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>28.5</GantryAngle>
+    <Matrix>
+        0.878817112661965                   0  -0.477158760259608           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>29.25</GantryAngle>
+    <Matrix>
+        0.872496007072797                   0  -0.488621241496955           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>30</GantryAngle>
+    <Matrix>
+        0.866025403784439                   0                -0.5           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>30.75</GantryAngle>
+    <Matrix>
+        0.859406411501453                   0  -0.511293086077052           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>31.5</GantryAngle>
+    <Matrix>
+        0.852640164354092                   0  -0.522498564715949           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>32.25</GantryAngle>
+    <Matrix>
+        0.845727821703973                   0  -0.533614515915611           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>33</GantryAngle>
+    <Matrix>
+        0.838670567945424                   0  -0.544639035015027           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>33.75</GantryAngle>
+    <Matrix>
+        0.831469612302545                   0  -0.555570233019602           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>34.5</GantryAngle>
+    <Matrix>
+        0.824126188622016                   0  -0.566406236924833           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>35.25</GantryAngle>
+    <Matrix>
+        0.816641555161679                   0  -0.577145190037234           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>36</GantryAngle>
+    <Matrix>
+        0.809016994374947                   0  -0.587785252292473           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>36.75</GantryAngle>
+    <Matrix>
+        0.801253812691061                   0  -0.598324600570659           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>37.5</GantryAngle>
+    <Matrix>
+        0.793353340291235                   0  -0.608761429008721           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>38.25</GantryAngle>
+    <Matrix>
+        0.785316930880745                   0  -0.619093949309834           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>39</GantryAngle>
+    <Matrix>
+        0.777145961456971                   0  -0.629320391049837           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>39.75</GantryAngle>
+    <Matrix>
+        0.768841832073459                   0  -0.639439001980585           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>40.5</GantryAngle>
+    <Matrix>
+        0.760405965600031                   0  -0.649448048330184           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>41.25</GantryAngle>
+    <Matrix>
+        0.751839807478977                   0  -0.659345815100069           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>42</GantryAngle>
+    <Matrix>
+        0.743144825477394                   0  -0.669130606358858           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>42.75</GantryAngle>
+    <Matrix>
+        0.734322509435686                   0  -0.678800745532942           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>43.5</GantryAngle>
+    <Matrix>
+        0.725374371012288                   0  -0.688354575693754           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>44.25</GantryAngle>
+    <Matrix>
+        0.716301943424654                   0   -0.69779045984168           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>45</GantryAngle>
+    <Matrix>
+        0.707106781186548                   0  -0.707106781186547           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>45.75</GantryAngle>
+    <Matrix>
+         0.69779045984168                   0  -0.716301943424654           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>46.5</GantryAngle>
+    <Matrix>
+        0.688354575693754                   0  -0.725374371012288           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>47.25</GantryAngle>
+    <Matrix>
+        0.678800745532942                   0  -0.734322509435686           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>48</GantryAngle>
+    <Matrix>
+        0.669130606358858                   0  -0.743144825477394           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>48.75</GantryAngle>
+    <Matrix>
+        0.659345815100069                   0  -0.751839807478977           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>49.5</GantryAngle>
+    <Matrix>
+        0.649448048330184                   0  -0.760405965600031           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>50.25</GantryAngle>
+    <Matrix>
+        0.639439001980585                   0   -0.76884183207346           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>51</GantryAngle>
+    <Matrix>
+        0.629320391049838                   0  -0.777145961456971           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>51.75</GantryAngle>
+    <Matrix>
+        0.619093949309834                   0  -0.785316930880745           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>52.5</GantryAngle>
+    <Matrix>
+        0.608761429008721                   0  -0.793353340291235           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>53.25</GantryAngle>
+    <Matrix>
+        0.598324600570659                   0  -0.801253812691061           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>54</GantryAngle>
+    <Matrix>
+        0.587785252292473                   0  -0.809016994374947           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>54.75</GantryAngle>
+    <Matrix>
+        0.577145190037234                   0  -0.816641555161679           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>55.5</GantryAngle>
+    <Matrix>
+        0.566406236924833                   0  -0.824126188622016           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>56.25</GantryAngle>
+    <Matrix>
+        0.555570233019602                   0  -0.831469612302545           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>57</GantryAngle>
+    <Matrix>
+        0.544639035015027                   0  -0.838670567945424           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>57.75</GantryAngle>
+    <Matrix>
+        0.533614515915612                   0  -0.845727821703973           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>58.5</GantryAngle>
+    <Matrix>
+        0.522498564715949                   0  -0.852640164354092           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>59.25</GantryAngle>
+    <Matrix>
+        0.511293086077052                   0  -0.859406411501453           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>60</GantryAngle>
+    <Matrix>
+                      0.5                   0  -0.866025403784439           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>60.75</GantryAngle>
+    <Matrix>
+        0.488621241496955                   0  -0.872496007072797           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>61.5</GantryAngle>
+    <Matrix>
+        0.477158760259608                   0  -0.878817112661965           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>62.25</GantryAngle>
+    <Matrix>
+        0.465614520325112                   0  -0.884987637463042           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>63</GantryAngle>
+    <Matrix>
+        0.453990499739547                   0  -0.891006524188368           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>63.75</GantryAngle>
+    <Matrix>
+        0.442288690219001                   0  -0.896872741532688           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>64.5</GantryAngle>
+    <Matrix>
+        0.430511096808295                   0  -0.902585284349861           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>65.25</GantryAngle>
+    <Matrix>
+        0.418659737537428                   0  -0.908143173825081           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>66</GantryAngle>
+    <Matrix>
+          0.4067366430758                   0  -0.913545457642601           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>66.75</GantryAngle>
+    <Matrix>
+        0.394743856384267                   0  -0.918791210148898           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>67.5</GantryAngle>
+    <Matrix>
+         0.38268343236509                   0  -0.923879532511287           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>68.25</GantryAngle>
+    <Matrix>
+        0.370557437509836                   0  -0.928809552871924           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>69</GantryAngle>
+    <Matrix>
+          0.3583679495453                   0  -0.933580426497202           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>69.75</GantryAngle>
+    <Matrix>
+        0.346117057077493                   0  -0.938191335922484           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>70.5</GantryAngle>
+    <Matrix>
+        0.333806859233771                   0  -0.942641491092178           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>71.25</GantryAngle>
+    <Matrix>
+        0.321439465303162                   0  -0.946930129495106           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>72</GantryAngle>
+    <Matrix>
+        0.309016994374947                   0  -0.951056516295154           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>72.75</GantryAngle>
+    <Matrix>
+        0.296541574975571                   0  -0.955019944457187           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>73.5</GantryAngle>
+    <Matrix>
+        0.284015344703923                   0  -0.958819734868193           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>74.25</GantryAngle>
+    <Matrix>
+        0.271440449865074                   0  -0.962455236453647           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>75</GantryAngle>
+    <Matrix>
+        0.258819045102521                   0  -0.965925826289068           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>75.75</GantryAngle>
+    <Matrix>
+        0.246153293028993                   0  -0.969230909706754           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>76.5</GantryAngle>
+    <Matrix>
+        0.233445363855905                   0  -0.972369920397677           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>77.25</GantryAngle>
+    <Matrix>
+        0.220697435021501                   0  -0.975342320508513           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>78</GantryAngle>
+    <Matrix>
+        0.207911690817759                   0  -0.978147600733806           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>78.75</GantryAngle>
+    <Matrix>
+        0.195090322016128                   0   -0.98078528040323           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>79.5</GantryAngle>
+    <Matrix>
+        0.182235525492147                   0  -0.983254907563955           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>80.25</GantryAngle>
+    <Matrix>
+        0.169349503849025                   0  -0.985556059058078           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>81</GantryAngle>
+    <Matrix>
+        0.156434465040231                   0  -0.987688340595138           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>81.75</GantryAngle>
+    <Matrix>
+        0.143492621991179                   0   -0.98965138681967           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>82.5</GantryAngle>
+    <Matrix>
+        0.130526192220052                   0   -0.99144486137381           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>83.25</GantryAngle>
+    <Matrix>
+        0.117537397457838                   0  -0.993068456954926           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>84</GantryAngle>
+    <Matrix>
+        0.104528463267653                   0  -0.994521895368273           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>84.75</GantryAngle>
+    <Matrix>
+       0.0915016186634025                   0  -0.995804927574662           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>85.5</GantryAngle>
+    <Matrix>
+        0.078459095727845                   0  -0.996917333733128           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>86.25</GantryAngle>
+    <Matrix>
+        0.065403129230143                   0  -0.997858923238603           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>87</GantryAngle>
+    <Matrix>
+        0.052335956242944                   0  -0.998629534754574           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>87.75</GantryAngle>
+    <Matrix>
+       0.0392598157590687                   0  -0.999229036240723           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>88.5</GantryAngle>
+    <Matrix>
+       0.0261769483078731                   0  -0.999657324975557           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>89.25</GantryAngle>
+    <Matrix>
+       0.0130895955713446                   0  -0.999914327574007           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>90</GantryAngle>
+    <Matrix>
+      6.12323399573677e-17                   0                  -1           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>90.75</GantryAngle>
+    <Matrix>
+      -0.0130895955713445                   0  -0.999914327574007           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>91.5</GantryAngle>
+    <Matrix>
+       -0.026176948307873                   0  -0.999657324975557           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>92.25</GantryAngle>
+    <Matrix>
+      -0.0392598157590685                   0  -0.999229036240723           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>93</GantryAngle>
+    <Matrix>
+      -0.0523359562429438                   0  -0.998629534754574           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>93.75</GantryAngle>
+    <Matrix>
+      -0.0654031292301429                   0  -0.997858923238603           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>94.5</GantryAngle>
+    <Matrix>
+      -0.0784590957278449                   0  -0.996917333733128           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>95.25</GantryAngle>
+    <Matrix>
+      -0.0915016186634024                   0  -0.995804927574662           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>96</GantryAngle>
+    <Matrix>
+       -0.104528463267654                   0  -0.994521895368273           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>96.75</GantryAngle>
+    <Matrix>
+       -0.117537397457838                   0  -0.993068456954926           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>97.5</GantryAngle>
+    <Matrix>
+       -0.130526192220052                   0   -0.99144486137381           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>98.25</GantryAngle>
+    <Matrix>
+       -0.143492621991179                   0   -0.98965138681967           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>99</GantryAngle>
+    <Matrix>
+       -0.156434465040231                   0  -0.987688340595138           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>99.75</GantryAngle>
+    <Matrix>
+       -0.169349503849025                   0  -0.985556059058078           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>100.5</GantryAngle>
+    <Matrix>
+       -0.182235525492148                   0  -0.983254907563955           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>101.25</GantryAngle>
+    <Matrix>
+       -0.195090322016128                   0   -0.98078528040323           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>102</GantryAngle>
+    <Matrix>
+       -0.207911690817759                   0  -0.978147600733806           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>102.75</GantryAngle>
+    <Matrix>
+       -0.220697435021501                   0  -0.975342320508513           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>103.5</GantryAngle>
+    <Matrix>
+       -0.233445363855905                   0  -0.972369920397677           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>104.25</GantryAngle>
+    <Matrix>
+       -0.246153293028993                   0  -0.969230909706754           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>105</GantryAngle>
+    <Matrix>
+       -0.258819045102521                   0  -0.965925826289068           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>105.75</GantryAngle>
+    <Matrix>
+       -0.271440449865074                   0  -0.962455236453647           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>106.5</GantryAngle>
+    <Matrix>
+       -0.284015344703923                   0  -0.958819734868193           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>107.25</GantryAngle>
+    <Matrix>
+       -0.296541574975571                   0  -0.955019944457187           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>108</GantryAngle>
+    <Matrix>
+       -0.309016994374947                   0  -0.951056516295154           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>108.75</GantryAngle>
+    <Matrix>
+       -0.321439465303162                   0  -0.946930129495106           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>109.5</GantryAngle>
+    <Matrix>
+       -0.333806859233771                   0  -0.942641491092178           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>110.25</GantryAngle>
+    <Matrix>
+       -0.346117057077493                   0  -0.938191335922484           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>111</GantryAngle>
+    <Matrix>
+         -0.3583679495453                   0  -0.933580426497202           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>111.75</GantryAngle>
+    <Matrix>
+       -0.370557437509836                   0  -0.928809552871924           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>112.5</GantryAngle>
+    <Matrix>
+        -0.38268343236509                   0  -0.923879532511287           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>113.25</GantryAngle>
+    <Matrix>
+       -0.394743856384267                   0  -0.918791210148898           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>114</GantryAngle>
+    <Matrix>
+         -0.4067366430758                   0  -0.913545457642601           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>114.75</GantryAngle>
+    <Matrix>
+       -0.418659737537428                   0  -0.908143173825081           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>115.5</GantryAngle>
+    <Matrix>
+       -0.430511096808295                   0  -0.902585284349861           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>116.25</GantryAngle>
+    <Matrix>
+       -0.442288690219001                   0  -0.896872741532688           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>117</GantryAngle>
+    <Matrix>
+       -0.453990499739547                   0  -0.891006524188368           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>117.75</GantryAngle>
+    <Matrix>
+       -0.465614520325111                   0  -0.884987637463042           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>118.5</GantryAngle>
+    <Matrix>
+       -0.477158760259608                   0  -0.878817112661965           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>119.25</GantryAngle>
+    <Matrix>
+       -0.488621241496955                   0  -0.872496007072797           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>120</GantryAngle>
+    <Matrix>
+                     -0.5                   0  -0.866025403784439           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>120.75</GantryAngle>
+    <Matrix>
+       -0.511293086077052                   0  -0.859406411501453           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>121.5</GantryAngle>
+    <Matrix>
+       -0.522498564715949                   0  -0.852640164354092           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>122.25</GantryAngle>
+    <Matrix>
+       -0.533614515915611                   0  -0.845727821703973           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>123</GantryAngle>
+    <Matrix>
+       -0.544639035015027                   0  -0.838670567945424           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>123.75</GantryAngle>
+    <Matrix>
+       -0.555570233019602                   0  -0.831469612302545           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>124.5</GantryAngle>
+    <Matrix>
+       -0.566406236924833                   0  -0.824126188622016           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>125.25</GantryAngle>
+    <Matrix>
+       -0.577145190037234                   0  -0.816641555161679           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>126</GantryAngle>
+    <Matrix>
+       -0.587785252292473                   0  -0.809016994374947           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>126.75</GantryAngle>
+    <Matrix>
+       -0.598324600570659                   0  -0.801253812691061           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>127.5</GantryAngle>
+    <Matrix>
+       -0.608761429008721                   0  -0.793353340291235           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>128.25</GantryAngle>
+    <Matrix>
+       -0.619093949309834                   0  -0.785316930880745           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>129</GantryAngle>
+    <Matrix>
+       -0.629320391049837                   0  -0.777145961456971           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>129.75</GantryAngle>
+    <Matrix>
+       -0.639439001980585                   0   -0.76884183207346           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>130.5</GantryAngle>
+    <Matrix>
+       -0.649448048330184                   0  -0.760405965600031           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>131.25</GantryAngle>
+    <Matrix>
+       -0.659345815100069                   0  -0.751839807478977           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>132</GantryAngle>
+    <Matrix>
+       -0.669130606358858                   0  -0.743144825477394           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>132.75</GantryAngle>
+    <Matrix>
+       -0.678800745532942                   0  -0.734322509435685           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>133.5</GantryAngle>
+    <Matrix>
+       -0.688354575693754                   0  -0.725374371012288           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>134.25</GantryAngle>
+    <Matrix>
+        -0.69779045984168                   0  -0.716301943424654           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>135</GantryAngle>
+    <Matrix>
+       -0.707106781186547                   0  -0.707106781186548           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>135.75</GantryAngle>
+    <Matrix>
+       -0.716301943424654                   0   -0.69779045984168           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>136.5</GantryAngle>
+    <Matrix>
+       -0.725374371012288                   0  -0.688354575693754           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>137.25</GantryAngle>
+    <Matrix>
+       -0.734322509435686                   0  -0.678800745532942           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>138</GantryAngle>
+    <Matrix>
+       -0.743144825477394                   0  -0.669130606358858           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>138.75</GantryAngle>
+    <Matrix>
+       -0.751839807478977                   0  -0.659345815100069           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>139.5</GantryAngle>
+    <Matrix>
+       -0.760405965600031                   0  -0.649448048330184           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>140.25</GantryAngle>
+    <Matrix>
+       -0.768841832073459                   0  -0.639439001980585           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>141</GantryAngle>
+    <Matrix>
+       -0.777145961456971                   0  -0.629320391049837           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>141.75</GantryAngle>
+    <Matrix>
+       -0.785316930880745                   0  -0.619093949309834           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>142.5</GantryAngle>
+    <Matrix>
+       -0.793353340291235                   0  -0.608761429008721           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>143.25</GantryAngle>
+    <Matrix>
+       -0.801253812691061                   0  -0.598324600570659           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>144</GantryAngle>
+    <Matrix>
+       -0.809016994374947                   0  -0.587785252292473           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>144.75</GantryAngle>
+    <Matrix>
+       -0.816641555161679                   0  -0.577145190037234           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>145.5</GantryAngle>
+    <Matrix>
+       -0.824126188622016                   0  -0.566406236924833           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>146.25</GantryAngle>
+    <Matrix>
+       -0.831469612302545                   0  -0.555570233019602           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>147</GantryAngle>
+    <Matrix>
+       -0.838670567945424                   0  -0.544639035015027           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>147.75</GantryAngle>
+    <Matrix>
+       -0.845727821703973                   0  -0.533614515915612           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>148.5</GantryAngle>
+    <Matrix>
+       -0.852640164354092                   0  -0.522498564715949           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>149.25</GantryAngle>
+    <Matrix>
+       -0.859406411501453                   0  -0.511293086077052           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>150</GantryAngle>
+    <Matrix>
+       -0.866025403784439                   0                -0.5           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>150.75</GantryAngle>
+    <Matrix>
+       -0.872496007072797                   0  -0.488621241496955           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>151.5</GantryAngle>
+    <Matrix>
+       -0.878817112661965                   0  -0.477158760259609           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>152.25</GantryAngle>
+    <Matrix>
+       -0.884987637463042                   0  -0.465614520325112           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>153</GantryAngle>
+    <Matrix>
+       -0.891006524188368                   0  -0.453990499739547           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>153.75</GantryAngle>
+    <Matrix>
+       -0.896872741532688                   0  -0.442288690219001           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>154.5</GantryAngle>
+    <Matrix>
+       -0.902585284349861                   0  -0.430511096808295           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>155.25</GantryAngle>
+    <Matrix>
+       -0.908143173825081                   0  -0.418659737537428           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>156</GantryAngle>
+    <Matrix>
+       -0.913545457642601                   0    -0.4067366430758           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>156.75</GantryAngle>
+    <Matrix>
+       -0.918791210148898                   0  -0.394743856384267           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>157.5</GantryAngle>
+    <Matrix>
+       -0.923879532511287                   0   -0.38268343236509           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>158.25</GantryAngle>
+    <Matrix>
+       -0.928809552871924                   0  -0.370557437509836           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>159</GantryAngle>
+    <Matrix>
+       -0.933580426497202                   0    -0.3583679495453           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>159.75</GantryAngle>
+    <Matrix>
+       -0.938191335922484                   0  -0.346117057077493           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>160.5</GantryAngle>
+    <Matrix>
+       -0.942641491092178                   0  -0.333806859233771           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>161.25</GantryAngle>
+    <Matrix>
+       -0.946930129495106                   0  -0.321439465303162           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>162</GantryAngle>
+    <Matrix>
+       -0.951056516295154                   0  -0.309016994374948           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>162.75</GantryAngle>
+    <Matrix>
+       -0.955019944457187                   0  -0.296541574975571           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>163.5</GantryAngle>
+    <Matrix>
+       -0.958819734868193                   0  -0.284015344703923           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>164.25</GantryAngle>
+    <Matrix>
+       -0.962455236453647                   0  -0.271440449865074           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>165</GantryAngle>
+    <Matrix>
+       -0.965925826289068                   0  -0.258819045102521           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>165.75</GantryAngle>
+    <Matrix>
+       -0.969230909706754                   0  -0.246153293028993           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>166.5</GantryAngle>
+    <Matrix>
+       -0.972369920397677                   0  -0.233445363855906           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>167.25</GantryAngle>
+    <Matrix>
+       -0.975342320508513                   0  -0.220697435021501           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>168</GantryAngle>
+    <Matrix>
+       -0.978147600733806                   0  -0.207911690817759           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>168.75</GantryAngle>
+    <Matrix>
+        -0.98078528040323                   0  -0.195090322016128           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>169.5</GantryAngle>
+    <Matrix>
+       -0.983254907563955                   0  -0.182235525492148           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>170.25</GantryAngle>
+    <Matrix>
+       -0.985556059058078                   0  -0.169349503849025           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>171</GantryAngle>
+    <Matrix>
+       -0.987688340595138                   0  -0.156434465040231           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>171.75</GantryAngle>
+    <Matrix>
+        -0.98965138681967                   0  -0.143492621991179           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>172.5</GantryAngle>
+    <Matrix>
+        -0.99144486137381                   0  -0.130526192220052           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>173.25</GantryAngle>
+    <Matrix>
+       -0.993068456954926                   0  -0.117537397457838           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>174</GantryAngle>
+    <Matrix>
+       -0.994521895368273                   0  -0.104528463267654           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>174.75</GantryAngle>
+    <Matrix>
+       -0.995804927574662                   0 -0.0915016186634026           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>175.5</GantryAngle>
+    <Matrix>
+       -0.996917333733128                   0 -0.0784590957278451           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>176.25</GantryAngle>
+    <Matrix>
+       -0.997858923238603                   0 -0.0654031292301431           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>177</GantryAngle>
+    <Matrix>
+       -0.998629534754574                   0 -0.0523359562429438           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>177.75</GantryAngle>
+    <Matrix>
+       -0.999229036240723                   0 -0.0392598157590685           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>178.5</GantryAngle>
+    <Matrix>
+       -0.999657324975557                   0 -0.0261769483078734           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>179.25</GantryAngle>
+    <Matrix>
+       -0.999914327574007                   0 -0.0130895955713446           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>180</GantryAngle>
+    <Matrix>
+                       -1                   0 -1.22464679914735e-16           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>180.75</GantryAngle>
+    <Matrix>
+       -0.999914327574007                   0  0.0130895955713444           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>181.5</GantryAngle>
+    <Matrix>
+       -0.999657324975557                   0  0.0261769483078732           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>182.25</GantryAngle>
+    <Matrix>
+       -0.999229036240723                   0  0.0392598157590687           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>183</GantryAngle>
+    <Matrix>
+       -0.998629534754574                   0  0.0523359562429436           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>183.75</GantryAngle>
+    <Matrix>
+       -0.997858923238603                   0  0.0654031292301429           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>184.5</GantryAngle>
+    <Matrix>
+       -0.996917333733128                   0  0.0784590957278448           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>185.25</GantryAngle>
+    <Matrix>
+       -0.995804927574662                   0  0.0915016186634023           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>186</GantryAngle>
+    <Matrix>
+       -0.994521895368273                   0   0.104528463267653           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>186.75</GantryAngle>
+    <Matrix>
+       -0.993068456954926                   0   0.117537397457838           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>187.5</GantryAngle>
+    <Matrix>
+        -0.99144486137381                   0   0.130526192220051           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>188.25</GantryAngle>
+    <Matrix>
+        -0.98965138681967                   0   0.143492621991179           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>189</GantryAngle>
+    <Matrix>
+       -0.987688340595138                   0   0.156434465040231           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>189.75</GantryAngle>
+    <Matrix>
+       -0.985556059058078                   0   0.169349503849025           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>190.5</GantryAngle>
+    <Matrix>
+       -0.983254907563955                   0   0.182235525492147           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>191.25</GantryAngle>
+    <Matrix>
+        -0.98078528040323                   0   0.195090322016128           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>192</GantryAngle>
+    <Matrix>
+       -0.978147600733806                   0    0.20791169081776           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>192.75</GantryAngle>
+    <Matrix>
+       -0.975342320508513                   0   0.220697435021501           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>193.5</GantryAngle>
+    <Matrix>
+       -0.972369920397677                   0   0.233445363855905           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>194.25</GantryAngle>
+    <Matrix>
+       -0.969230909706754                   0   0.246153293028993           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>195</GantryAngle>
+    <Matrix>
+       -0.965925826289068                   0   0.258819045102521           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>195.75</GantryAngle>
+    <Matrix>
+       -0.962455236453647                   0   0.271440449865074           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>196.5</GantryAngle>
+    <Matrix>
+       -0.958819734868193                   0   0.284015344703923           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>197.25</GantryAngle>
+    <Matrix>
+       -0.955019944457187                   0   0.296541574975571           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>198</GantryAngle>
+    <Matrix>
+       -0.951056516295154                   0   0.309016994374947           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>198.75</GantryAngle>
+    <Matrix>
+       -0.946930129495106                   0   0.321439465303162           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>199.5</GantryAngle>
+    <Matrix>
+       -0.942641491092178                   0   0.333806859233771           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>200.25</GantryAngle>
+    <Matrix>
+       -0.938191335922484                   0   0.346117057077493           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>201</GantryAngle>
+    <Matrix>
+       -0.933580426497202                   0     0.3583679495453           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>201.75</GantryAngle>
+    <Matrix>
+       -0.928809552871924                   0   0.370557437509836           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>202.5</GantryAngle>
+    <Matrix>
+       -0.923879532511287                   0    0.38268343236509           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>203.25</GantryAngle>
+    <Matrix>
+       -0.918791210148898                   0   0.394743856384267           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>204</GantryAngle>
+    <Matrix>
+       -0.913545457642601                   0     0.4067366430758           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>204.75</GantryAngle>
+    <Matrix>
+       -0.908143173825081                   0   0.418659737537428           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>205.5</GantryAngle>
+    <Matrix>
+       -0.902585284349861                   0   0.430511096808295           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>206.25</GantryAngle>
+    <Matrix>
+       -0.896872741532688                   0   0.442288690219001           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>207</GantryAngle>
+    <Matrix>
+       -0.891006524188368                   0   0.453990499739547           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>207.75</GantryAngle>
+    <Matrix>
+       -0.884987637463042                   0   0.465614520325111           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>208.5</GantryAngle>
+    <Matrix>
+       -0.878817112661965                   0   0.477158760259608           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>209.25</GantryAngle>
+    <Matrix>
+       -0.872496007072797                   0   0.488621241496955           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>210</GantryAngle>
+    <Matrix>
+       -0.866025403784439                   0                 0.5           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>210.75</GantryAngle>
+    <Matrix>
+       -0.859406411501453                   0   0.511293086077052           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>211.5</GantryAngle>
+    <Matrix>
+       -0.852640164354092                   0   0.522498564715949           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>212.25</GantryAngle>
+    <Matrix>
+       -0.845727821703973                   0   0.533614515915611           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>213</GantryAngle>
+    <Matrix>
+       -0.838670567945424                   0   0.544639035015027           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>213.75</GantryAngle>
+    <Matrix>
+       -0.831469612302545                   0   0.555570233019602           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>214.5</GantryAngle>
+    <Matrix>
+       -0.824126188622016                   0   0.566406236924833           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>215.25</GantryAngle>
+    <Matrix>
+       -0.816641555161679                   0   0.577145190037233           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>216</GantryAngle>
+    <Matrix>
+       -0.809016994374948                   0   0.587785252292473           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>216.75</GantryAngle>
+    <Matrix>
+       -0.801253812691061                   0   0.598324600570659           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>217.5</GantryAngle>
+    <Matrix>
+       -0.793353340291235                   0   0.608761429008721           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>218.25</GantryAngle>
+    <Matrix>
+       -0.785316930880745                   0   0.619093949309834           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>219</GantryAngle>
+    <Matrix>
+       -0.777145961456971                   0   0.629320391049838           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>219.75</GantryAngle>
+    <Matrix>
+        -0.76884183207346                   0   0.639439001980585           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>220.5</GantryAngle>
+    <Matrix>
+       -0.760405965600031                   0   0.649448048330184           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>221.25</GantryAngle>
+    <Matrix>
+       -0.751839807478977                   0   0.659345815100069           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>222</GantryAngle>
+    <Matrix>
+       -0.743144825477394                   0   0.669130606358858           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>222.75</GantryAngle>
+    <Matrix>
+       -0.734322509435685                   0   0.678800745532942           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>223.5</GantryAngle>
+    <Matrix>
+       -0.725374371012288                   0   0.688354575693754           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>224.25</GantryAngle>
+    <Matrix>
+       -0.716301943424654                   0    0.69779045984168           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>225</GantryAngle>
+    <Matrix>
+       -0.707106781186548                   0   0.707106781186547           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>225.75</GantryAngle>
+    <Matrix>
+        -0.69779045984168                   0   0.716301943424654           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>226.5</GantryAngle>
+    <Matrix>
+       -0.688354575693754                   0   0.725374371012288           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>227.25</GantryAngle>
+    <Matrix>
+       -0.678800745532942                   0   0.734322509435686           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>228</GantryAngle>
+    <Matrix>
+       -0.669130606358858                   0   0.743144825477394           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>228.75</GantryAngle>
+    <Matrix>
+       -0.659345815100069                   0   0.751839807478977           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>229.5</GantryAngle>
+    <Matrix>
+       -0.649448048330183                   0   0.760405965600031           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>230.25</GantryAngle>
+    <Matrix>
+       -0.639439001980584                   0    0.76884183207346           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>231</GantryAngle>
+    <Matrix>
+       -0.629320391049838                   0   0.777145961456971           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>231.75</GantryAngle>
+    <Matrix>
+       -0.619093949309834                   0   0.785316930880745           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>232.5</GantryAngle>
+    <Matrix>
+       -0.608761429008721                   0   0.793353340291235           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>233.25</GantryAngle>
+    <Matrix>
+       -0.598324600570659                   0   0.801253812691061           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>234</GantryAngle>
+    <Matrix>
+       -0.587785252292473                   0   0.809016994374947           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>234.75</GantryAngle>
+    <Matrix>
+       -0.577145190037234                   0   0.816641555161679           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>235.5</GantryAngle>
+    <Matrix>
+       -0.566406236924833                   0   0.824126188622016           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>236.25</GantryAngle>
+    <Matrix>
+       -0.555570233019602                   0   0.831469612302545           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>237</GantryAngle>
+    <Matrix>
+       -0.544639035015027                   0   0.838670567945424           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>237.75</GantryAngle>
+    <Matrix>
+       -0.533614515915611                   0   0.845727821703973           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>238.5</GantryAngle>
+    <Matrix>
+       -0.522498564715949                   0   0.852640164354092           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>239.25</GantryAngle>
+    <Matrix>
+       -0.511293086077052                   0   0.859406411501453           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>240</GantryAngle>
+    <Matrix>
+                     -0.5                   0   0.866025403784438           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>240.75</GantryAngle>
+    <Matrix>
+       -0.488621241496955                   0   0.872496007072797           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>241.5</GantryAngle>
+    <Matrix>
+       -0.477158760259609                   0   0.878817112661965           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>242.25</GantryAngle>
+    <Matrix>
+       -0.465614520325112                   0   0.884987637463042           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>243</GantryAngle>
+    <Matrix>
+       -0.453990499739547                   0   0.891006524188368           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>243.75</GantryAngle>
+    <Matrix>
+       -0.442288690219001                   0   0.896872741532688           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>244.5</GantryAngle>
+    <Matrix>
+       -0.430511096808295                   0   0.902585284349861           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>245.25</GantryAngle>
+    <Matrix>
+       -0.418659737537428                   0   0.908143173825081           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>246</GantryAngle>
+    <Matrix>
+         -0.4067366430758                   0   0.913545457642601           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>246.75</GantryAngle>
+    <Matrix>
+       -0.394743856384267                   0   0.918791210148898           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>247.5</GantryAngle>
+    <Matrix>
+        -0.38268343236509                   0   0.923879532511287           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>248.25</GantryAngle>
+    <Matrix>
+       -0.370557437509836                   0   0.928809552871924           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>249</GantryAngle>
+    <Matrix>
+       -0.358367949545301                   0   0.933580426497202           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>249.75</GantryAngle>
+    <Matrix>
+       -0.346117057077493                   0   0.938191335922484           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>250.5</GantryAngle>
+    <Matrix>
+       -0.333806859233771                   0   0.942641491092178           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>251.25</GantryAngle>
+    <Matrix>
+       -0.321439465303162                   0   0.946930129495106           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>252</GantryAngle>
+    <Matrix>
+       -0.309016994374948                   0   0.951056516295154           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>252.75</GantryAngle>
+    <Matrix>
+       -0.296541574975571                   0   0.955019944457187           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>253.5</GantryAngle>
+    <Matrix>
+       -0.284015344703923                   0   0.958819734868193           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>254.25</GantryAngle>
+    <Matrix>
+       -0.271440449865074                   0   0.962455236453647           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>255</GantryAngle>
+    <Matrix>
+       -0.258819045102521                   0   0.965925826289068           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>255.75</GantryAngle>
+    <Matrix>
+       -0.246153293028993                   0   0.969230909706754           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>256.5</GantryAngle>
+    <Matrix>
+       -0.233445363855905                   0   0.972369920397677           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>257.25</GantryAngle>
+    <Matrix>
+       -0.220697435021501                   0   0.975342320508513           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>258</GantryAngle>
+    <Matrix>
+        -0.20791169081776                   0   0.978147600733806           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>258.75</GantryAngle>
+    <Matrix>
+       -0.195090322016129                   0    0.98078528040323           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>259.5</GantryAngle>
+    <Matrix>
+       -0.182235525492148                   0   0.983254907563955           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>260.25</GantryAngle>
+    <Matrix>
+       -0.169349503849025                   0   0.985556059058078           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>261</GantryAngle>
+    <Matrix>
+       -0.156434465040231                   0   0.987688340595138           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>261.75</GantryAngle>
+    <Matrix>
+       -0.143492621991179                   0    0.98965138681967           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>262.5</GantryAngle>
+    <Matrix>
+       -0.130526192220052                   0    0.99144486137381           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>263.25</GantryAngle>
+    <Matrix>
+       -0.117537397457838                   0   0.993068456954926           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>264</GantryAngle>
+    <Matrix>
+       -0.104528463267653                   0   0.994521895368273           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>264.75</GantryAngle>
+    <Matrix>
+      -0.0915016186634022                   0   0.995804927574662           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>265.5</GantryAngle>
+    <Matrix>
+      -0.0784590957278447                   0   0.996917333733128           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>266.25</GantryAngle>
+    <Matrix>
+      -0.0654031292301427                   0   0.997858923238603           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>267</GantryAngle>
+    <Matrix>
+      -0.0523359562429443                   0   0.998629534754574           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>267.75</GantryAngle>
+    <Matrix>
+       -0.039259815759069                   0   0.999229036240723           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>268.5</GantryAngle>
+    <Matrix>
+      -0.0261769483078735                   0   0.999657324975557           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>269.25</GantryAngle>
+    <Matrix>
+      -0.0130895955713447                   0   0.999914327574007           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>270</GantryAngle>
+    <Matrix>
+      -1.83697019872103e-16                   0                   1           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>270.75</GantryAngle>
+    <Matrix>
+       0.0130895955713443                   0   0.999914327574007           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>271.5</GantryAngle>
+    <Matrix>
+       0.0261769483078731                   0   0.999657324975557           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>272.25</GantryAngle>
+    <Matrix>
+       0.0392598157590686                   0   0.999229036240723           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>273</GantryAngle>
+    <Matrix>
+       0.0523359562429439                   0   0.998629534754574           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>273.75</GantryAngle>
+    <Matrix>
+       0.0654031292301433                   0   0.997858923238603           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>274.5</GantryAngle>
+    <Matrix>
+       0.0784590957278452                   0   0.996917333733128           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>275.25</GantryAngle>
+    <Matrix>
+       0.0915016186634027                   0   0.995804927574662           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>276</GantryAngle>
+    <Matrix>
+        0.104528463267653                   0   0.994521895368273           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>276.75</GantryAngle>
+    <Matrix>
+        0.117537397457837                   0   0.993068456954926           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>277.5</GantryAngle>
+    <Matrix>
+        0.130526192220051                   0    0.99144486137381           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>278.25</GantryAngle>
+    <Matrix>
+        0.143492621991179                   0    0.98965138681967           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>279</GantryAngle>
+    <Matrix>
+        0.156434465040231                   0   0.987688340595138           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>279.75</GantryAngle>
+    <Matrix>
+        0.169349503849025                   0   0.985556059058078           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>280.5</GantryAngle>
+    <Matrix>
+        0.182235525492147                   0   0.983254907563955           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>281.25</GantryAngle>
+    <Matrix>
+        0.195090322016128                   0    0.98078528040323           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>282</GantryAngle>
+    <Matrix>
+        0.207911690817759                   0   0.978147600733806           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>282.75</GantryAngle>
+    <Matrix>
+        0.220697435021501                   0   0.975342320508513           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>283.5</GantryAngle>
+    <Matrix>
+        0.233445363855906                   0   0.972369920397677           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>284.25</GantryAngle>
+    <Matrix>
+        0.246153293028993                   0   0.969230909706754           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>285</GantryAngle>
+    <Matrix>
+         0.25881904510252                   0   0.965925826289068           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>285.75</GantryAngle>
+    <Matrix>
+        0.271440449865074                   0   0.962455236453647           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>286.5</GantryAngle>
+    <Matrix>
+        0.284015344703922                   0   0.958819734868193           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>287.25</GantryAngle>
+    <Matrix>
+        0.296541574975571                   0   0.955019944457187           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>288</GantryAngle>
+    <Matrix>
+        0.309016994374947                   0   0.951056516295154           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>288.75</GantryAngle>
+    <Matrix>
+        0.321439465303161                   0   0.946930129495106           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>289.5</GantryAngle>
+    <Matrix>
+        0.333806859233771                   0   0.942641491092178           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>290.25</GantryAngle>
+    <Matrix>
+        0.346117057077493                   0   0.938191335922484           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>291</GantryAngle>
+    <Matrix>
+          0.3583679495453                   0   0.933580426497202           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>291.75</GantryAngle>
+    <Matrix>
+        0.370557437509836                   0   0.928809552871924           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>292.5</GantryAngle>
+    <Matrix>
+         0.38268343236509                   0   0.923879532511287           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>293.25</GantryAngle>
+    <Matrix>
+        0.394743856384268                   0   0.918791210148898           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>294</GantryAngle>
+    <Matrix>
+          0.4067366430758                   0   0.913545457642601           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>294.75</GantryAngle>
+    <Matrix>
+        0.418659737537428                   0   0.908143173825081           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>295.5</GantryAngle>
+    <Matrix>
+        0.430511096808295                   0   0.902585284349861           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>296.25</GantryAngle>
+    <Matrix>
+        0.442288690219001                   0   0.896872741532688           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>297</GantryAngle>
+    <Matrix>
+        0.453990499739547                   0   0.891006524188368           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>297.75</GantryAngle>
+    <Matrix>
+        0.465614520325111                   0   0.884987637463042           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>298.5</GantryAngle>
+    <Matrix>
+        0.477158760259608                   0   0.878817112661965           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>299.25</GantryAngle>
+    <Matrix>
+        0.488621241496955                   0   0.872496007072797           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>300</GantryAngle>
+    <Matrix>
+                      0.5                   0   0.866025403784439           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>300.75</GantryAngle>
+    <Matrix>
+        0.511293086077052                   0   0.859406411501453           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>301.5</GantryAngle>
+    <Matrix>
+        0.522498564715949                   0   0.852640164354092           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>302.25</GantryAngle>
+    <Matrix>
+        0.533614515915612                   0   0.845727821703973           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>303</GantryAngle>
+    <Matrix>
+        0.544639035015027                   0   0.838670567945424           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>303.75</GantryAngle>
+    <Matrix>
+        0.555570233019602                   0   0.831469612302545           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>304.5</GantryAngle>
+    <Matrix>
+        0.566406236924832                   0   0.824126188622016           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>305.25</GantryAngle>
+    <Matrix>
+        0.577145190037233                   0   0.816641555161679           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>306</GantryAngle>
+    <Matrix>
+        0.587785252292473                   0   0.809016994374948           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>306.75</GantryAngle>
+    <Matrix>
+        0.598324600570659                   0   0.801253812691061           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>307.5</GantryAngle>
+    <Matrix>
+        0.608761429008721                   0   0.793353340291235           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>308.25</GantryAngle>
+    <Matrix>
+        0.619093949309834                   0   0.785316930880745           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>309</GantryAngle>
+    <Matrix>
+        0.629320391049838                   0   0.777145961456971           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>309.75</GantryAngle>
+    <Matrix>
+        0.639439001980585                   0   0.768841832073459           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>310.5</GantryAngle>
+    <Matrix>
+        0.649448048330184                   0   0.760405965600031           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>311.25</GantryAngle>
+    <Matrix>
+        0.659345815100069                   0   0.751839807478977           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>312</GantryAngle>
+    <Matrix>
+        0.669130606358858                   0   0.743144825477395           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>312.75</GantryAngle>
+    <Matrix>
+        0.678800745532941                   0   0.734322509435686           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>313.5</GantryAngle>
+    <Matrix>
+        0.688354575693754                   0   0.725374371012288           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>314.25</GantryAngle>
+    <Matrix>
+         0.69779045984168                   0   0.716301943424654           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>315</GantryAngle>
+    <Matrix>
+        0.707106781186547                   0   0.707106781186548           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>315.75</GantryAngle>
+    <Matrix>
+        0.716301943424654                   0    0.69779045984168           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>316.5</GantryAngle>
+    <Matrix>
+        0.725374371012288                   0   0.688354575693754           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>317.25</GantryAngle>
+    <Matrix>
+        0.734322509435686                   0   0.678800745532942           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>318</GantryAngle>
+    <Matrix>
+        0.743144825477394                   0   0.669130606358858           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>318.75</GantryAngle>
+    <Matrix>
+        0.751839807478977                   0   0.659345815100069           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>319.5</GantryAngle>
+    <Matrix>
+        0.760405965600031                   0   0.649448048330183           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>320.25</GantryAngle>
+    <Matrix>
+         0.76884183207346                   0   0.639439001980585           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>321</GantryAngle>
+    <Matrix>
+        0.777145961456971                   0   0.629320391049838           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>321.75</GantryAngle>
+    <Matrix>
+        0.785316930880745                   0   0.619093949309834           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>322.5</GantryAngle>
+    <Matrix>
+        0.793353340291235                   0   0.608761429008721           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>323.25</GantryAngle>
+    <Matrix>
+         0.80125381269106                   0   0.598324600570659           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>324</GantryAngle>
+    <Matrix>
+        0.809016994374947                   0   0.587785252292473           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>324.75</GantryAngle>
+    <Matrix>
+        0.816641555161679                   0   0.577145190037234           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>325.5</GantryAngle>
+    <Matrix>
+        0.824126188622016                   0   0.566406236924833           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>326.25</GantryAngle>
+    <Matrix>
+        0.831469612302545                   0   0.555570233019602           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>327</GantryAngle>
+    <Matrix>
+        0.838670567945424                   0   0.544639035015027           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>327.75</GantryAngle>
+    <Matrix>
+        0.845727821703973                   0   0.533614515915611           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>328.5</GantryAngle>
+    <Matrix>
+        0.852640164354092                   0   0.522498564715949           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>329.25</GantryAngle>
+    <Matrix>
+        0.859406411501453                   0   0.511293086077052           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>330</GantryAngle>
+    <Matrix>
+        0.866025403784438                   0                 0.5           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>330.75</GantryAngle>
+    <Matrix>
+        0.872496007072797                   0   0.488621241496955           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>331.5</GantryAngle>
+    <Matrix>
+        0.878817112661965                   0   0.477158760259609           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>332.25</GantryAngle>
+    <Matrix>
+        0.884987637463042                   0   0.465614520325112           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>333</GantryAngle>
+    <Matrix>
+        0.891006524188368                   0   0.453990499739547           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>333.75</GantryAngle>
+    <Matrix>
+        0.896872741532688                   0   0.442288690219001           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>334.5</GantryAngle>
+    <Matrix>
+        0.902585284349861                   0   0.430511096808295           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>335.25</GantryAngle>
+    <Matrix>
+        0.908143173825081                   0   0.418659737537428           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>336</GantryAngle>
+    <Matrix>
+        0.913545457642601                   0     0.4067366430758           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>336.75</GantryAngle>
+    <Matrix>
+        0.918791210148898                   0   0.394743856384267           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>337.5</GantryAngle>
+    <Matrix>
+        0.923879532511287                   0    0.38268343236509           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>338.25</GantryAngle>
+    <Matrix>
+        0.928809552871924                   0   0.370557437509836           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>339</GantryAngle>
+    <Matrix>
+        0.933580426497202                   0   0.358367949545301           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>339.75</GantryAngle>
+    <Matrix>
+        0.938191335922484                   0   0.346117057077493           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>340.5</GantryAngle>
+    <Matrix>
+        0.942641491092178                   0   0.333806859233771           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>341.25</GantryAngle>
+    <Matrix>
+        0.946930129495106                   0   0.321439465303162           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>342</GantryAngle>
+    <Matrix>
+        0.951056516295154                   0   0.309016994374948           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>342.75</GantryAngle>
+    <Matrix>
+        0.955019944457187                   0   0.296541574975571           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>343.5</GantryAngle>
+    <Matrix>
+        0.958819734868193                   0   0.284015344703923           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>344.25</GantryAngle>
+    <Matrix>
+        0.962455236453647                   0   0.271440449865074           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>345</GantryAngle>
+    <Matrix>
+        0.965925826289068                   0   0.258819045102521           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>345.75</GantryAngle>
+    <Matrix>
+        0.969230909706754                   0   0.246153293028993           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>346.5</GantryAngle>
+    <Matrix>
+        0.972369920397677                   0   0.233445363855905           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>347.25</GantryAngle>
+    <Matrix>
+        0.975342320508513                   0   0.220697435021501           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>348</GantryAngle>
+    <Matrix>
+        0.978147600733806                   0    0.20791169081776           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>348.75</GantryAngle>
+    <Matrix>
+         0.98078528040323                   0   0.195090322016129           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>349.5</GantryAngle>
+    <Matrix>
+        0.983254907563955                   0   0.182235525492148           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>350.25</GantryAngle>
+    <Matrix>
+        0.985556059058078                   0   0.169349503849025           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>351</GantryAngle>
+    <Matrix>
+        0.987688340595138                   0   0.156434465040231           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>351.75</GantryAngle>
+    <Matrix>
+         0.98965138681967                   0   0.143492621991179           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>352.5</GantryAngle>
+    <Matrix>
+         0.99144486137381                   0   0.130526192220052           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>353.25</GantryAngle>
+    <Matrix>
+        0.993068456954926                   0   0.117537397457838           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>354</GantryAngle>
+    <Matrix>
+        0.994521895368273                   0   0.104528463267653           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>354.75</GantryAngle>
+    <Matrix>
+        0.995804927574662                   0  0.0915016186634023           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>355.5</GantryAngle>
+    <Matrix>
+        0.996917333733128                   0  0.0784590957278447           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>356.25</GantryAngle>
+    <Matrix>
+        0.997858923238603                   0  0.0654031292301428           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>357</GantryAngle>
+    <Matrix>
+        0.998629534754574                   0  0.0523359562429444           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>357.75</GantryAngle>
+    <Matrix>
+        0.999229036240723                   0  0.0392598157590691           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>358.5</GantryAngle>
+    <Matrix>
+        0.999657324975557                   0  0.0261769483078735           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+  <Projection>
+    <GantryAngle>359.25</GantryAngle>
+    <Matrix>
+        0.999914327574007                   0  0.0130895955713448           280.54681
+                        0                   1                   0           280.54681
+                        0                   0                   0                   1
+    </Matrix>
+  </Projection>
+</RTKThreeDCircularGeometry>

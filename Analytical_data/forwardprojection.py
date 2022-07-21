@@ -21,7 +21,7 @@ alphapve_default = 0.025745123547513887
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings = CONTEXT_SETTINGS)
 @click.option('--inputsrc', '-i', help = 'path to the input 3D image to forward project')
-@click.option('--output_folder', '-o', help = 'output folder. The output files will be ${inputsrc}_PVE.mhd and ${inputsrc}_PVfree.mhd')
+@click.option('--output_folder', '-o', help = 'output folder.')
 @click.option('--geom', '-g', 'geometry_filename', default = None, help = 'If the geometry file you want to use is already created, precise here the path to the xml file')
 @click.option('--attmap', '-a', default = "./data/acf_ct_air.mhd",help = 'Path to the attenuation map if the default is not ok)')
 @click.option('--nproj',type=int, default = None, help = 'Precise the number of projections needed')
