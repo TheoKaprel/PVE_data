@@ -6,5 +6,5 @@
 **.txt
 **.db
 **.pth
-!/PVE_data/Analytical_data/data/acf_ct_air.mhd
-!/PVE_data/Analytical_data/data/acf_ct_air.raw
+!/Analytical_data/data/acf_ct_air.mhd
+!/Analytical_data/data/acf_ct_air.raw
