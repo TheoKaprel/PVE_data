@@ -1,8 +1,0 @@
-OSEM avec 1 proj par subset (donc 60 subset) et 15 iterations 
-donc équivalent à 60 à 15*60=900 iterations
-
-
-RMSE croissante ... entre 4.8x10^-3 à 5.15x10^-3
-
-
-avec 5.08x10^-3 à 5 iterations (ce que j'utilisais dans mes reconstruction.py)
