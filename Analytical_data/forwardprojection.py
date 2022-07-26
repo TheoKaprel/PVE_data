@@ -29,16 +29,22 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--pvfree', is_flag = True, default = False, help = 'To project the input source without partial volume effect')
 @click.option('--sigma0pve', default = sigma0pve_default,type = float, help = 'sigma at distance 0 of the detector', show_default=True)
 @click.option('--alphapve', default = alphapve_default, type = float, help = 'Slope of the PSF against the detector distance', show_default=True)
+@click.option('--size', default = 128, show_default = True)
+@click.option('--spacing', default = 4.41806, show_default = True)
 @click.option('--noise', is_flag = True, default = False, help= 'Apply poisson noise to the projection')
 @click.option('--output_ref', default = None, type = str, help = 'ref to append to output_filename')
-def forwardproject_click(inputsrc, output_folder,geometry_filename,attmap, nproj,pve, pvfree, sigma0pve, alphapve,noise, output_ref):
+def forwardproject_click(inputsrc, output_folder,geometry_filename,attmap, nproj,pve, pvfree, sigma0pve, alphapve, size,spacing,noise, output_ref):
 
-    forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj,pve, pvfree, sigma0pve, alphapve,noise, output_ref)
+    forwardprojectRTK(inputsrc=inputsrc, output_folder=output_folder,geometry_filename=geometry_filename,attmap=attmap,
+                      nproj=nproj,pve=pve, pvfree=pvfree,size=size,spacing=spacing,
+                      sigma0pve=sigma0pve, alphapve=alphapve, noise=noise, output_ref=output_ref)
 
 
 
-def forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj,pve, pvfree, sigma0pve=sigma0pve_default, alphapve=alphapve_default, noise=False, output_ref=None):
+def forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj,pve, pvfree, size,spacing, sigma0pve=sigma0pve_default, alphapve=alphapve_default, noise=False, output_ref=None):
     # projection parameters
+    offset = (-spacing*size + spacing)/2
+
     if (geometry_filename and not nproj):
         xmlReader = rtk.ThreeDCircularProjectionGeometryXMLFileReader.New()
         xmlReader.SetFilename(geometry_filename)
@@ -46,15 +52,16 @@ def forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj,pv
         geometry = xmlReader.GetOutputObject()
         nproj = len(geometry.GetGantryAngles())
     elif (nproj and not geometry_filename):
-        geom_fn = f'./data/geom_{nproj}.xml'
+
         list_angles = np.linspace(0,360,nproj+1)
         geometry = rtk.ThreeDCircularProjectionGeometry.New()
         for i in range(nproj):
-            geometry.AddProjection(380, 0, list_angles[i], -280.54681, -280.54681)
-        xmlWriter = rtk.ThreeDCircularProjectionGeometryXMLFileWriter.New()
-        xmlWriter.SetFilename(geom_fn)
-        xmlWriter.SetObject(geometry)
-        xmlWriter.WriteFile()
+            geometry.AddProjection(380, 0, list_angles[i], offset, offset)
+        # geom_fn = f'./data/geom_{nproj}.xml'
+        # xmlWriter = rtk.ThreeDCircularProjectionGeometryXMLFileWriter.New()
+        # xmlWriter.SetFilename(geom_fn)
+        # xmlWriter.SetObject(geometry)
+        # xmlWriter.WriteFile()
     else:
         print('ERROR: give me geom xor nproj')
         exit(0)
@@ -70,8 +77,6 @@ def forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj,pv
 
     attenuation_image = itk.imread(attmap, itk.F)
 
-    # size,spacing = 128,4.41806
-    size,spacing = 256, 4.41806/2
 
 
     output_spacing = [spacing,spacing, 1]

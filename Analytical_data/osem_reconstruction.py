@@ -11,15 +11,18 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--input', '-i', help = 'input projections')
 @click.option('--outputfilename', '-o')
 @click.option('--like')
-@click.option('--data_folder', help = 'Location of the folder containing : geom_60.xml and acf_ct_air.mhd')
+@click.option('--data_folder', help = 'Location of the folder containing : geom_120.xml and acf_ct_air.mhd')
+@click.option('--geom', '-g')
+@click.option('--attenuationmap', '-a')
 @click.option('--pvc', is_flag = True, default = False, help = 'if --pvc, resolution correction')
 @click.option('--nprojpersubset', type = int, default = 10, show_default = True)
 @click.option('--niterations', type = int, default = 5, show_default = True)
 @click.option('--FB', 'projector_type')
-def osem_reconstruction_click(input, outputfilename,like, data_folder,pvc, nprojpersubset, niterations, projector_type):
-    osem_reconstruction(input, outputfilename,like, data_folder,pvc, nprojpersubset, niterations, projector_type)
+def osem_reconstruction_click(input, outputfilename,like, data_folder, geom,attenuationmap,pvc, nprojpersubset, niterations, projector_type):
+    osem_reconstruction(input=input, outputfilename=outputfilename,like=like, data_folder=data_folder, geom=geom,attenuationmap=attenuationmap,
+                        pvc=pvc, nprojpersubset=nprojpersubset, niterations=niterations, projector_type=projector_type)
 
-def osem_reconstruction(input, outputfilename,like, data_folder,pvc, nprojpersubset, niterations, projector_type):
+def osem_reconstruction(input, outputfilename,like, data_folder, geom,attenuationmap,pvc, nprojpersubset, niterations, projector_type):
     print('Begining of reconstruction ...')
 
     Dimension = 3
@@ -41,16 +44,32 @@ def osem_reconstruction(input, outputfilename,like, data_folder,pvc, nprojpersub
     print(f'{nproj} projections detected')
 
     print('Reading geometry file ...')
-    geom_filename = os.path.join(data_folder, f'geom_{nproj}.xml')
+    if (data_folder and not(geom)):
+        geom_filename = os.path.join(data_folder, f'geom_{nproj}.xml')
+    elif (geom and not (data_folder)):
+        geom_filename = geom
+    else:
+        print('Error in geometry arguments')
+        exit(0)
+
     xmlReader = rtk.ThreeDCircularProjectionGeometryXMLFileReader.New()
     xmlReader.SetFilename(geom_filename)
     xmlReader.GenerateOutputInformation()
     geometry = xmlReader.GetOutputObject()
+
+
     print(geom_filename+ ' is opened!')
 
 
     print('Reading attenuation map ...')
-    attmap_filename = os.path.join(data_folder, f'acf_ct_air.mhd')
+    if (data_folder and not(attenuationmap)):
+        attmap_filename = os.path.join(data_folder, f'acf_ct_air.mhd')
+    elif (attenuationmap and not (data_folder)):
+        attmap_filename = attenuationmap
+    else:
+        print('Error in attenuationmap arguments')
+        exit(0)
+
     attenuation_map = itk.imread(attmap_filename, pixelType)
 
     print('Set OSEM parameters ...')
