@@ -1,6 +1,7 @@
 import click
 import itk
 from itk import RTK as rtk
+import numpy as np
 import os
 
 from forwardprojection import alphapve_default,sigma0pve_default
@@ -14,15 +15,16 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--data_folder', help = 'Location of the folder containing : geom_120.xml and acf_ct_air.mhd')
 @click.option('--geom', '-g')
 @click.option('--attenuationmap', '-a')
+@click.option('--beta', type = float, default = 0.01, show_default = True)
 @click.option('--pvc', is_flag = True, default = False, help = 'if --pvc, resolution correction')
 @click.option('--nprojpersubset', type = int, default = 10, show_default = True)
 @click.option('--niterations', type = int, default = 5, show_default = True)
 @click.option('--FB', 'projector_type')
-def osem_reconstruction_click(input, outputfilename,like, data_folder, geom,attenuationmap,pvc, nprojpersubset, niterations, projector_type):
+def osem_reconstruction_click(input, outputfilename,like, data_folder, geom,attenuationmap,beta, pvc, nprojpersubset, niterations, projector_type):
     osem_reconstruction(input=input, outputfilename=outputfilename,like=like, data_folder=data_folder, geom=geom,attenuationmap=attenuationmap,
-                        pvc=pvc, nprojpersubset=nprojpersubset, niterations=niterations, projector_type=projector_type)
+                        beta= beta, pvc=pvc, nprojpersubset=nprojpersubset, niterations=niterations, projector_type=projector_type)
 
-def osem_reconstruction(input, outputfilename,like, data_folder, geom,attenuationmap,pvc, nprojpersubset, niterations, projector_type):
+def osem_reconstruction(input, outputfilename,like, data_folder, geom,attenuationmap,beta, pvc, nprojpersubset, niterations, projector_type):
     print('Begining of reconstruction ...')
 
     Dimension = 3
@@ -44,21 +46,30 @@ def osem_reconstruction(input, outputfilename,like, data_folder, geom,attenuatio
     print(f'{nproj} projections detected')
 
     print('Reading geometry file ...')
-    if (data_folder and not(geom)):
-        geom_filename = os.path.join(data_folder, f'geom_{nproj}.xml')
-    elif (geom and not (data_folder)):
-        geom_filename = geom
+    if (data_folder or geom):
+        if (data_folder and not(geom)):
+            geom_filename = os.path.join(data_folder, f'geom_{nproj}.xml')
+        elif (geom and not (data_folder)):
+            geom_filename = geom
+        else:
+            print('Error in geometry arguments')
+            exit(0)
+        xmlReader = rtk.ThreeDCircularProjectionGeometryXMLFileReader.New()
+        xmlReader.SetFilename(geom_filename)
+        xmlReader.GenerateOutputInformation()
+        geometry = xmlReader.GetOutputObject()
+        print(geom_filename + ' is opened!')
     else:
-        print('Error in geometry arguments')
-        exit(0)
+        Offset = projections.GetOrigin()
 
-    xmlReader = rtk.ThreeDCircularProjectionGeometryXMLFileReader.New()
-    xmlReader.SetFilename(geom_filename)
-    xmlReader.GenerateOutputInformation()
-    geometry = xmlReader.GetOutputObject()
+        list_angles = np.linspace(0,360,nproj+1)
+        geometry = rtk.ThreeDCircularProjectionGeometry.New()
+        for i in range(nproj):
+            geometry.AddProjection(380, 0, list_angles[i], Offset[0], Offset[1])
+            print(f'Created geom file with {nproj} angles and Offset = {Offset[0]},{Offset[1]}')
 
 
-    print(geom_filename+ ' is opened!')
+
 
 
     print('Reading attenuation map ...')
@@ -82,6 +93,8 @@ def osem_reconstruction(input, outputfilename,like, data_folder, geom,attenuatio
 
     osem.SetNumberOfIterations(niterations)
     osem.SetNumberOfProjectionsPerSubset(nprojpersubset)
+
+    osem.SetBetaRegularization(beta)
 
     if (projector_type is None or projector_type=='Zeng'):
         osem.SetInput(2, attenuation_map)
