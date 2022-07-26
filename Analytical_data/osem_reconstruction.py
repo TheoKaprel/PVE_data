@@ -13,12 +13,13 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--like')
 @click.option('--data_folder', help = 'Location of the folder containing : geom_60.xml and acf_ct_air.mhd')
 @click.option('--pvc', is_flag = True, default = False, help = 'if --pvc, resolution correction')
-@click.option('--nprojpersubset', type = int, default = 10)
-@click.option('--niterations', type = int, default = 5)
-def osem_reconstruction_click(input, outputfilename,like, data_folder,pvc, nprojpersubset, niterations):
-    osem_reconstruction(input, outputfilename,like, data_folder,pvc, nprojpersubset, niterations)
+@click.option('--nprojpersubset', type = int, default = 10, show_default = True)
+@click.option('--niterations', type = int, default = 5, show_default = True)
+@click.option('--FB', 'projector_type')
+def osem_reconstruction_click(input, outputfilename,like, data_folder,pvc, nprojpersubset, niterations, projector_type):
+    osem_reconstruction(input, outputfilename,like, data_folder,pvc, nprojpersubset, niterations, projector_type)
 
-def osem_reconstruction(input, outputfilename,like, data_folder,pvc, nprojpersubset, niterations):
+def osem_reconstruction(input, outputfilename,like, data_folder,pvc, nprojpersubset, niterations, projector_type):
     print('Begining of reconstruction ...')
 
     Dimension = 3
@@ -57,18 +58,35 @@ def osem_reconstruction(input, outputfilename,like, data_folder,pvc, nprojpersub
     osem = OSEMType.New()
     osem.SetInput(0, output_image.GetOutput())
     osem.SetInput(1, projections)
-    osem.SetInput(2, attenuation_map)
+
     osem.SetGeometry(geometry)
-    if pvc:
-        osem.SetSigmaZero(sigma0pve_default)
-        osem.SetAlpha(alphapve_default)
-    else:
-        osem.SetSigmaZero(0)
-        osem.SetAlpha(0)
+
     osem.SetNumberOfIterations(niterations)
     osem.SetNumberOfProjectionsPerSubset(nprojpersubset)
-    osem.SetForwardProjectionFilter(osem.ForwardProjectionType_FP_ZENG)
-    osem.SetBackProjectionFilter(osem.BackProjectionType_BP_ZENG)
+
+    if (projector_type is None or projector_type=='Zeng'):
+        osem.SetInput(2, attenuation_map)
+
+        FP = osem.ForwardProjectionType_FP_ZENG
+        BP = osem.BackProjectionType_BP_ZENG
+
+        if pvc:
+            osem.SetSigmaZero(sigma0pve_default)
+            osem.SetAlpha(alphapve_default)
+        else:
+            osem.SetSigmaZero(0)
+            osem.SetAlpha(0)
+
+
+    elif projector_type=='Joseph':
+        FP = osem.ForwardProjectionType_FP_JOSEPH
+        BP = osem.BackProjectionType_BP_JOSEPH
+
+
+    osem.SetForwardProjectionFilter(FP)
+    osem.SetBackProjectionFilter(BP)
+
+
 
     print('Reconstruction ...')
     osem.Update()

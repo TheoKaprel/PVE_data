@@ -70,7 +70,8 @@ def forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj,pv
 
     attenuation_image = itk.imread(attmap, itk.F)
 
-    size,spacing = 128,4.41806
+    # size,spacing = 128,4.41806
+    size,spacing = 256, 4.41806/2
 
 
     output_spacing = [spacing,spacing, 1]
