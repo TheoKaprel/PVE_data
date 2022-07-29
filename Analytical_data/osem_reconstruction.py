@@ -15,11 +15,11 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--data_folder', help = 'Location of the folder containing : geom_120.xml and acf_ct_air.mhd')
 @click.option('--geom', '-g')
 @click.option('--attenuationmap', '-a')
-@click.option('--beta', type = float, default = 0.01, show_default = True)
+@click.option('--beta', type = float, default = 0, show_default = True)
 @click.option('--pvc', is_flag = True, default = False, help = 'if --pvc, resolution correction')
 @click.option('--nprojpersubset', type = int, default = 10, show_default = True)
 @click.option('--niterations', type = int, default = 5, show_default = True)
-@click.option('--FB', 'projector_type')
+@click.option('--FB', 'projector_type', default = "Zeng")
 def osem_reconstruction_click(input, outputfilename,like, data_folder, geom,attenuationmap,beta, pvc, nprojpersubset, niterations, projector_type):
     osem_reconstruction(input=input, outputfilename=outputfilename,like=like, data_folder=data_folder, geom=geom,attenuationmap=attenuationmap,
                         beta= beta, pvc=pvc, nprojpersubset=nprojpersubset, niterations=niterations, projector_type=projector_type)
@@ -60,13 +60,16 @@ def osem_reconstruction(input, outputfilename,like, data_folder, geom,attenuatio
         geometry = xmlReader.GetOutputObject()
         print(geom_filename + ' is opened!')
     else:
-        Offset = projections.GetOrigin()
+        if projector_type=="Zeng":
+            Offset = projections.GetOrigin()
+        else:
+            Offset = [0,0]
 
         list_angles = np.linspace(0,360,nproj+1)
         geometry = rtk.ThreeDCircularProjectionGeometry.New()
         for i in range(nproj):
             geometry.AddProjection(380, 0, list_angles[i], Offset[0], Offset[1])
-            print(f'Created geom file with {nproj} angles and Offset = {Offset[0]},{Offset[1]}')
+        print(f'Created geom file with {nproj} angles and Offset = {Offset[0]},{Offset[1]}')
 
 
 
@@ -96,7 +99,7 @@ def osem_reconstruction(input, outputfilename,like, data_folder, geom,attenuatio
 
     osem.SetBetaRegularization(beta)
 
-    if (projector_type is None or projector_type=='Zeng'):
+    if (projector_type=='Zeng'):
         osem.SetInput(2, attenuation_map)
 
         FP = osem.ForwardProjectionType_FP_ZENG
@@ -108,8 +111,6 @@ def osem_reconstruction(input, outputfilename,like, data_folder, geom,attenuatio
         else:
             osem.SetSigmaZero(0)
             osem.SetAlpha(0)
-
-
     elif projector_type=='Joseph':
         FP = osem.ForwardProjectionType_FP_JOSEPH
         BP = osem.BackProjectionType_BP_JOSEPH
