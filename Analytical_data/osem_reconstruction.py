@@ -11,6 +11,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.option('--input', '-i', help = 'input projections')
 @click.option('--outputfilename', '-o')
+@click.option('--start')
 @click.option('--like')
 @click.option('--data_folder', help = 'Location of the folder containing : geom_120.xml and acf_ct_air.mhd')
 @click.option('--geom', '-g')
@@ -18,13 +19,13 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--beta', type = float, default = 0, show_default = True)
 @click.option('--pvc', is_flag = True, default = False, help = 'if --pvc, resolution correction')
 @click.option('--nprojpersubset', type = int, default = 10, show_default = True)
-@click.option('--niterations', type = int, default = 5, show_default = True)
+@click.option('-n','--niterations', type = int, default = 5, show_default = True)
 @click.option('--FB', 'projector_type', default = "Zeng")
-def osem_reconstruction_click(input, outputfilename,like, data_folder, geom,attenuationmap,beta, pvc, nprojpersubset, niterations, projector_type):
-    osem_reconstruction(input=input, outputfilename=outputfilename,like=like, data_folder=data_folder, geom=geom,attenuationmap=attenuationmap,
+def osem_reconstruction_click(input,start, outputfilename,like, data_folder, geom,attenuationmap,beta, pvc, nprojpersubset, niterations, projector_type):
+    osem_reconstruction(input=input,start=start, outputfilename=outputfilename,like=like, data_folder=data_folder, geom=geom,attenuationmap=attenuationmap,
                         beta= beta, pvc=pvc, nprojpersubset=nprojpersubset, niterations=niterations, projector_type=projector_type)
 
-def osem_reconstruction(input, outputfilename,like, data_folder, geom,attenuationmap,beta, pvc, nprojpersubset, niterations, projector_type):
+def osem_reconstruction(input,start, outputfilename,like, data_folder, geom,attenuationmap,beta, pvc, nprojpersubset, niterations, projector_type):
     print('Begining of reconstruction ...')
 
     Dimension = 3
@@ -32,13 +33,17 @@ def osem_reconstruction(input, outputfilename,like, data_folder, geom,attenuatio
     imageType = itk.Image[pixelType, Dimension]
 
 
-    print('Creating output image...')
-    like_image = itk.imread(like, pixelType)
-    output_image = rtk.ConstantImageSource[imageType].New()
-    output_image.SetSpacing(like_image.GetSpacing())
-    output_image.SetOrigin(like_image.GetOrigin())
-    output_image.SetSize(itk.size(like_image))
-    output_image.SetConstant(1)
+    print('Creating the first output image...')
+    if start:
+        output_image = itk.imread(start)
+    else:
+        like_image = itk.imread(like, pixelType)
+        constant_image = rtk.ConstantImageSource[imageType].New()
+        constant_image.SetSpacing(like_image.GetSpacing())
+        constant_image.SetOrigin(like_image.GetOrigin())
+        constant_image.SetSize(itk.size(like_image))
+        constant_image.SetConstant(1)
+        output_image = constant_image.GetOutput()
 
     print('Reading input projections...')
     projections = itk.imread(input, pixelType)
@@ -89,7 +94,7 @@ def osem_reconstruction(input, outputfilename,like, data_folder, geom,attenuatio
     print('Set OSEM parameters ...')
     OSEMType = rtk.OSEMConeBeamReconstructionFilter[imageType, imageType]
     osem = OSEMType.New()
-    osem.SetInput(0, output_image.GetOutput())
+    osem.SetInput(0, output_image)
     osem.SetInput(1, projections)
 
     osem.SetGeometry(geometry)
