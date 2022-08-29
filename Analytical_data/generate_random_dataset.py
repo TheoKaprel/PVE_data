@@ -16,7 +16,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--nb_data','-n', type = int, required = True, help = 'number of desired data = (src,projPVE,projPVfree)')
 @click.option('--size', type = int, default = 128, help = 'Size of the desired image i.e. number of voxels per dim', show_default=True)
 @click.option('--spacing', type = float, default = 4, help = 'Spacing of the desired image i.e phyisical length of a voxels (mm)', show_default=True)
-@click.option('--like', default = None, help = "Instead of specifying spacing/size, you can specify a .mhd image as a metadata model", show_default=True)
+@click.option('--like', default = None, help = "Instead of specifying spacing/size, you can specify an image as a metadata model", show_default=True)
 @click.option('--min_radius', default = 4, help = 'minimum radius of the random spheres', show_default = True)
 @click.option('--max_radius', default = 32, help = 'max radius of the random spheres', show_default = True)
 @click.option('--max_activity', default = 1, help = 'max activity in spheres', show_default = True)
@@ -127,7 +127,7 @@ def generate(nb_data, output_folder,size, spacing, like,min_radius, max_radius,m
 
         # saving of source 3D image
         if save_src:
-            source_path = os.path.join(output_folder,f'{source_ref}.mhd')
+            source_path = os.path.join(output_folder,f'{source_ref}.mha')
             itk.imwrite(src_img,source_path)
         
         if geom == None:
@@ -141,7 +141,7 @@ def generate(nb_data, output_folder,size, spacing, like,min_radius, max_radius,m
         forward_projector_PVfree.SetInput(1, src_img)
         forward_projector_PVfree.Update()
         output_forward_PVfree = forward_projector_PVfree.GetOutput()
-        output_filename_PVfree = os.path.join(output_folder,f'{source_ref}_PVfree.mhd')
+        output_filename_PVfree = os.path.join(output_folder,f'{source_ref}_PVfree.mha')
         itk.imwrite(output_forward_PVfree,output_filename_PVfree)
 
         # proj PVE
@@ -157,7 +157,7 @@ def generate(nb_data, output_folder,size, spacing, like,min_radius, max_radius,m
             output_forward_PVE_noisy.SetOrigin(output_forward_PVE.GetOrigin())
             output_forward_PVE = output_forward_PVE_noisy
 
-        output_filename_PVE = os.path.join(output_folder,f'{source_ref}_PVE.mhd')
+        output_filename_PVE = os.path.join(output_folder,f'{source_ref}_PVE.mha')
         itk.imwrite(output_forward_PVE,output_filename_PVE)
 
     tf = time.time()

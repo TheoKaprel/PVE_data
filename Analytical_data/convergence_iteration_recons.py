@@ -15,7 +15,7 @@ def get_list_of_iter_img(path_iterations):
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.option('-s', '--source',)
-@click.option('-p', 'path_iterations', help="path to reconstructed images with %d instead of iteration number. ex rec_img_120_%d.mhd")
+@click.option('-p', 'path_iterations', help="path to reconstructed images with %d instead of iteration number. ex rec_img_120_%d.mha")
 def plot_conv_iter_recons(source, path_iterations):
 
     source_array = itk.array_from_image(itk.imread(source))

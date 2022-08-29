@@ -8,13 +8,13 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings = CONTEXT_SETTINGS)
 @click.option('--size', type = int, default = 128, help = 'Size of the desired image i.e. number of voxels per dim', show_default=True)
 @click.option('--spacing', type = float, default = 4, help = 'Spacing of the desired image i.e phyisical length of a voxels (mm)', show_default=True)
-@click.option('--like', default = None, help = "Instead of specifying spacing/size, you can specify a .mhd image as a metadata model")
+@click.option('--like', default = None, help = "Instead of specifying spacing/size, you can specify an image as a metadata model")
 @click.option('--n_source', default = 1, type = int, help = "Number of spherical sources")
 @click.option('--value', type = float,multiple = True, default = [1], help = 'Activity concentration to assign to the source', show_default=True)
 @click.option('--type', type = str, default = "sphere", help = 'sphere or square')
 @click.option('--radius', type = float,multiple = True, default = [64], help = 'Radius of activity source (mm)', show_default=True)
 @click.option('--center', type = (int,int,int), multiple = True, help = 'Center of the point source (Ox,Oy,Oz) (mm)')
-@click.option('--output','-o', 'output_filename', required = True, help = "Output filename (should be .mhd)")
+@click.option('--output','-o', 'output_filename', required = True, help = "Output filename (should be .mha or .mhd)")
 def create_source_click(size,spacing, value,type, like,n_source, center, radius, output_filename):
     """
     Creates source

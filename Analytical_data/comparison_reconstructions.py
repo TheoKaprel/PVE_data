@@ -8,7 +8,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.option('--source', required = True)
 @click.option('--folder', multiple = True)
-@click.option('--input', '-i',multiple = True, required = True, help = 'Selected images will be input_%d.mhd where %d is the iteration')
+@click.option('--input', '-i',multiple = True, required = True, help = 'Selected images will be input_%d.mha where %d is the iteration')
 @click.option('-n',type = int ,multiple = True,required = True, help = 'Max number of iteration')
 @click.option('--every', type= int, multiple = True)
 @click.option('--add', type = (int,int),multiple = True, help = 'Add an iteration')
@@ -48,7 +48,7 @@ def comp_rec_images(source,folder,input, n,every,s,nproj, add):
         for itit in range(len(iteration_array_k)):
             it = iteration_array_k[itit]
             equivalent_iteration_array_k[itit] = it*s_k
-            img_filename = os.path.join(folder_k, f'{input_k}{it}.mhd')
+            img_filename = os.path.join(folder_k, f'{input_k}{it}.mha')
             img_array = itk.array_from_image(itk.imread(img_filename))
             RMSE_array_k[itit] = np.sqrt(np.sum( (img_array - source_array)**2 )) / norm
             ax[1].plot(img_array[63,63,:], label = it)

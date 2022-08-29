@@ -10,7 +10,7 @@ from forwardprojection import alphapve_default,sigma0pve_default
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.option('--input', '-i', help = 'input projections')
-@click.option('--outputfilename', '-o')
+@click.option('--outputfilename', '-o', help = 'Output filename of desired type (mhd/mha)')
 @click.option('--start')
 @click.option('--like')
 @click.option('--data_folder', help = 'Location of the folder containing : geom_120.xml and acf_ct_air.mhd')
