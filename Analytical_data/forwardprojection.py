@@ -15,8 +15,8 @@ import itk
 import numpy as np
 from itk import RTK as rtk
 
-sigma0pve_default = 0.9008418065898374
-alphapve_default = 0.025745123547513887
+from parameters import sigma0pve_default, alphapve_default
+
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings = CONTEXT_SETTINGS)
@@ -103,7 +103,7 @@ def forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj,pv
 
         output_forward_PVfree = forward_projector.GetOutput()
 
-        output_filename_PVfree = os.path.join(output_folder,f'{output_ref}_PVfree.mhd')
+        output_filename_PVfree = os.path.join(output_folder,f'{output_ref}_PVfree.mha')
         itk.imwrite(output_forward_PVfree,output_filename_PVfree)
 
     if pve:
@@ -121,7 +121,7 @@ def forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj,pv
             output_forward_PVE_noisy.SetOrigin(output_forward_PVE.GetOrigin())
             output_forward_PVE = output_forward_PVE_noisy
 
-        output_filename_PVE = os.path.join(output_folder,f'{output_ref}_PVE.mhd')
+        output_filename_PVE = os.path.join(output_folder,f'{output_ref}_PVE.mha')
         itk.imwrite(output_forward_PVE,output_filename_PVE)
 
 

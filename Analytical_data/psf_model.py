@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import cm
+
 
 
 
@@ -21,7 +21,11 @@ print(f'FWHM = {FWHM} mm')
 dX = 546
 dY = 406
 
+sigma0 = d / (2*np.sqrt(2*np.log(2)))
+alpha = sigma0 / leff
 
+print(f'sigma0 : {sigma0}')
+print(f'alpha : {alpha}')
 
 lX = np.arange(-dX/2, dX/2, 4)
 lY = np.arange(-dY/2, dY/2, 4)

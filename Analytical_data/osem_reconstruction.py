@@ -85,11 +85,15 @@ def osem_reconstruction(input,start, outputfilename,like, data_folder, geom,atte
         attmap_filename = os.path.join(data_folder, f'acf_ct_air.mhd')
     elif (attenuationmap and not (data_folder)):
         attmap_filename = attenuationmap
+    elif projector_type == 'Joseph':
+        attmap_filename = None
+        print('no att map but ok')
     else:
         print('Error in attenuationmap arguments')
         exit(0)
 
-    attenuation_map = itk.imread(attmap_filename, pixelType)
+    if attmap_filename:
+        attenuation_map = itk.imread(attmap_filename, pixelType)
 
     print('Set OSEM parameters ...')
     OSEMType = rtk.OSEMConeBeamReconstructionFilter[imageType, imageType]

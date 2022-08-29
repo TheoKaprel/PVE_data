@@ -3,7 +3,6 @@ import numpy as np
 import itk
 import glob
 import click
-import re
 
 def get_list_of_iter_img(path_iterations):
     id_d = path_iterations.find("%d")

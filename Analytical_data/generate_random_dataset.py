@@ -4,9 +4,10 @@ import click
 import os
 import random
 import string
-import forwardprojection
 from itk import RTK as rtk
 import time
+
+from parameters import sigma0pve_default, alphapve_default
 
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -25,8 +26,8 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--geom', '-g', default = None, help = 'geometry file to forward project. Default is the proj on one detector')
 @click.option('--attenuationmap', '-a',default = None, help = 'path to the attenuation map file')
 @click.option('--output_folder','-o', default = './dataset', help = " Absolute or relative path to the output folder", show_default=True)
-@click.option('--sigma0pve', default = forwardprojection.sigma0pve_default,type = float, help = 'sigma at distance 0 of the detector', show_default=True)
-@click.option('--alphapve', default = forwardprojection.alphapve_default, type = float, help = 'Slope of the PSF against the detector distance', show_default=True)
+@click.option('--sigma0pve', default = sigma0pve_default,type = float, help = 'sigma at distance 0 of the detector', show_default=True)
+@click.option('--alphapve', default = alphapve_default, type = float, help = 'Slope of the PSF against the detector distance', show_default=True)
 @click.option('--save_src', is_flag = True, default = False, help = "if you want to also save the source that will be forward projected")
 @click.option('--noise', is_flag = True, default = False, help = "Add Poisson noise ONLY to ProjPVE")
 def generate(nb_data, output_folder,size, spacing, like,min_radius, max_radius,max_activity, nspheres,background,ellipse, geom,attenuationmap, sigma0pve, alphapve, save_src, noise):
