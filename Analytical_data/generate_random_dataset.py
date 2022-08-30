@@ -31,6 +31,25 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--save_src', is_flag = True, default = False, help = "if you want to also save the source that will be forward projected")
 @click.option('--noise', is_flag = True, default = False, help = "Add Poisson noise ONLY to ProjPVE")
 def generate(nb_data, output_folder,size, spacing, like,min_radius, max_radius,max_activity, nspheres,background,ellipse, geom,attenuationmap, sigma0pve, alphapve, save_src, noise):
+    print(f'nb_data: {nb_data}')
+    print(f'output_folder: {output_folder}')
+    print(f'size: {size}')
+    print(f'spacing: {spacing}')
+    print(f'like: {like}')
+    print(f'min_radius: {min_radius}')
+    print(f'max_radius: {max_radius}')
+    print(f'max_activity: {max_activity}')
+    print(f'nspheres: {nspheres}')
+    print(f'background: {background}')
+    print(f'ellipse: {ellipse}')
+    print(f'geom: {geom}')
+    print(f'attenuationmap: {attenuationmap}')
+    print(f'sigma0pve: {sigma0pve}')
+    print(f'alphapve: {alphapve}')
+    print(f'save_src: {save_src}')
+    print(f'noise: {noise}')
+
+
     t0 = time.time()
     # get output image parameters
     if like:
