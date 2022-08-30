@@ -21,7 +21,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--max_radius', default = 32, help = 'max radius of the random spheres', show_default = True)
 @click.option('--max_activity', default = 1, help = 'max activity in spheres', show_default = True)
 @click.option('--nspheres', default = 1, help = 'max number of spheres to generate on each source', show_default= True)
-@click.option('--background', default = None, help = 'If you want background activity specify the activity:background ratio. For example --background 10 for 1/10 background activity.')
+@click.option('--background', default = None, help = 'If you want background activity specify the maximal activity:background ratio. For example --background 10 for a maximum 1/10 background activity.')
 @click.option('--ellipse', is_flag = True, default= False, help = "if --ellipse, activity spheres are in fact ellipses")
 @click.option('--geom', '-g', default = None, help = 'geometry file to forward project. Default is the proj on one detector')
 @click.option('--attenuationmap', '-a',default = None, help = 'path to the attenuation map file')
@@ -112,9 +112,11 @@ def generate(nb_data, output_folder,size, spacing, like,min_radius, max_radius,m
         src_array = np.zeros_like(X)
 
         if background:
-            bg_center = np.random.randint(-20,20,3)
-            bg_radius = np.random.randint(180, 217)
-            src_array += (1/float(background)) * ((((X - bg_center[0]) / bg_radius) ** 2 + ((Y - bg_center[1]) / bg_radius) ** 2 + (
+            bg_center = np.random.randint(-50,50,3)
+            bg_radius = np.random.randint(100, 217)
+            bg_level = np.random.rand()*1/float(background)
+
+            src_array += (bg_level) * ((((X - bg_center[0]) / bg_radius) ** 2 + ((Y - bg_center[1]) / bg_radius) ** 2 + (
                         (Z - bg_center[2]) / bg_radius) ** 2) < 1).astype(float)
 
 
