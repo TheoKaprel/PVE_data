@@ -7,5 +7,6 @@
 **.txt
 **.db
 **.pth
+**.pdf
 !/Analytical_data/data/acf_ct_air.mhd
 !/Analytical_data/data/acf_ct_air.raw

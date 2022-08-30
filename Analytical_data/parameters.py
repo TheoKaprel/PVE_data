@@ -25,3 +25,6 @@ b = 380
 
 sigma0pve_default = d / (2*np.sqrt(2*np.log(2)))
 alphapve_default = d / (2*np.sqrt(2*np.log(2))) / leff
+
+
+FWHM_b = d*(1 + b / leff)
