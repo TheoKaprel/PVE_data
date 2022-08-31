@@ -2,61 +2,76 @@ import os
 import click
 from pathlib import Path
 from box import Box
-import gam_gate as gam
-import contrib.spect_ge_nm670 as gam_spect
+import opengate as gate
+import opengate.contrib.spect_ge_nm670 as gate_spect
 
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
+@click.option('--ct', help = "path to the ct")
+@click.option('--actmap', help = "path to the activity map")
 @click.option('--activity', '-a', 'upactivity', type = int, default = 1)
 @click.option('--rot', is_flag = True, default = False)
 @click.option('--nproj', '-n', type = int, default = 60)
+@click.option('--mt', type = int, default = 1, help = 'Multi Thread')
 @click.option('--visu', is_flag = True, default = False)
 @click.option('--debug', 'updebug', is_flag = True, default = False)
 @click.option('--output_folder', '-o')
-def sim_full_spect(upactivity,rot, nproj, visu, updebug, output_folder):
+def sim_full_spect(ct, actmap, upactivity,rot, nproj,mt, visu, updebug, output_folder):
     paths = Box()
     paths.pwd = Path(os.getcwd())
     paths.data = paths.pwd / 'data'
 
     if output_folder:
-        paths.output = paths.pwd / 'outputs' / output_folder
+        paths.output = paths.pwd / output_folder
     else:
         paths.output = paths.pwd / 'ouputs'
 
-    sim = gam.Simulation()
+    sim = gate.Simulation()
 
     # main options
     ui = sim.user_info
     ui.g4_verbose = False
     ui.visu = visu
     ui.visu_versbose = True
-    ui.number_of_threads = 1
+    ui.number_of_threads = mt
     ui.check_volumes_overlap = False
+
+    sim.add_material_database(paths.data / "GateMaterials.db")
+
 
     # world size
     world = sim.world
     world.size = [2 * m, 2 * m, 2 * m]
     world.material = 'G4_AIR'
 
-    spect = gam_spect.add_ge_nm67_spect_head(sim, 'spect', collimator=True, debug=updebug)
+    spect = gate_spect.add_ge_nm67_spect_head(sim, name='spect', collimator_type="lehr", debug=updebug)
     sdd = 38 * cm
     psd = 6.11 * cm
     pos = [0, 0, -(sdd + psd)]
-    spect.translation, spect.rotation = gam.get_transform_orbiting(pos, 'y', 0)
+    spect.translation, spect.rotation = gate.get_transform_orbiting(pos, 'y', 0)
 
     make_physics_list(sim)
 
+
+    patient_ct = sim.add_volume("Image", "patient_ct")
+    patient_ct.image = ct
+    patient_ct.mother = world.name
+    f1 = str(paths.data / "Schneider2000MaterialsTable.txt")
+    f2 = str(paths.data / "Schneider2000DensitiesTable.txt")
+    tol = 0.05 * gcm3
+    patient_ct.voxel_materials, materials = gate.HounsfieldUnit_to_material(tol, f1, f2)
+    print(f"tol = {tol} g/cm3")
+    print(f"mat : {len(patient_ct.voxel_materials)} materials")
+
     activity = upactivity * Bq
     source = sim.add_source('Voxels', 'source')
-    source.mother = world.name
+    source.mother = "patient_ct"
+    source.image = actmap
     source.particle = 'gamma'
     source.activity = activity / ui.number_of_threads
-    source.image = paths.data / 'my_iec_test.mhd'
     source.direction.type = 'iso'
     source.energy.mono = 140.5 * keV
-    source.direction.acceptance_angle.volumes = ['spect']
-    source.direction.acceptance_angle.intersection_flag = True
 
 
     # add stat actor
@@ -107,10 +122,10 @@ def sim_full_spect(upactivity,rot, nproj, visu, updebug, output_folder):
         motion.mother = spect.name
         sim.run_timing_intervals = []
         arc = 360
-        motion.translations, motion.rotations = gam.volume_orbiting_transform('y', 0, arc, nproj, spect.translation, spect.rotation)
+        motion.translations, motion.rotations = gate.volume_orbiting_transform('y', 0, arc, nproj, spect.translation, spect.rotation)
         motion.priority = 5
 
-        sim.run_timing_intervals = gam.range_timing(0, 1 * sec, nproj)
+        sim.run_timing_intervals = gate.range_timing(0, 1 * sec, nproj)
         print(f'Run intervals: {sim.run_timing_intervals}')
 
     sim.initialize()
@@ -137,13 +152,13 @@ def make_physics_list(sim):
 
 
 # units
-m = gam.g4_units('m')
-cm = gam.g4_units('cm')
-keV = gam.g4_units('keV')
-mm = gam.g4_units('mm')
-Bq = gam.g4_units('Bq')
-sec = gam.g4_units('second')
-
+m = gate.g4_units('m')
+cm = gate.g4_units('cm')
+keV = gate.g4_units('keV')
+mm = gate.g4_units('mm')
+Bq = gate.g4_units('Bq')
+sec = gate.g4_units('second')
+gcm3 = gate.g4_units("g/cm3")
 
 if __name__=='__main__':
     sim_full_spect()
