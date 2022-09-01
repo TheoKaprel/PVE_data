@@ -14,8 +14,11 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 @click.command(context_settings = CONTEXT_SETTINGS)
 @click.option('--nb_data','-n', type = int, required = True, help = 'number of desired data = (src,projPVE,projPVfree)')
-@click.option('--size', type = int, default = 128, help = 'Size of the desired image i.e. number of voxels per dim', show_default=True)
-@click.option('--spacing', type = float, default = 4, help = 'Spacing of the desired image i.e phyisical length of a voxels (mm)', show_default=True)
+@click.option('--size_volume', type = int, default = 128, help = 'Size of the desired image i.e. number of voxels per dim', show_default=True)
+@click.option('--spacing_volume', type = float, default = 4, help = 'Spacing of the desired image i.e phyisical length of a voxels (mm)', show_default=True)
+@click.option('--size_proj', type = int, default = 128, help = 'Size of the desired projections', show_default=True)
+@click.option('--spacing_proj', type = float, default = 4, help = 'Spacing of the desired projection', show_default=True)
+@click.option('--type', default = 'mha', show_default = True, help = "Create mha or mhd image")
 @click.option('--like', default = None, help = "Instead of specifying spacing/size, you can specify an image as a metadata model", show_default=True)
 @click.option('--min_radius', default = 4, help = 'minimum radius of the random spheres', show_default = True)
 @click.option('--max_radius', default = 32, help = 'max radius of the random spheres', show_default = True)
@@ -30,12 +33,15 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--alphapve', default = alphapve_default, type = float, help = 'Slope of the PSF against the detector distance', show_default=True)
 @click.option('--save_src', is_flag = True, default = False, help = "if you want to also save the source that will be forward projected")
 @click.option('--noise', is_flag = True, default = False, help = "Add Poisson noise ONLY to ProjPVE")
-def generate(nb_data, output_folder,size, spacing, like,min_radius, max_radius,max_activity, nspheres,background,ellipse, geom,attenuationmap, sigma0pve, alphapve, save_src, noise):
+def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacing_proj, type,  like,min_radius, max_radius,max_activity, nspheres,background,ellipse, geom,attenuationmap, sigma0pve, alphapve, save_src, noise):
     print(f'nb_data: {nb_data}')
     print(f'output_folder: {output_folder}')
-    print(f'size: {size}')
-    print(f'spacing: {spacing}')
+    print(f'size_volume: {size_volume}')
+    print(f'spacing_volume: {spacing_volume}')
+    print(f'size_proj: {size_proj}')
+    print(f'spacing_proj: {spacing_proj}')
     print(f'like: {like}')
+    print(f'type: {type}')
     print(f'min_radius: {min_radius}')
     print(f'max_radius: {max_radius}')
     print(f'max_activity: {max_activity}')
@@ -58,9 +64,9 @@ def generate(nb_data, output_folder,size, spacing, like,min_radius, max_radius,m
         vSize = np.array(itk.size(im_like))
         vOffset = np.array(im_like.GetOrigin())
     else:
-        vSize = np.array([size,size,size])
-        vSpacing = np.array([spacing,spacing,spacing])
-        offset = (-spacing*size + spacing)/2
+        vSize = np.array([size_volume,size_volume,size_volume])
+        vSpacing = np.array([spacing_volume,spacing_volume,spacing_volume])
+        offset = (-spacing_volume*size_volume + spacing_volume)/2
         vOffset = np.array([offset,offset,offset])
 
     # matrix settings
@@ -81,16 +87,16 @@ def generate(nb_data, output_folder,size, spacing, like,min_radius, max_radius,m
     if not attenuationmap:
         attenuationmap = "./data/acf_ct_air.mhd"
     attenuation_image = itk.imread(attenuationmap, itk.F)
-    size,spacing = 128,4.41806
+    # size,spacing = 128,4.41806
     pixelType = itk.F
     imageType = itk.Image[pixelType, 3]
-    output_spacing = [spacing,spacing, 1]
-    offset = (-spacing * size + spacing) / 2
+    output_spacing = [spacing_proj,spacing_proj, 1]
+    offset = (-spacing_proj * size_proj + spacing_proj) / 2
     output_offset = [offset, offset, (-nproj+1)/2]
     output_image = rtk.ConstantImageSource[imageType].New()
     output_image.SetSpacing(output_spacing)
     output_image.SetOrigin(output_offset)
-    output_image.SetSize([size, size, nproj])
+    output_image.SetSize([size_proj, size_proj, nproj])
     output_image.SetConstant(0.)
 
     forward_projector_PVfree = rtk.ZengForwardProjectionImageFilter.New()
@@ -148,7 +154,7 @@ def generate(nb_data, output_folder,size, spacing, like,min_radius, max_radius,m
 
         # saving of source 3D image
         if save_src:
-            source_path = os.path.join(output_folder,f'{source_ref}.mha')
+            source_path = os.path.join(output_folder,f'{source_ref}.{type}')
             itk.imwrite(src_img,source_path)
         
         if geom == None:
@@ -162,7 +168,7 @@ def generate(nb_data, output_folder,size, spacing, like,min_radius, max_radius,m
         forward_projector_PVfree.SetInput(1, src_img)
         forward_projector_PVfree.Update()
         output_forward_PVfree = forward_projector_PVfree.GetOutput()
-        output_filename_PVfree = os.path.join(output_folder,f'{source_ref}_PVfree.mha')
+        output_filename_PVfree = os.path.join(output_folder,f'{source_ref}_PVfree.{type}')
         itk.imwrite(output_forward_PVfree,output_filename_PVfree)
 
         # proj PVE
@@ -178,7 +184,7 @@ def generate(nb_data, output_folder,size, spacing, like,min_radius, max_radius,m
             output_forward_PVE_noisy.SetOrigin(output_forward_PVE.GetOrigin())
             output_forward_PVE = output_forward_PVE_noisy
 
-        output_filename_PVE = os.path.join(output_folder,f'{source_ref}_PVE.mha')
+        output_filename_PVE = os.path.join(output_folder,f'{source_ref}_PVE.{type}')
         itk.imwrite(output_forward_PVE,output_filename_PVE)
 
     tf = time.time()
