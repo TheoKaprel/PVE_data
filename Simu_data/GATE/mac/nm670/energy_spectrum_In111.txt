@@ -1,0 +1,9 @@
+# Gamma spectrum for Indium 111
+# (first line is 1 0 to say it is a discrete spectrum)
+# Two main lines : 171 KeV and 245 KeV
+# http://www.nucleide.org/DDEP_WG/Nuclides/In-111_tables.pdf
+# sum : 0.000015+0.9061+0.9412 = 1.847315
+1 0
+0.15081 0.000015
+0.17128 0.9061
+0.24535 0.9412

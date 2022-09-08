@@ -1,0 +1,21 @@
+EXperience pour voir l'efficacité de notre Pix2pix
+
+Sources de tailles entre 4 et 64 mm de rayon, forwardprojetées comme d'hab, PVE/PVfree, puis on applique notre réseau
+
+Rq: Par prévention je met un background de 1/100, vu que ce réseau a été entrainé uniquement sur des données avec Bg (entre 0 et 1/10)
+
+On reconstruit comme d'hab et on compare l'évolution des RC/Size suivant le type de reconstruction
+
+
+
+
+Pour %d dans [4, 8, 16, 32, 64]
+python create_source.py --n_source 1 --value 1 --type sphere --center 0 0 0 --background 100 --radius 4  -o datasets/exp_RCvsSize_Pix2Pix/source_4.mha
+
+
+python forwardprojection.py -i datasets/exp_RCvsSize_Pix2Pix/source_4.mha -o datasets/exp_RCvsSize_Pix2Pix/ -g data/geom_120.xml -a data/acf_ct_air.mhd --pve --pvfree --type mha --output_ref proj_source_4
+python forwardprojection.py -i datasets/exp_RCvsSize_Pix2Pix/source_8.mha -o datasets/exp_RCvsSize_Pix2Pix/ -g data/geom_120.xml -a data/acf_ct_air.mhd --pve --pvfree --type mha --output_ref proj_source_8;
+python forwardprojection.py -i datasets/exp_RCvsSize_Pix2Pix/source_16.mha -o datasets/exp_RCvsSize_Pix2Pix/ -g data/geom_120.xml -a data/acf_ct_air.mhd --pve --pvfree --type mha --output_ref proj_source_16;
+python forwardprojection.py -i datasets/exp_RCvsSize_Pix2Pix/source_32.mha -o datasets/exp_RCvsSize_Pix2Pix/ -g data/geom_120.xml -a data/acf_ct_air.mhd --pve --pvfree --type mha --output_ref proj_source_32;
+python forwardprojection.py -i datasets/exp_RCvsSize_Pix2Pix/source_46.mha -o datasets/exp_RCvsSize_Pix2Pix/ -g data/geom_120.xml -a data/acf_ct_air.mhd --pve --pvfree --type mha --output_ref proj_source_64;
+

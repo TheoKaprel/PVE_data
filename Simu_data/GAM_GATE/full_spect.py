@@ -54,19 +54,19 @@ def sim_full_spect(ct, actmap, upactivity,rot, nproj,mt, visu, updebug, output_f
     make_physics_list(sim)
 
 
-    patient_ct = sim.add_volume("Image", "patient_ct")
-    patient_ct.image = ct
-    patient_ct.mother = world.name
-    f1 = str(paths.data / "Schneider2000MaterialsTable.txt")
-    f2 = str(paths.data / "Schneider2000DensitiesTable.txt")
-    tol = 0.05 * gcm3
-    patient_ct.voxel_materials, materials = gate.HounsfieldUnit_to_material(tol, f1, f2)
-    print(f"tol = {tol} g/cm3")
-    print(f"mat : {len(patient_ct.voxel_materials)} materials")
+    # patient_ct = sim.add_volume("Image", "patient_ct")
+    # patient_ct.image = ct
+    # patient_ct.mother = world.name
+    # f1 = str(paths.data / "Schneider2000MaterialsTable.txt")
+    # f2 = str(paths.data / "Schneider2000DensitiesTable.txt")
+    # tol = 0.05 * gcm3
+    # patient_ct.voxel_materials, materials = gate.HounsfieldUnit_to_material(tol, f1, f2)
+    # print(f"tol = {tol} g/cm3")
+    # print(f"mat : {len(patient_ct.voxel_materials)} materials")
 
     activity = upactivity * Bq
     source = sim.add_source('Voxels', 'source')
-    source.mother = "patient_ct"
+    source.mother = world.name
     source.image = actmap
     source.particle = 'gamma'
     source.activity = activity / ui.number_of_threads

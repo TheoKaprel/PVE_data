@@ -51,8 +51,8 @@ def illustration(sources_paths):
 
 
     ax_img[0,0].set_ylabel('Source', fontsize=18)
-    ax_img[1,0].set_ylabel('Projection', fontsize=18)
-    ax_img[2,0].set_ylabel('Profile', fontsize=18)
+    ax_img[1,0].set_ylabel('Slice of \n reconstructed images', fontsize=14)
+    ax_img[2,0].set_ylabel('Profile of \n reconstructed images', fontsize=14)
 
 
 

@@ -1,0 +1,18 @@
+# NumberOfRun    = 1
+# NumberOfEvents = 1001201
+# NumberOfTracks = 1045128
+# NumberOfSteps  = 139866820
+# NumberOfGeometricalSteps  = ?
+# NumberOfPhysicalSteps     = ?
+# ElapsedTime           = 132.616852
+# ElapsedTimeWoInit     = 120.61537
+# StartDate             = 0 ps 
+# EndDate               = 1 s  
+# PPS (Primary per sec)      = 8301
+# TPS (Track per sec)        = 8665
+# SPS (Step per sec)         = 1159610
+# Threads                    = 1
+# Date                       = 2022-08-31 15:39:28.704115
+# Track types:
+# e- = 28740
+# gamma = 1016388

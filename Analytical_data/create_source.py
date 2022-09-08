@@ -14,8 +14,9 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--type', type = str, default = "sphere", help = 'sphere or square')
 @click.option('--radius', type = float,multiple = True, default = [64], help = 'Radius of activity source (mm)', show_default=True)
 @click.option('--center', type = (int,int,int), multiple = True, help = 'Center of the point source (Ox,Oy,Oz) (mm)')
+@click.option('--background', default = None, help = 'If you want background activity specify the activity:background ratio. For example --background 10 for a 1/10 background ratio.')
 @click.option('--output','-o', 'output_filename', required = True, help = "Output filename (should be .mha or .mhd)")
-def create_source_click(size,spacing, value,type, like,n_source, center, radius, output_filename):
+def create_source_click(size,spacing, value,type, like,n_source, center, radius,background, output_filename):
     """
     Creates source
     Usage :
@@ -27,10 +28,10 @@ def create_source_click(size,spacing, value,type, like,n_source, center, radius,
 
     """
     create_source(size=size, spacing=spacing, like=like,n_source = n_source, value=value, type = type,
-                  center=center, radius=radius, output_filename=output_filename)
+                  center=center, radius=radius,background = background, output_filename=output_filename)
 
 
-def create_source(size, spacing, like,n_source, value,type, center, radius, output_filename):
+def create_source(size, spacing, like,n_source, value,type, center, radius, background, output_filename):
     if (n_source!= len(value) or n_source!=len(center) or n_source!=len(radius)):
         print('ERROR : problem in the number of source/parameters per sources...')
         exit(0)
@@ -53,6 +54,15 @@ def create_source(size, spacing, like,n_source, value,type, center, radius, outp
 
     X, Y, Z = np.meshgrid(lspaceX,lspaceY,lspaceZ)
     src_array = np.zeros_like(X)
+
+    if background:
+        bg_center = [0,0,0]
+        bg_radius = 200
+        bg_level =  1 / float(background)
+
+        src_array += (bg_level) * ((((X - bg_center[0]) / bg_radius) ** 2 + ((Y - bg_center[1]) / bg_radius) ** 2 + (
+                (Z - bg_center[2]) / bg_radius) ** 2) < 1).astype(float)
+
 
     for s in range(n_source):
         center_s = [center[s][1], center[s][2], center[s][0]]
