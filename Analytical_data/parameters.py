@@ -28,3 +28,6 @@ alphapve_default = d / (2*np.sqrt(2*np.log(2))) / leff
 
 
 FWHM_b = d*(1 + b / leff)
+
+
+print(FWHM_b)
