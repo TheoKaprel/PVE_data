@@ -6,6 +6,7 @@ import random
 import string
 from itk import RTK as rtk
 import time
+import json
 
 from parameters import sigma0pve_default, alphapve_default
 
@@ -17,7 +18,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--size_volume', type = int, default = 128, help = 'Size of the desired image i.e. number of voxels per dim', show_default=True)
 @click.option('--spacing_volume', type = float, default = 4, help = 'Spacing of the desired image i.e phyisical length of a voxels (mm)', show_default=True)
 @click.option('--size_proj', type = int, default = 128, help = 'Size of the desired projections', show_default=True)
-@click.option('--spacing_proj', type = float, default = 4, help = 'Spacing of the desired projection', show_default=True)
+@click.option('--spacing_proj', type = float, default = 4.41806, help = 'Spacing of the desired projection', show_default=True)
 @click.option('--type', default = 'mha', show_default = True, help = "Create mha or mhd image")
 @click.option('--like', default = None, help = "Instead of specifying spacing/size, you can specify an image as a metadata model", show_default=True)
 @click.option('--min_radius', default = 4, help = 'minimum radius of the random spheres', show_default = True)
@@ -34,6 +35,9 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--save_src', is_flag = True, default = False, help = "if you want to also save the source that will be forward projected")
 @click.option('--noise', is_flag = True, default = False, help = "Add Poisson noise ONLY to ProjPVE")
 def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacing_proj, type,  like,min_radius, max_radius,max_activity, nspheres,background,ellipse, geom,attenuationmap, sigma0pve, alphapve, save_src, noise):
+    dataset_infos = {}
+    current_date = time.strftime("%d_%m_%Y_%Hh_%Mm_%Ss", time.localtime())
+    print(f'date: {current_date}')
     print(f'nb_data: {nb_data}')
     print(f'output_folder: {output_folder}')
     print(f'size_volume: {size_volume}')
@@ -54,6 +58,28 @@ def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacin
     print(f'alphapve: {alphapve}')
     print(f'save_src: {save_src}')
     print(f'noise: {noise}')
+
+    dataset_infos['date'] = current_date
+    dataset_infos['nb_data']= nb_data
+    dataset_infos['output_folder']=output_folder
+    dataset_infos['size_volume']=size_volume
+    dataset_infos['spacing_volume']=spacing_volume
+    dataset_infos['size_proj']=size_proj
+    dataset_infos['spacing_proj']=spacing_proj
+    dataset_infos['like']=like
+    dataset_infos['type']=type
+    dataset_infos['min_radius'] = min_radius
+    dataset_infos['max_radius'] = max_radius
+    dataset_infos['max_activity'] = max_activity
+    dataset_infos['nspheres'] = nspheres
+    dataset_infos['background'] = background
+    dataset_infos['ellipse'] = ellipse
+    dataset_infos['geom'] = geom
+    dataset_infos['attenuationmap'] = attenuationmap
+    dataset_infos['sigma0pve'] = sigma0pve
+    dataset_infos['alphapve'] = alphapve
+    dataset_infos['save_src'] = save_src
+    dataset_infos['noise'] = noise
 
 
     t0 = time.time()
@@ -175,6 +201,9 @@ def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacin
         forward_projector_PVE.SetInput(1, src_img)
         forward_projector_PVE.Update()
         output_forward_PVE = forward_projector_PVE.GetOutput()
+        output_filename_PVE = os.path.join(output_folder,f'{source_ref}_PVE.{type}')
+        itk.imwrite(output_forward_PVE,output_filename_PVE)
+
 
         if noise:
             output_forward_PVE_array = itk.array_from_image(output_forward_PVE)
@@ -182,15 +211,21 @@ def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacin
             output_forward_PVE_noisy = itk.image_from_array(noisy_projection_array)
             output_forward_PVE_noisy.SetSpacing(output_forward_PVE.GetSpacing())
             output_forward_PVE_noisy.SetOrigin(output_forward_PVE.GetOrigin())
-            output_forward_PVE = output_forward_PVE_noisy
+            output_filename_PVE_noisy = os.path.join(output_folder, f'{source_ref}_PVE_noisy.{type}')
+            itk.imwrite(output_forward_PVE_noisy, output_filename_PVE_noisy)
 
-        output_filename_PVE = os.path.join(output_folder,f'{source_ref}_PVE.{type}')
-        itk.imwrite(output_forward_PVE,output_filename_PVE)
 
     tf = time.time()
     elapsed_time = round(tf - t0)
     elapsed_time_min = round(elapsed_time/60)
+    dataset_infos['elapsed_time_s'] = elapsed_time
     print(f'Total time elapsed for data generation : {elapsed_time_min} min    (i.e. {elapsed_time} s)')
+
+    formatted_dataset_infos = json.dumps(dataset_infos, indent=4)
+    output_info_json = os.path.join(output_folder, 'dataset_infos.json')
+    jsonfile = open(output_info_json, "w")
+    jsonfile.write(formatted_dataset_infos)
+    jsonfile.close()
 
 
 if __name__ == '__main__':
