@@ -2,7 +2,7 @@ import uproot
 import numpy as np
 
 
-with uproot.open('outputs/arf/arf_training_dataset.root') as f:
+with uproot.open('outputs/arf_10_6.root') as f:
     k = f.keys()
     print(k)
 
@@ -17,7 +17,7 @@ with uproot.open('outputs/arf/arf_training_dataset.root') as f:
 
     n = arf.num_entries
 
-    print(n)
+    print(f'Total number of particles : {n}')
 
     a = arf.arrays(library="numpy")
 
@@ -25,7 +25,9 @@ with uproot.open('outputs/arf/arf_training_dataset.root') as f:
     # print(d)
 
     # print(d[d[:,3]>0])
-    print(d[d[:,3]>0].shape[0])
+    nEW = d[d[:,3]>0].shape[0]
+    print(f'Number of particles in one of the Energy Windows : {nEW}')
+
     # print(np.mean(d[d[:,3]>0][:,2]))
 
     # print((d[d[:,3]==1][:,0]<=0.126).all() and (d[d[:,3]==1][:,0]>=0.114).all())

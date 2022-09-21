@@ -10,13 +10,12 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.option('-n','number_of_particles', help = 'number of particles')
 @click.option('--visu', is_flag = True, default = False)
-@click.option('--debug', 'updebug', is_flag = True, default = False)
-@click.option('--output_folder', '-o', required = True)
-def generate_garf_training_dataset(number_of_particles, visu, updebug, output_folder):
+@click.option('--mt',type=int, default = 1)
+@click.option('--output', '-o')
+def generate_garf_training_dataset(number_of_particles, visu,mt, output):
     paths = Box()
     paths.pwd = Path(os.getcwd())
     paths.data = paths.pwd / 'data'
-    paths.output = paths.pwd / output_folder
 
 
     sim = gate.Simulation()
@@ -24,16 +23,16 @@ def generate_garf_training_dataset(number_of_particles, visu, updebug, output_fo
     ui.g4_verbose = False
     ui.visu = visu
     ui.visu_versbose = True
-    ui.number_of_threads = 1
+    ui.number_of_threads = mt
     ui.check_volumes_overlap = False
-    sim.add_material_database(paths.data / "GateMaterials.db")
+    # sim.add_material_database(paths.data / "GateMaterials.db")
 
     # world size
     world = sim.world
     world.size = [1 * m, 1 * m, 0.7 * m]
     world.material = 'G4_AIR'
 
-    spect = gate_spect.add_ge_nm67_spect_head(sim, name='spect', collimator_type="lehr", debug=updebug)
+    spect = gate_spect.add_ge_nm67_spect_head(sim, name='spect', collimator_type="lehr", debug=visu)
     sdd = 10 * cm
     psd = 6.11 * cm
     pos = [0, 0, -(sdd + psd)]
@@ -74,11 +73,16 @@ def generate_garf_training_dataset(number_of_particles, visu, updebug, output_fo
 
 
     # arf actor for building the training dataset
-    arf = sim.add_actor("ARFTrainingDatasetActor", "ARF_training")
-    arf.mother = detPlane.name
-    arf.output = paths.output / "arf_training_dataset.root"
-    arf.energy_windows_actor = cc.name
-    arf.russian_roulette = 100
+    if visu==False:
+        arf = sim.add_actor("ARFTrainingDatasetActor", "ARF_training")
+        arf.mother = detPlane.name
+
+        if output:
+            arf.output = Path(output)
+        else:
+            arf.output = paths.pwd / 'outputs' / "arf_training_dataset.root"
+        arf.energy_windows_actor = cc.name
+        arf.russian_roulette = 100
 
     # add stat actor
     stats = sim.add_actor('SimulationStatisticsActor', 'Stats')

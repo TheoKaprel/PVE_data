@@ -56,7 +56,7 @@ def generate_garf_test_dataset(number_of_particles,src_ref, pth, visu):
     activity = int(float(number_of_particles)) * Bq
     source = sim.add_source('Voxels', 'source')
     source.mother = world.name
-    source.image = f'{src_ref}.mhd'
+    source.image = Path(f'{src_ref}.mhd')
     source.particle = 'gamma'
     source.activity = activity / ui.number_of_threads
     source.direction.type = 'iso'
@@ -66,7 +66,7 @@ def generate_garf_test_dataset(number_of_particles,src_ref, pth, visu):
     #arf actor
     arf = sim.add_actor("ARFActor", "arf")
     arf.mother = detPlane.name
-    arf.output = f'{src_ref}_garf_ew.mhd'
+    arf.output = Path(f'{src_ref}_garf_eww.mhd')
     arf.batch_size = 2e5
     arf.image_size = [128, 128]
     arf.image_spacing = [4.41806 * mm, 4.41806 * mm]
@@ -87,7 +87,7 @@ def generate_garf_test_dataset(number_of_particles,src_ref, pth, visu):
     gate.delete_run_manager_if_needed(sim)
 
 
-    image = itk.imread(arf.output)
+    image = itk.imread(f'{src_ref}_garf_ew.mhd')
     res = scatter_correction_dew(input_image=image,head=1,energy_window=3,primary=2,scatter=1,factor=1.1)
     itk.imwrite(res,f'{src_ref}_garf.mhd')
 
