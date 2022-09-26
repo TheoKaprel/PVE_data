@@ -2,7 +2,7 @@ import uproot
 import numpy as np
 
 
-with uproot.open('outputs/arf_10_6.root') as f:
+with uproot.open('outputs/arf/arf_5x10_9.root') as f:
     k = f.keys()
     print(k)
 

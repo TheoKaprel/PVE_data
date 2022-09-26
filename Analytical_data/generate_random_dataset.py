@@ -168,6 +168,8 @@ def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacin
             src_array += random_activity  * ( ( ((X-center[0]) / radius[0]) ** 2 + ((Y-center[1]) / radius[1]) ** 2 + ((Z-center[2])/ radius[2]) ** 2  ) < 1).astype(float)
 
 
+        # src_array = src_array / np.sum(src_array)
+
         src_img = itk.image_from_array(src_array.astype(np.float32))
         src_img.SetSpacing(vSpacing)
         src_img.SetOrigin(vOffset)

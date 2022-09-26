@@ -87,9 +87,9 @@ def generate_garf_test_dataset(number_of_particles,src_ref, pth, visu):
     gate.delete_run_manager_if_needed(sim)
 
 
-    image = itk.imread(f'{src_ref}_garf_ew.mhd')
-    res = scatter_correction_dew(input_image=image,head=1,energy_window=3,primary=2,scatter=1,factor=1.1)
-    itk.imwrite(res,f'{src_ref}_garf.mhd')
+    # image = itk.imread(f'{src_ref}_garf_ew.mhd')
+    # res = scatter_correction_dew(input_image=image,head=1,energy_window=3,primary=2,scatter=1,factor=1.1)
+    # itk.imwrite(res,f'{src_ref}_garf.mhd')
 
 
 

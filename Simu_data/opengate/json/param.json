@@ -15,10 +15,10 @@
     "learning_rate": 0.00005,
 
     "##########": "Max nb of epoch (iteration)",
-    "epoch_max": 50,
+    "epoch_max": 100,
 
     "##########": "Nb of epoch without progress to stop earlier",
-    "early_stopping": 100,
+    "early_stopping": 50,
 
     "##########": "Nb of samples by batch",
     "batch_size": 5000,
@@ -27,6 +27,6 @@
     "batch_per_epoch": 200,
 
     "##########": "Every <this number> epoch: store the current model (in epoch)",
-    "epoch_store_every": 100
+    "epoch_store_every": 200
 
 }
