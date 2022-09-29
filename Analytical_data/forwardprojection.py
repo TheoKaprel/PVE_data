@@ -33,16 +33,17 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--spacing', default = 4.41806, show_default = True)
 @click.option('--type', default = 'mhd', show_default = True)
 @click.option('--noise', is_flag = True, default = False, help= 'Apply poisson noise to the projection')
+@click.option('--activity', default = 100, show_default = True)
 @click.option('--output_ref', default = None, type = str, help = 'ref to append to output_filename')
-def forwardproject_click(inputsrc, output_folder,geometry_filename,attmap, nproj,pve, pvfree, sigma0pve, alphapve, size,spacing, type,noise, output_ref):
+def forwardproject_click(inputsrc, output_folder,geometry_filename,attmap, nproj,pve, pvfree, sigma0pve, alphapve, size,spacing, type,noise,activity, output_ref):
 
     forwardprojectRTK(inputsrc=inputsrc, output_folder=output_folder,geometry_filename=geometry_filename,attmap=attmap,
                       nproj=nproj,pve=pve, pvfree=pvfree,size=size,spacing=spacing, type = type,
-                      sigma0pve=sigma0pve, alphapve=alphapve, noise=noise, output_ref=output_ref)
+                      sigma0pve=sigma0pve, alphapve=alphapve, noise=noise,activity=activity, output_ref=output_ref)
 
 
 
-def forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj,pve, pvfree, size,spacing,type, sigma0pve=sigma0pve_default, alphapve=alphapve_default, noise=False, output_ref=None):
+def forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj,pve, pvfree, size,spacing,type,activity, sigma0pve=sigma0pve_default, alphapve=alphapve_default, noise=False, output_ref=None):
     # projection parameters
     offset = (-spacing*size + spacing)/2
 
@@ -67,14 +68,25 @@ def forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj,pv
         print('ERROR: give me geom xor nproj')
         exit(0)
 
-
-    # source_image= itk.imread(inputsrc, itk.F)
     pixelType = itk.F
     imageType = itk.Image[pixelType, 3]
-    readerType = itk.ImageFileReader[imageType]
-    source_image_reader = readerType.New()
-    source_image_reader.SetFileName(inputsrc)
-    source_image_reader.Update()
+    volume = 4**3 / 1000
+
+    source_image= itk.imread(inputsrc, itk.F)
+    source_array = itk.array_from_image(source_image)
+    # source_array_act = source_array / np.sum(source_array) * int(activity) * volume * 0.13
+    source_array_act = source_array
+    source_image_act = itk.image_from_array(source_array_act).astype(itk.F)
+    source_image_act.SetOrigin(source_image.GetOrigin())
+    source_image_act.SetSpacing(source_image.GetSpacing())
+
+
+    # readerType = itk.ImageFileReader[imageType]
+    # source_image_reader = readerType.New()
+    # source_image_reader.SetFileName(inputsrc)
+    # source_image_reader.Update()
+
+
 
     attenuation_image = itk.imread(attmap, itk.F)
 
@@ -92,7 +104,8 @@ def forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj,pv
 
     forward_projector = rtk.ZengForwardProjectionImageFilter.New()
     forward_projector.SetInput(0, output_image.GetOutput())
-    forward_projector.SetInput(1, source_image_reader.GetOutput())
+    # forward_projector.SetInput(1, source_image_reader.GetOutput())
+    forward_projector.SetInput(1, source_image_act)
     # forward_projector.SetInput(2, attenuation_image)
 
     forward_projector.SetGeometry(geometry)
@@ -113,6 +126,8 @@ def forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj,pv
         forward_projector.Update()
 
         output_forward_PVE = forward_projector.GetOutput()
+        output_filename_PVE = os.path.join(output_folder,f'{output_ref}_PVE.{type}')
+        itk.imwrite(output_forward_PVE,output_filename_PVE)
 
         if noise:
             output_forward_PVE_array = itk.array_from_image(output_forward_PVE)
@@ -120,11 +135,8 @@ def forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj,pv
             output_forward_PVE_noisy = itk.image_from_array(noisy_projection_array)
             output_forward_PVE_noisy.SetSpacing(output_forward_PVE.GetSpacing())
             output_forward_PVE_noisy.SetOrigin(output_forward_PVE.GetOrigin())
-            output_forward_PVE = output_forward_PVE_noisy
-
-        output_filename_PVE = os.path.join(output_folder,f'{output_ref}_PVE.{type}')
-        itk.imwrite(output_forward_PVE,output_filename_PVE)
-
+            output_filename_PVE_noisy = os.path.join(output_folder, f'{output_ref}_PVE_noisy.{type}')
+            itk.imwrite(output_forward_PVE_noisy, output_filename_PVE_noisy)
 
 
 

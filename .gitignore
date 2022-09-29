@@ -9,5 +9,7 @@
 **.db
 **.pth
 **.pdf
+
+**brouillon.py
 !/Analytical_data/data/acf_ct_air.mhd
 !/Analytical_data/data/acf_ct_air.raw

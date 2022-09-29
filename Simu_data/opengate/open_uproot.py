@@ -23,10 +23,13 @@ with uproot.open('outputs/arf/arf_5x10_9.root') as f:
 
     d = np.column_stack([a[k] for k in arf.keys()])
     # print(d)
+    print(d[34,:])
 
     # print(d[d[:,3]>0])
     nEW = d[d[:,3]>0].shape[0]
     print(f'Number of particles in one of the Energy Windows : {nEW}')
+
+
 
     # print(np.mean(d[d[:,3]>0][:,2]))
 

@@ -2,25 +2,21 @@ import os
 import click
 from pathlib import Path
 from box import Box
-import opengate as gate
-import opengate.contrib.spect_ge_nm670 as gate_spect
-from garf_training_dataset import *
-import torch
 import itk
-
-import sys
-sys.path.append("/export/home/tkaprelian/Desktop/External_repositories/listMode_SPECT")
-from scatter_correction_dew import scatter_correction_dew
+import opengate as gate
+from garf_helpers import *
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
-@click.option('-n','number_of_particles', help = 'number of particles')
-@click.option('--src_ref')
-@click.option('--pth')
+@click.option('-n','number_of_particles', help = 'number of PRIMARY particles. Ex: 4e7', required = True)
+@click.option('-s','--source', 'source_image', required = True)
+@click.option('--pth', help='Path to the nn-ARF .pth file', required = True)
+@click.option('-o', '--output', 'output_filename', help='Output projection filename', required = True)
 @click.option('--visu', is_flag = True, default = False)
-def generate_garf_test_dataset(number_of_particles,src_ref, pth, visu):
+def generate_garf_projection(number_of_particles,source_image, pth,output_filename, visu):
     paths = Box()
-    paths.pwd = Path(os.getcwd())
+    # paths.pwd = Path(os.getcwd())
+    paths.pwd = Path(os.path.dirname(__file__))
     paths.data = paths.pwd / 'data'
 
     sim = gate.Simulation()
@@ -53,10 +49,12 @@ def generate_garf_test_dataset(number_of_particles,src_ref, pth, visu):
     p.physics_list_name = "G4EmStandardPhysics_option4"
     sim.set_cut("world", "all", 1 * km)
 
-    activity = int(float(number_of_particles)) * Bq
+
+    nb_primaries=int(float(number_of_particles))
+    activity = nb_primaries * Bq
     source = sim.add_source('Voxels', 'source')
     source.mother = world.name
-    source.image = Path(f'{src_ref}.mhd')
+    source.image = Path(source_image)
     source.particle = 'gamma'
     source.activity = activity / ui.number_of_threads
     source.direction.type = 'iso'
@@ -66,7 +64,8 @@ def generate_garf_test_dataset(number_of_particles,src_ref, pth, visu):
     #arf actor
     arf = sim.add_actor("ARFActor", "arf")
     arf.mother = detPlane.name
-    arf.output = Path(f'{src_ref}_garf_eww.mhd')
+
+    arf.output = Path(output_filename)
     arf.batch_size = 2e5
     arf.image_size = [128, 128]
     arf.image_spacing = [4.41806 * mm, 4.41806 * mm]
@@ -84,31 +83,36 @@ def generate_garf_test_dataset(number_of_particles,src_ref, pth, visu):
     # start simulation
     sim.start()
 
+    arf = sim.get_actor('arf')
+    nb_detected = arf.detected_particles
+    print(f'Total Number of particles that have reached to Detector Plane : {nb_detected}')
+    print(f'Ratio detected/primaries: {nb_detected / nb_primaries}')
+
+    output_img = arf.output_image
+    output_img_arr = itk.array_view_from_image(output_img)
+    output_img_arr = output_img_arr / nb_primaries
+    output_img_scaled = itk.image_from_array(output_img_arr)
+    output_img_scaled.CopyInformation(output_img)
+    if '.mha' in output_filename:
+        output_scaled_filename = output_filename.replace('.mha', '_scaled.mha')
+    elif '.mhd' in output_filename:
+        output_scaled_filename = output_filename.replace('.mhd', '_scaled.mhd')
+    itk.imwrite(output_img_scaled, output_scaled_filename)
+
+
+
+    stats = sim.get_actor('Stats')
+    print(stats)
+    # stat_filename = output_filename.replace('.mha', '_stats.txt')
+    # stats.write(Path(stat_filename))
+
     gate.delete_run_manager_if_needed(sim)
 
 
-    # image = itk.imread(f'{src_ref}_garf_ew.mhd')
-    # res = scatter_correction_dew(input_image=image,head=1,energy_window=3,primary=2,scatter=1,factor=1.1)
-    # itk.imwrite(res,f'{src_ref}_garf.mhd')
 
 
 
 
-
-
-def make_physics_list(sim):
-    # physic list
-    p = sim.get_physics_user_info()
-    p.physics_list_name = 'G4EmStandardPhysics_option4'
-    p.enable_decay = False
-    cuts = p.production_cuts
-    cuts.world.gamma = 10 * mm
-    cuts.world.electron = 10 * mm
-    cuts.world.positron = 10 * mm
-    cuts.world.proton = 10 * mm
-    cuts.spect.gamma = 0.1 * mm
-    cuts.spect.electron = 0.01 * mm
-    cuts.spect.positron = 0.1 * mm
 
 # units
 m = gate.g4_units('m')
@@ -124,4 +128,4 @@ gcm3 = gate.g4_units("g/cm3")
 
 
 if __name__=='__main__':
-    generate_garf_test_dataset()
+    generate_garf_projection()
