@@ -139,17 +139,23 @@ def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacin
     forward_projector_PVE.SetSigmaZero(sigma0pve)
     forward_projector_PVE.SetAlpha(alphapve)
 
+    if background:
+        background_radius_min,background_radius_max = 160,240
+        print(f'Background radius between {background_radius_min} and {background_radius_max} mm')
+
+    total_counts_in_proj_min,total_counts_in_proj_max = 2e4,1e5
+    print(f'Total counts in projections between {total_counts_in_proj_min} and {total_counts_in_proj_max}')
 
     for n in range(nb_data):
         src_array = np.zeros_like(X)
 
         if background:
             bg_center = np.random.randint(-50,50,3)
-            bg_radius = np.random.randint(100, 217)
+            bg_radius = np.random.randint(background_radius_min, background_radius_max, 3)
             bg_level = np.random.rand()*1/float(background)
 
-            src_array += (bg_level) * ((((X - bg_center[0]) / bg_radius) ** 2 + ((Y - bg_center[1]) / bg_radius) ** 2 + (
-                        (Z - bg_center[2]) / bg_radius) ** 2) < 1).astype(float)
+            src_array += (bg_level) * ((((X - bg_center[0]) / bg_radius[0]) ** 2 + ((Y - bg_center[1]) / bg_radius[1]) ** 2 + (
+                        (Z - bg_center[2]) / bg_radius[2]) ** 2) < 1).astype(float)
 
 
         random_nb_of_sphers = np.random.randint(1,nspheres+1)
@@ -167,8 +173,8 @@ def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacin
             center = (2*np.random.rand(3)-1)*(lengths/2-np.max(radius)) # the sphere borders remain inside the phantom
             src_array += random_activity  * ( ( ((X-center[0]) / radius[0]) ** 2 + ((Y-center[1]) / radius[1]) ** 2 + ((Z-center[2])/ radius[2]) ** 2  ) < 1).astype(float)
 
-
-        # src_array = src_array / np.sum(src_array)
+        total_counts_in_proj = np.random.randint(total_counts_in_proj_min,total_counts_in_proj_max)
+        src_array = src_array / np.sum(src_array) * total_counts_in_proj * spacing_proj**2 / spacing_volume**3
 
         src_img = itk.image_from_array(src_array.astype(np.float32))
         src_img.SetSpacing(vSpacing)

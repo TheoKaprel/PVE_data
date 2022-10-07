@@ -11,9 +11,12 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('-n','number_of_particles', help = 'number of PRIMARY particles. Ex: 4e7', required = True)
 @click.option('-s','--source', 'source_image', required = True)
 @click.option('--pth', help='Path to the nn-ARF .pth file', required = True)
+@click.option('--batchsize', default = 2e5)
 @click.option('-o', '--output', 'output_filename', help='Output projection filename', required = True)
 @click.option('--visu', is_flag = True, default = False)
-def generate_garf_projection(number_of_particles,source_image, pth,output_filename, visu):
+def generate_garf_projection(number_of_particles,source_image, pth,batchsize, output_filename, visu):
+
+
     paths = Box()
     # paths.pwd = Path(os.getcwd())
     paths.pwd = Path(os.path.dirname(__file__))
@@ -66,7 +69,7 @@ def generate_garf_projection(number_of_particles,source_image, pth,output_filena
     arf.mother = detPlane.name
 
     arf.output = Path(output_filename)
-    arf.batch_size = 2e5
+    arf.batch_size = int(float(batchsize))
     arf.image_size = [128, 128]
     arf.image_spacing = [4.41806 * mm, 4.41806 * mm]
     arf.verbose_batch = True
