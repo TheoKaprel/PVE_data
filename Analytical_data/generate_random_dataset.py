@@ -113,7 +113,6 @@ def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacin
     if not attenuationmap:
         attenuationmap = "./data/acf_ct_air.mhd"
     attenuation_image = itk.imread(attenuationmap, itk.F)
-    # size,spacing = 128,4.41806
     pixelType = itk.F
     imageType = itk.Image[pixelType, 3]
     output_spacing = [spacing_proj,spacing_proj, 1]

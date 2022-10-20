@@ -23,7 +23,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--inputsrc', '-i', help = 'path to the input 3D image to forward project')
 @click.option('--output_folder', '-o', help = 'output folder.')
 @click.option('--geom', '-g', 'geometry_filename', default = None, help = 'If the geometry file you want to use is already created, precise here the path to the xml file')
-@click.option('--attmap', '-a', default = "./data/acf_ct_air.mhd",help = 'Path to the attenuation map if the default is not ok)')
+@click.option('--attmap', '-a', help = 'Path to the attenuation map if the default is not ok)')
 @click.option('--nproj',type=int, default = None, help = 'Precise the number of projections needed')
 @click.option('--pve',is_flag = True, default = False, help = 'To project the input source without partial volume effect')
 @click.option('--pvfree', is_flag = True, default = False, help = 'To project the input source without partial volume effect')
@@ -88,7 +88,7 @@ def forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj,pv
 
 
 
-    attenuation_image = itk.imread(attmap, itk.F)
+
 
 
 
@@ -104,9 +104,10 @@ def forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj,pv
 
     forward_projector = rtk.ZengForwardProjectionImageFilter.New()
     forward_projector.SetInput(0, output_image.GetOutput())
-    # forward_projector.SetInput(1, source_image_reader.GetOutput())
     forward_projector.SetInput(1, source_image_act)
-    # forward_projector.SetInput(2, attenuation_image)
+    if attmap:
+        attenuation_image = itk.imread(attmap, itk.F)
+        forward_projector.SetInput(2, attenuation_image)
 
     forward_projector.SetGeometry(geometry)
 

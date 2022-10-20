@@ -3,6 +3,7 @@
 
 import opengate as gate
 import opengate.contrib.phantom_nema_iec_body as gate_iec
+import opengate_core as g4
 import itk
 import json
 import click
@@ -18,6 +19,9 @@ def create_iec(spacing, output):
 
     # create the simulation
     sim = gate.Simulation()
+
+    ui = sim.user_info
+    ui.g4_verbose = 1
 
     # shhhht !
     gate.log.setLevel(gate.NONE)
@@ -47,24 +51,29 @@ def create_iec(spacing, output):
     labels, image = gate.voxelize_volume(sim, iec.name, image)
     print(f"Output labels: {labels}")
 
-    materials = ["G4_WATER", "G4_LUNG_ICRP", "G4_AIR", "IEC_PLASTIC", "G4_LEAD_OXIDE"]
+    # materials = ["G4_WATER", "G4_LUNG_ICRP", "G4_AIR", "IEC_PLASTIC", "G4_LEAD_OXIDE"]
+    #
+    # for mat in materials:
+    #     print(gate.dump_material_like_Gate(mat))
+    #
 
-    for mat in materials:
-        print(gate.dump_material_like_Gate(mat))
 
+    n = g4.G4NistManager.Instance()
+    water = n.FindMaterial("G4_WATER")
+    print(water)
+
+
+
+    # n.PrintG4Material("G4_WATER")
 
     # write labels
     lf = str(output).replace('.mhd', '.json')
     outfile = open(lf, "w")
-    # json.dump(labels, outfile, indent=4)
+    json.dump(labels, outfile, indent=4)
 
     # write image
     print(f"Write image {output}")
-    # itk.imwrite(image, str(output))
+    itk.imwrite(image, str(output))
 
 if __name__ == "__main__":
     create_iec()
-
-
-
-
