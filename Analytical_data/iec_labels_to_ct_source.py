@@ -10,7 +10,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--lj','labels', help = 'Labels json')
 @click.option('--li','voxels_labels', help = 'Labels image')
 @click.option('--ct',help = 'Output ct filename')
-@click.option('--source',help = 'Output ct filename')
+@click.option('--source',help = 'Output source filename')
 def labels_to_HU(labels, voxels_labels,ct,source):
     dict_labels = json.loads(open(labels).read())
 

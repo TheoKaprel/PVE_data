@@ -33,17 +33,17 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--spacing', default = 4.41806, show_default = True)
 @click.option('--type', default = 'mhd', show_default = True)
 @click.option('--noise', is_flag = True, default = False, help= 'Apply poisson noise to the projection')
-@click.option('--activity', default = 100, show_default = True)
+@click.option('--total_count', default = 2e4, show_default = True)
 @click.option('--output_ref', default = None, type = str, help = 'ref to append to output_filename')
-def forwardproject_click(inputsrc, output_folder,geometry_filename,attmap, nproj,pve, pvfree, sigma0pve, alphapve, size,spacing, type,noise,activity, output_ref):
+def forwardproject_click(inputsrc, output_folder,geometry_filename,attmap, nproj,pve, pvfree, sigma0pve, alphapve, size,spacing, type,noise,total_count, output_ref):
 
     forwardprojectRTK(inputsrc=inputsrc, output_folder=output_folder,geometry_filename=geometry_filename,attmap=attmap,
                       nproj=nproj,pve=pve, pvfree=pvfree,size=size,spacing=spacing, type = type,
-                      sigma0pve=sigma0pve, alphapve=alphapve, noise=noise,activity=activity, output_ref=output_ref)
+                      sigma0pve=sigma0pve, alphapve=alphapve, noise=noise,total_count=total_count, output_ref=output_ref)
 
 
 
-def forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj,pve, pvfree, size,spacing,type,activity, sigma0pve=sigma0pve_default, alphapve=alphapve_default, noise=False, output_ref=None):
+def forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj,pve, pvfree, size,spacing,type,total_count, sigma0pve=sigma0pve_default, alphapve=alphapve_default, noise=False, output_ref=None):
     # projection parameters
     offset = (-spacing*size + spacing)/2
 
@@ -70,12 +70,10 @@ def forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj,pv
 
     pixelType = itk.F
     imageType = itk.Image[pixelType, 3]
-    volume = 4**3 / 1000
 
     source_image= itk.imread(inputsrc, itk.F)
     source_array = itk.array_from_image(source_image)
-    # source_array_act = source_array / np.sum(source_array) * int(activity) * volume * 0.13
-    source_array_act = source_array
+    source_array_act = source_array / np.sum(source_array) * float(total_count) * spacing ** 2 / (source_image.GetSpacing()[0] ** 3)
     source_image_act = itk.image_from_array(source_array_act).astype(itk.F)
     source_image_act.SetOrigin(source_image.GetOrigin())
     source_image_act.SetSpacing(source_image.GetSpacing())
