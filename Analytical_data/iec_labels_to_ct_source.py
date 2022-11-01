@@ -11,7 +11,8 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--li','voxels_labels', help = 'Labels image')
 @click.option('--ct',help = 'Output ct filename')
 @click.option('--source',help = 'Output source filename')
-def labels_to_HU(labels, voxels_labels,ct,source):
+@click.option('--bg','background',type = float, help = 'Background ratio. if --bg 10, then the ratio background / source = 1/10')
+def labels_to_HU(labels, voxels_labels,ct,source, background):
     dict_labels = json.loads(open(labels).read())
 
     img_labels = itk.imread(voxels_labels)
@@ -19,7 +20,7 @@ def labels_to_HU(labels, voxels_labels,ct,source):
     if ct:
         make_ct_from_labels(dict_labels, img_labels, output_hu=ct)
     if source:
-        make_src_from_labels(dict_labels, img_labels, output_src=source)
+        make_src_from_labels(dict_labels, img_labels, output_src=source, background=background)
 
 
 
@@ -63,7 +64,7 @@ def make_ct_from_labels(dict_labels,img_labels, output_hu):
     print(f'ct saved in : {output_hu}')
 
 
-def make_src_from_labels(dict_labels, img_labels, output_src):
+def make_src_from_labels(dict_labels, img_labels, output_src, background):
     list_labels_with_src = ["iec_sphere_10mm",
                             "iec_sphere_13mm",
                             "iec_sphere_22mm",
@@ -74,7 +75,12 @@ def make_src_from_labels(dict_labels, img_labels, output_src):
 
     array_labels = itk.array_from_image(img_labels)
     array_src = np.zeros(array_labels.shape)
+
+    # background activity
+    array_src[array_labels >= 2] = 1 / (background)
+
     for l in dict_labels:
+        # hot source activity
         if l in list_labels_with_src:
             array_src[array_labels == dict_labels[l]] = 1
 

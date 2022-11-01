@@ -10,7 +10,8 @@ def get_list_of_iter_img(path_iterations):
     list_iter = [int(img[id_d:img.find(path_iterations[id_d+2:])]) for img in list_imgs]
     return list_imgs,list_iter
 
-
+def normalize(array):
+    return array / array.sum()
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
@@ -19,6 +20,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 def plot_conv_iter_recons(source, path_iterations):
 
     source_array = itk.array_from_image(itk.imread(source))
+    norm_src_array = normalize(source_array)
 
     list_img, list_iter = get_list_of_iter_img(path_iterations)
     list_err = []
@@ -26,7 +28,8 @@ def plot_conv_iter_recons(source, path_iterations):
     for img_file, iter in zip(list_img,list_iter):
 
         img_array = itk.array_from_image(itk.imread(img_file))
-        list_err.append(np.mean((img_array-source_array)**2)/np.mean(img_array**2))
+        norm_img_array = normalize(img_array)
+        list_err.append(np.mean((norm_img_array-norm_src_array)**2))
 
     fig,ax = plt.subplots()
     ax.scatter(list_iter, list_err, s=10, marker='o')
