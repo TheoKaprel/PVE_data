@@ -25,17 +25,18 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--nprojpersubset', type = int, default = 10, show_default = True)
 @click.option('-n','--niterations', type = int, default = 5, show_default = True)
 @click.option('--FB', 'projector_type', default = "Zeng", show_default = True)
-def osem_reconstruction_click(input,start, outputfilename,like,size,spacing, data_folder, geom,attenuationmap,beta, pvc, nprojpersubset, niterations, projector_type):
+@click.option('--output-every', type = int)
+@click.option('--iteration-filename', help = 'If output-every is not null, iteration-filename to output intermediate iterations with %d as a placeholder for iteration number')
+def osem_reconstruction_click(input,start, outputfilename,like,size,spacing, data_folder, geom,attenuationmap,beta, pvc, nprojpersubset, niterations, projector_type, output_every, iteration_filename):
     osem_reconstruction(input=input,start=start, outputfilename=outputfilename,like=like,size=size,spacing=spacing, data_folder=data_folder, geom=geom,attenuationmap=attenuationmap,
-                        beta= beta, pvc=pvc, nprojpersubset=nprojpersubset, niterations=niterations, projector_type=projector_type)
+                        beta= beta, pvc=pvc, nprojpersubset=nprojpersubset, niterations=niterations, projector_type=projector_type, output_every=output_every, iteration_filename=iteration_filename)
 
-def osem_reconstruction(input,start, outputfilename,like,size,spacing, data_folder, geom,attenuationmap,beta, pvc, nprojpersubset, niterations, projector_type):
+def osem_reconstruction(input,start, outputfilename,like,size,spacing, data_folder, geom,attenuationmap,beta, pvc, nprojpersubset, niterations, projector_type, output_every, iteration_filename):
     print('Begining of reconstruction ...')
 
     Dimension = 3
     pixelType = itk.F
     imageType = itk.Image[pixelType, Dimension]
-
 
     print('Creating the first output image...')
     if start:
@@ -79,34 +80,30 @@ def osem_reconstruction(input,start, outputfilename,like,size,spacing, data_fold
     else:
         if projector_type=="Zeng":
             Offset = projections.GetOrigin()
-        else: # Joseph
+        else:
             Offset = [0,0]
 
         list_angles = np.linspace(0,360,nproj+1)
         geometry = rtk.ThreeDCircularProjectionGeometry.New()
         for i in range(nproj):
-            geometry.AddProjection(380, 0, list_angles[i], Offset[0], Offset[1])  ## 380 (mm) Centre to Detector distance, 0, angle_i, Offset_x, Offset_y
+            geometry.AddProjection(380, 0, list_angles[i], Offset[0], Offset[1])
         print(f'Created geom file with {nproj} angles and Offset = {Offset[0]},{Offset[1]}')
-
-# Detecteur 2D Npix x Npix, sp x sp
-#     Offset_x = (-Npix*sp + sp)/2
-
 
 
     print('Reading attenuation map ...')
     if (data_folder and not(attenuationmap)):
         attmap_filename = os.path.join(data_folder, f'acf_ct_air.mhd')
+        att_corr = True
     elif (attenuationmap and not (data_folder)):
         attmap_filename = attenuationmap
-    elif projector_type == 'Joseph':
-        attmap_filename = None
-        print('no att map but ok')
+        att_corr = True
     else:
-        print('Error in attenuationmap arguments')
-        exit(0)
+        att_corr = False
+        print('no att map but ok')
 
-    if attmap_filename:
+    if att_corr:
         attenuation_map = itk.imread(attmap_filename, pixelType)
+
 
     print('Set OSEM parameters ...')
     OSEMType = rtk.OSEMConeBeamReconstructionFilter[imageType, imageType]
@@ -119,11 +116,12 @@ def osem_reconstruction(input,start, outputfilename,like,size,spacing, data_fold
     osem.SetNumberOfIterations(niterations)
     osem.SetNumberOfProjectionsPerSubset(nprojpersubset)
 
-    osem.SetBetaRegularization(beta) # 0.01
+    osem.SetBetaRegularization(beta)
 
-    if (projector_type=='Zeng'):
+    if att_corr:
         osem.SetInput(2, attenuation_map)
 
+    if (projector_type=='Zeng'):
         FP = osem.ForwardProjectionType_FP_ZENG
         BP = osem.BackProjectionType_BP_ZENG
 
@@ -137,10 +135,31 @@ def osem_reconstruction(input,start, outputfilename,like,size,spacing, data_fold
         FP = osem.ForwardProjectionType_FP_JOSEPH
         BP = osem.BackProjectionType_BP_JOSEPH
 
-
     osem.SetForwardProjectionFilter(FP)
     osem.SetBackProjectionFilter(BP)
 
+
+
+    global iter
+    iter = 0
+    def callback():
+        global iter
+        iter+=1
+        if iter%output_every==0:
+            output_iter = osem.GetOutput()
+            itk.imwrite(output_iter, iteration_filename.replace('%d', str(iter)))
+            print(f'end of iteration {iter}')
+
+    if output_every:
+        if iteration_filename:
+            try:
+                assert ('%d' in iteration_filename)
+            except:
+                print(f'Error in iteration filename {iteration_filename}. Should contain a %d to be replaced by the iteration number')
+                exit(0)
+        else:
+            iteration_filename = outputfilename.replace('.mh', '_%d.mh')
+        osem.AddObserver(itk.IterationEvent(), callback)
 
 
     print('Reconstruction ...')
