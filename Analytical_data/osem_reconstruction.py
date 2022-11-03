@@ -6,6 +6,8 @@ import os
 
 from forwardprojection import alphapve_default,sigma0pve_default
 
+print(alphapve_default)
+print(sigma0pve_default)
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
@@ -13,6 +15,8 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--outputfilename', '-o', help = 'Output filename of desired type (mhd/mha)')
 @click.option('--start')
 @click.option('--like')
+@click.option('--size', type = int)
+@click.option('--spacing', type = float)
 @click.option('--data_folder', help = 'Location of the folder containing : geom_120.xml and acf_ct_air.mhd')
 @click.option('--geom', '-g')
 @click.option('--attenuationmap', '-a')
@@ -20,12 +24,12 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--pvc', is_flag = True, default = False, help = 'if --pvc, resolution correction')
 @click.option('--nprojpersubset', type = int, default = 10, show_default = True)
 @click.option('-n','--niterations', type = int, default = 5, show_default = True)
-@click.option('--FB', 'projector_type', default = "Zeng")
-def osem_reconstruction_click(input,start, outputfilename,like, data_folder, geom,attenuationmap,beta, pvc, nprojpersubset, niterations, projector_type):
-    osem_reconstruction(input=input,start=start, outputfilename=outputfilename,like=like, data_folder=data_folder, geom=geom,attenuationmap=attenuationmap,
+@click.option('--FB', 'projector_type', default = "Zeng", show_default = True)
+def osem_reconstruction_click(input,start, outputfilename,like,size,spacing, data_folder, geom,attenuationmap,beta, pvc, nprojpersubset, niterations, projector_type):
+    osem_reconstruction(input=input,start=start, outputfilename=outputfilename,like=like,size=size,spacing=spacing, data_folder=data_folder, geom=geom,attenuationmap=attenuationmap,
                         beta= beta, pvc=pvc, nprojpersubset=nprojpersubset, niterations=niterations, projector_type=projector_type)
 
-def osem_reconstruction(input,start, outputfilename,like, data_folder, geom,attenuationmap,beta, pvc, nprojpersubset, niterations, projector_type):
+def osem_reconstruction(input,start, outputfilename,like,size,spacing, data_folder, geom,attenuationmap,beta, pvc, nprojpersubset, niterations, projector_type):
     print('Begining of reconstruction ...')
 
     Dimension = 3
@@ -36,6 +40,14 @@ def osem_reconstruction(input,start, outputfilename,like, data_folder, geom,atte
     print('Creating the first output image...')
     if start:
         output_image = itk.imread(start)
+    elif (size and spacing):
+        output_array = np.ones((size,size,size))
+        output_image = itk.image_from_array(output_array)
+        output_image.SetSpacing([spacing, spacing, spacing])
+        offset = (-size * spacing + spacing) / 2
+        output_image.SetOrigin([offset, offset, offset])
+        output_image = output_image.astype(pixelType)
+
     else:
         like_image = itk.imread(like, pixelType)
         constant_image = rtk.ConstantImageSource[imageType].New()
@@ -48,7 +60,7 @@ def osem_reconstruction(input,start, outputfilename,like, data_folder, geom,atte
     print('Reading input projections...')
     projections = itk.imread(input, pixelType)
     nproj = itk.size(projections)[2]
-    print(f'{nproj} projections detected')
+    print(f'{nproj} projections')
 
     print('Reading geometry file ...')
     if (data_folder or geom):
@@ -67,16 +79,17 @@ def osem_reconstruction(input,start, outputfilename,like, data_folder, geom,atte
     else:
         if projector_type=="Zeng":
             Offset = projections.GetOrigin()
-        else:
+        else: # Joseph
             Offset = [0,0]
 
         list_angles = np.linspace(0,360,nproj+1)
         geometry = rtk.ThreeDCircularProjectionGeometry.New()
         for i in range(nproj):
-            geometry.AddProjection(380, 0, list_angles[i], Offset[0], Offset[1])
+            geometry.AddProjection(380, 0, list_angles[i], Offset[0], Offset[1])  ## 380 (mm) Centre to Detector distance, 0, angle_i, Offset_x, Offset_y
         print(f'Created geom file with {nproj} angles and Offset = {Offset[0]},{Offset[1]}')
 
-
+# Detecteur 2D Npix x Npix, sp x sp
+#     Offset_x = (-Npix*sp + sp)/2
 
 
 
@@ -106,7 +119,7 @@ def osem_reconstruction(input,start, outputfilename,like, data_folder, geom,atte
     osem.SetNumberOfIterations(niterations)
     osem.SetNumberOfProjectionsPerSubset(nprojpersubset)
 
-    osem.SetBetaRegularization(beta)
+    osem.SetBetaRegularization(beta) # 0.01
 
     if (projector_type=='Zeng'):
         osem.SetInput(2, attenuation_map)

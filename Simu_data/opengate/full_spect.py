@@ -10,7 +10,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.option('--ct', help = "path to the ct")
 @click.option('--actmap', help = "path to the activity map")
-@click.option('--activity', '-a', 'upactivity', type = int, default = 1)
+@click.option('--activity', '-a', 'upactivity')
 @click.option('--rot', is_flag = True, default = False)
 @click.option('--nproj', '-n', type = int, default = 60)
 @click.option('--mt', type = int, default = 1, help = 'Multi Thread')
@@ -64,7 +64,7 @@ def sim_full_spect(ct, actmap, upactivity,rot, nproj,mt, visu, updebug, output_f
     # print(f"tol = {tol} g/cm3")
     # print(f"mat : {len(patient_ct.voxel_materials)} materials")
 
-    activity = upactivity * Bq
+    activity = int(float(upactivity)) * Bq
     source = sim.add_source('Voxels', 'source')
     source.mother = world.name
     source.image = actmap
@@ -114,7 +114,7 @@ def sim_full_spect(ct, actmap, upactivity,rot, nproj,mt, visu, updebug, output_f
     proj.spacing = [4.41806 * mm, 4.41806 * mm]
     proj.size = [128, 128]
     # proj.plane = 'XY' # not implemented yet
-    proj.output = paths.output / 'proj.mhd'
+    proj.output = paths.output / f'proj_{upactivity}.mhd'
 
     if rot:
         # motion of the spect, create also the run time interval
