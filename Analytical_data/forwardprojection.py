@@ -33,7 +33,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--spacing', default = 4.41806, show_default = True)
 @click.option('--type', default = 'mhd', show_default = True)
 @click.option('--noise', is_flag = True, default = False, help= 'Apply poisson noise to the projection')
-@click.option('--total_count', default = 2e4, show_default = True)
+@click.option('--total_count', default = 5e5, show_default = True)
 @click.option('--output_ref', default = None, type = str, help = 'ref to append to output_filename')
 def forwardproject_click(inputsrc, output_folder,geometry_filename,attmap, nproj,pve, pvfree, sigma0pve, alphapve, size,spacing, type,noise,total_count, output_ref):
 
