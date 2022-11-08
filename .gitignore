@@ -3,6 +3,7 @@
 **.mhd
 **.raw
 **.mha
+**.dcm
 **.json
 **.xml
 **.root
@@ -14,3 +15,8 @@
 **brouillon.py
 !/Analytical_data/data/acf_ct_air.mhd
 !/Analytical_data/data/acf_ct_air.raw
+
+Analytical_data/comparison_reconstructions.py
+Analytical_data/convergence_iteration_recons.py
+Analytical_data/deconvolve.py
+
