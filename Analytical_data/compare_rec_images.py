@@ -20,11 +20,14 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--legend', '-l')
 @click.option('-s','--slice', type = int)
 @click.option('-p','--profile', type = int)
-@click.option('--mse')
+@click.option('--mse',  is_flag = True, default = False)
 @click.option('--norm', is_flag = True, default = False)
 def comp_rec_images(source,images,legend, slice, profile, mse, norm):
     if legend:
         assert(len(images) == len(legend))
+        legends = list(legend)
+    else:
+        legends = list(images)
 
 
     source_array = itk.array_from_image(itk.imread(source))
@@ -34,23 +37,23 @@ def comp_rec_images(source,images,legend, slice, profile, mse, norm):
 
 
     norm_src = calc_norm(source_array, norm=norm)
-    stack_slices = [source_array[slice,:,:] / norm_src]
+    stack_img = [source_array / norm_src]
 
     for img in (images):
         img_array = itk.array_from_image(itk.imread(img))
         norm_img = calc_norm(img_array, norm=norm)
-        stack_slices.append(img_array[slice,:,:] / norm_img)
+        stack_img.append(img_array / norm_img)
 
 
-    vmin_ = min([np.min(sl) for sl in stack_slices])
-    vmax_ = max([np.max(sl) for sl in stack_slices])
+    vmin_ = min([np.min(sl) for sl in stack_img])
+    vmax_ = max([np.max(sl) for sl in stack_img])
 
 
-    imsh = ax_img[0].imshow(stack_slices[0], vmin = vmin_, vmax = vmax_)
+    imsh = ax_img[0].imshow(stack_img[0][slice,:,:], vmin = vmin_, vmax = vmax_)
     ax_img[0].set_title(source)
     for k in range(len(images)):
-        imsh = ax_img[k+1].imshow(stack_slices[k+1], vmin = vmin_, vmax = vmax_)
-        ax_img[k+1].set_title(images[k])
+        imsh = ax_img[k+1].imshow(stack_img[k+1][slice,:,:], vmin = vmin_, vmax = vmax_)
+        ax_img[k+1].set_title(legends[k])
 
     fig_img.colorbar(imsh, ax=ax_img)
 
@@ -58,11 +61,21 @@ def comp_rec_images(source,images,legend, slice, profile, mse, norm):
 
     if profile:
         fig_prof,ax_prof = plt.subplots()
-        ax_prof.plot(stack_slices[0][profile, :], '-', label=source)
+        ax_prof.plot(stack_img[0][slice,profile, :], '-', label=source)
         for k in range(len(images)):
-            ax_prof.plot(stack_slices[k+1][profile,:], '-',label = images[k])
+            ax_prof.plot(stack_img[k+1][slice,profile,:], '-',label = legends[k])
 
         ax_prof.legend()
+
+    if mse:
+        fig_mse,ax_mse = plt.subplots()
+        lrmse = []
+        for k in range(len(images)):
+            rmse = np.sqrt(np.mean((stack_img[0] - stack_img[k+1])**2))
+            lrmse.append(rmse)
+
+        ax_mse.bar([k for k in range(len(images))],lrmse, tick_label = legends, color = 'black')
+        ax_mse.set_ylabel('MSE', fontsize = 20)
 
 
     plt.show()
