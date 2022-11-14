@@ -58,7 +58,7 @@ def create_source(size, spacing, like,n_source, value,type, center, radius, back
 
     if background:
         bg_center = [0,0,0]
-        bg_radius = 200
+        bg_radius = 100
         bg_level =  1 / float(background)
 
         src_array += (bg_level) * ((((X - bg_center[0]) / bg_radius) ** 2 + ((Y - bg_center[1]) / bg_radius) ** 2 + (
