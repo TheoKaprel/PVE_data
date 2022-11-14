@@ -48,9 +48,10 @@ def create_source(size, spacing, like,n_source, value,type, center, radius, back
         vOffset = np.array([offset,offset,offset])
 
 
-    lspaceX = np.linspace(-vSize[0] * vSpacing[0] / 2, vSize[0] * vSpacing[0] / 2, vSize[0])
-    lspaceY = np.linspace(-vSize[1] * vSpacing[1] / 2, vSize[1] * vSpacing[1] / 2, vSize[1])
-    lspaceZ = np.linspace(-vSize[2] * vSpacing[2] / 2, vSize[2] * vSpacing[2] / 2, vSize[2])
+    # itk coordinate system
+    lspaceZ = np.linspace(-vSize[0] * vSpacing[0] / 2, vSize[0] * vSpacing[0] / 2, vSize[0])
+    lspaceX = np.linspace(-vSize[1] * vSpacing[1] / 2, vSize[1] * vSpacing[1] / 2, vSize[1])
+    lspaceY = np.linspace(-vSize[2] * vSpacing[2] / 2, vSize[2] * vSpacing[2] / 2, vSize[2])
 
     X, Y, Z = np.meshgrid(lspaceX,lspaceY,lspaceZ)
     src_array = np.zeros_like(X)

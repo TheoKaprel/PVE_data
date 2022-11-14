@@ -10,6 +10,10 @@ import matplotlib.pyplot as plt
 def calc_norm(img,norm):
     if (norm==False or norm==None):
         return 1
+    elif norm == "max":
+        return img.max()
+    elif norm == "sum":
+        return img.sum()
     else:
         return img.max()
 
@@ -21,7 +25,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('-s','--slice', type = int)
 @click.option('-p','--profile', type = int)
 @click.option('--mse',  is_flag = True, default = False)
-@click.option('--norm', is_flag = True, default = False)
+@click.option('--norm')
 def comp_rec_images(source,images,legend, slice, profile, mse, norm):
     if legend:
         assert(len(images) == len(legend))
@@ -61,9 +65,9 @@ def comp_rec_images(source,images,legend, slice, profile, mse, norm):
 
     if profile:
         fig_prof,ax_prof = plt.subplots()
-        ax_prof.plot(stack_img[0][slice,profile, :], '-', label=source)
+        ax_prof.plot(stack_img[0][slice,profile, :], '-',marker='.', markersize=2, label=source)
         for k in range(len(images)):
-            ax_prof.plot(stack_img[k+1][slice,profile,:], '-',label = legends[k])
+            ax_prof.plot(stack_img[k+1][slice,profile,:], '-',marker='.', markersize=2,label = legends[k])
 
         ax_prof.legend()
 
