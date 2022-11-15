@@ -50,5 +50,6 @@ python ../../osem_reconstruction.py -i proj_source_64_PVE.mha -o rec_source_64_P
 python ../../osem_reconstruction.py -i proj_source_64_PVfree.mha -o rec_source_64_noPVE_noPVC.mha --like source_4.mha --data_folder ../../data/ --beta 0 -n 10 --FB Zeng
 python ../../osem_reconstruction.py -i proj_source_64_765286_DeepPVC.mha -o rec_source_64_PVE_DeepPVC.mha --like source_4.mha --data_folder ../../data/ --beta 0 -n 10 --FB Zeng
 
+puis analyse / figure avec : exp_RCvsSize_Pix2Pix_figure.py
 
 
