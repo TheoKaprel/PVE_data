@@ -32,17 +32,19 @@ def make_ct_from_labels(dict_labels,img_labels, output_hu):
 
     dict_labels_mat_hu ={}
     for l in dict_labels:
-        mat = "IEC_PLASTIC"
+        # mat = "IEC_PLASTIC"
         if l == "world":
             mat = 'G4_AIR'
-        if 'sphere' in l:
+        else:
             mat = 'G4_WATER'
-        if 'capillary' in l:
-            mat = 'G4_WATER'
-        if 'shell' in l:
-            mat = 'IEC_PLASTIC'
-        if l == "iec_center_cylinder_hole":
-            mat = 'G4_LUNG_ICRP'
+        # if 'sphere' in l:
+        #     mat = 'G4_WATER'
+        # if 'capillary' in l:
+        #     mat = 'G4_WATER'
+        # if 'shell' in l:
+        #     mat = 'IEC_PLASTIC'
+        # if l == "iec_center_cylinder_hole":
+        #     mat = 'G4_LUNG_ICRP'
 
         dict_labels_mat_hu[l] = [dict_labels[l], mat, dict_mat_HU[mat]]
 
