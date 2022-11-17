@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 
 
 """
@@ -15,8 +16,10 @@ import itk
 import numpy as np
 from itk import RTK as rtk
 
-from parameters import sigma0pve_default, alphapve_default
+from .parameters import sigma0pve_default, alphapve_default
 
+print(sigma0pve_default)
+print(alphapve_default)
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings = CONTEXT_SETTINGS)
