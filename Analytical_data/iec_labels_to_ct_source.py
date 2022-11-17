@@ -12,41 +12,64 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--ct',help = 'Output ct filename')
 @click.option('--source',help = 'Output source filename')
 @click.option('--bg','background',type = float, help = 'Background ratio. if --bg 10, then the ratio background / source = 1/10')
-def labels_to_HU(labels, voxels_labels,ct,source, background):
+@click.option('--iec-type', type = click.Choice(['air', 'water', 'iec'], case_sensitive=False), help = 'Attenuating material (iec = real, ie with plastic, ...)')
+def labels_to_HU(labels, voxels_labels,ct,source, background, iec_type):
+
+    if (voxels_labels==None) and (labels==None):
+        print("ERROR: you must provide at least one of the label.json or label.mhd image")
+        exit(0)
+    else:
+        if voxels_labels==None:
+            voxels_labels = labels.replace('.json', '.mhd')
+        if labels==None:
+            labels = voxels_labels.replace('.mhd', '.json')
+
+
     dict_labels = json.loads(open(labels).read())
 
     img_labels = itk.imread(voxels_labels)
 
     if ct:
-        make_ct_from_labels(dict_labels, img_labels, output_hu=ct)
+        make_ct_from_labels(dict_labels=dict_labels, img_labels=img_labels, output_hu=ct,iec_type=iec_type)
     if source:
-        make_src_from_labels(dict_labels, img_labels, output_src=source, background=background)
+        make_src_from_labels(dict_labels=dict_labels, img_labels=img_labels, output_src=source, background=background)
 
 
 
-def make_ct_from_labels(dict_labels,img_labels, output_hu):
+def make_ct_from_labels(dict_labels,img_labels, output_hu, iec_type):
     dict_mat_HU = {'G4_AIR': -1000,
                    'G4_WATER': 0,
                    'IEC_PLASTIC': 20,
                    'G4_LUNG_ICRP': -200}
 
     dict_labels_mat_hu ={}
-    for l in dict_labels:
-        # mat = "IEC_PLASTIC"
-        if l == "world":
+    if iec_type=="air":
+        for l in dict_labels:
             mat = 'G4_AIR'
-        else:
-            mat = 'G4_WATER'
-        # if 'sphere' in l:
-        #     mat = 'G4_WATER'
-        # if 'capillary' in l:
-        #     mat = 'G4_WATER'
-        # if 'shell' in l:
-        #     mat = 'IEC_PLASTIC'
-        # if l == "iec_center_cylinder_hole":
-        #     mat = 'G4_LUNG_ICRP'
+            dict_labels_mat_hu[l] = [dict_labels[l], mat, dict_mat_HU[mat]]
+    elif iec_type=="water":
+        for l in dict_labels:
+            if l == "world":
+                mat = 'G4_AIR'
+            else:
+                mat = 'G4_WATER'
+            dict_labels_mat_hu[l] = [dict_labels[l], mat, dict_mat_HU[mat]]
+    elif iec_type=="iec":
+        for l in dict_labels:
+            mat = "IEC_PLASTIC"
+            if l == "world":
+                mat = 'G4_AIR'
+            if 'sphere' in l:
+                mat = 'G4_WATER'
+            if 'capillary' in l:
+                mat = 'G4_WATER'
+            if 'shell' in l:
+                mat = 'IEC_PLASTIC'
+            if l == "iec_center_cylinder_hole":
+                mat = 'G4_LUNG_ICRP'
 
-        dict_labels_mat_hu[l] = [dict_labels[l], mat, dict_mat_HU[mat]]
+            dict_labels_mat_hu[l] = [dict_labels[l], mat, dict_mat_HU[mat]]
+
 
     # write labels
     lf = str(output_hu).replace('.mhd', '.json')

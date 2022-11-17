@@ -16,7 +16,12 @@ import itk
 import numpy as np
 from itk import RTK as rtk
 
-from .parameters import sigma0pve_default, alphapve_default
+try:
+    from .parameters import sigma0pve_default, alphapve_default
+except:
+    from parameters import sigma0pve_default,alphapve_default
+
+
 
 print(sigma0pve_default)
 print(alphapve_default)
