@@ -37,28 +37,6 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacing_proj, type,  like,min_radius, max_radius,max_activity, nspheres,background,ellipse, geom,attenuationmap, sigma0pve, alphapve, save_src, noise):
     dataset_infos = {}
     current_date = time.strftime("%d_%m_%Y_%Hh_%Mm_%Ss", time.localtime())
-    print(f'date: {current_date}')
-    print(f'nb_data: {nb_data}')
-    print(f'output_folder: {output_folder}')
-    print(f'size_volume: {size_volume}')
-    print(f'spacing_volume: {spacing_volume}')
-    print(f'size_proj: {size_proj}')
-    print(f'spacing_proj: {spacing_proj}')
-    print(f'like: {like}')
-    print(f'type: {type}')
-    print(f'min_radius: {min_radius}')
-    print(f'max_radius: {max_radius}')
-    print(f'max_activity: {max_activity}')
-    print(f'nspheres: {nspheres}')
-    print(f'background: {background}')
-    print(f'ellipse: {ellipse}')
-    print(f'geom: {geom}')
-    print(f'attenuationmap: {attenuationmap}')
-    print(f'sigma0pve: {sigma0pve}')
-    print(f'alphapve: {alphapve}')
-    print(f'save_src: {save_src}')
-    print(f'noise: {noise}')
-
     dataset_infos['date'] = current_date
     dataset_infos['nb_data']= nb_data
     dataset_infos['output_folder']=output_folder
@@ -80,11 +58,12 @@ def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacin
     dataset_infos['alphapve'] = alphapve
     dataset_infos['save_src'] = save_src
     dataset_infos['noise'] = noise
-
+    print(json.dumps(dataset_infos, indent = 3))
 
     t0 = time.time()
+
     # get output image parameters
-    if like:
+    if like is not None:
         im_like = itk.imread(like)
         vSpacing = np.array(im_like.GetSpacing())
         vSize = np.array(itk.size(im_like))
@@ -110,9 +89,7 @@ def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacin
     geometry = xmlReader.GetOutputObject()
     nproj = len(geometry.GetGantryAngles())
 
-    if not attenuationmap:
-        attenuationmap = "./data/acf_ct_air.mhd"
-    attenuation_image = itk.imread(attenuationmap, itk.F)
+
     pixelType = itk.F
     imageType = itk.Image[pixelType, 3]
     output_spacing = [spacing_proj,spacing_proj, 1]
@@ -126,19 +103,24 @@ def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacin
 
     forward_projector_PVfree = rtk.ZengForwardProjectionImageFilter.New()
     forward_projector_PVfree.SetInput(0, output_image.GetOutput())
-    forward_projector_PVfree.SetInput(2, attenuation_image)
+
     forward_projector_PVfree.SetGeometry(geometry)
     forward_projector_PVfree.SetSigmaZero(0)
     forward_projector_PVfree.SetAlpha(0)
 
     forward_projector_PVE = rtk.ZengForwardProjectionImageFilter.New()
     forward_projector_PVE.SetInput(0, output_image.GetOutput())
-    forward_projector_PVE.SetInput(2, attenuation_image)
+
     forward_projector_PVE.SetGeometry(geometry)
     forward_projector_PVE.SetSigmaZero(sigma0pve)
     forward_projector_PVE.SetAlpha(alphapve)
 
-    if background:
+    if attenuationmap is not None:
+        attenuation_image = itk.imread(attenuationmap, itk.F)
+        forward_projector_PVfree.SetInput(2, attenuation_image)
+        forward_projector_PVE.SetInput(2, attenuation_image)
+
+    if background is not None:
         background_radius_min,background_radius_max = 160,240
         print(f'Background radius between {background_radius_min} and {background_radius_max} mm')
 
@@ -151,7 +133,7 @@ def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacin
         if background:
             bg_center = np.random.randint(-50,50,3)
             bg_radius = np.random.randint(background_radius_min, background_radius_max, 3)
-            bg_level = np.random.rand()*1/float(background)
+            bg_level = round(np.random.rand(),3)*1/float(background)
 
             src_array += (bg_level) * ((((X - bg_center[0]) / bg_radius[0]) ** 2 + ((Y - bg_center[1]) / bg_radius[1]) ** 2 + (
                         (Z - bg_center[2]) / bg_radius[2]) ** 2) < 1).astype(float)
@@ -160,7 +142,7 @@ def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacin
         random_nb_of_sphers = np.random.randint(1,nspheres+1)
 
         for s  in range(random_nb_of_sphers):
-            random_activity = np.random.randint(1, max_activity+1)
+            random_activity = round(np.random.rand(),3)*(max_activity-1)+1
 
             # random radius and center
             if ellipse:
@@ -173,11 +155,11 @@ def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacin
             src_array += random_activity  * ( ( ((X-center[0]) / radius[0]) ** 2 + ((Y-center[1]) / radius[1]) ** 2 + ((Z-center[2])/ radius[2]) ** 2  ) < 1).astype(float)
 
         total_counts_in_proj = np.random.randint(total_counts_in_proj_min,total_counts_in_proj_max)
-        src_array = src_array / np.sum(src_array) * total_counts_in_proj * spacing_proj**2 / spacing_volume**3
+        src_array_normedToTotalCounts = src_array / np.sum(src_array) * total_counts_in_proj * spacing_proj**2 / spacing_volume**3
 
-        src_img = itk.image_from_array(src_array.astype(np.float32))
-        src_img.SetSpacing(vSpacing)
-        src_img.SetOrigin(vOffset)
+        src_img_normedToTotalCounts = itk.image_from_array(src_array_normedToTotalCounts.astype(np.float32))
+        src_img_normedToTotalCounts.SetSpacing(vSpacing)
+        src_img_normedToTotalCounts.SetOrigin(vOffset)
 
         # Random output filename
         letters = string.ascii_uppercase
@@ -187,25 +169,25 @@ def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacin
 
         # saving of source 3D image
         if save_src:
+            src_img = itk.image_from_array(src_array.astype(np.float32))
+            src_img.SetSpacing(vSpacing)
+            src_img.SetOrigin(vOffset)
             source_path = os.path.join(output_folder,f'{source_ref}.{type}')
             itk.imwrite(src_img,source_path)
-        
-        if geom == None:
-            geom = './data/geom_1.xml'
-        
+
 
         #compute fowardprojections :
         print(source_ref)
 
         # proj PVfree
-        forward_projector_PVfree.SetInput(1, src_img)
+        forward_projector_PVfree.SetInput(1, src_img_normedToTotalCounts)
         forward_projector_PVfree.Update()
         output_forward_PVfree = forward_projector_PVfree.GetOutput()
         output_filename_PVfree = os.path.join(output_folder,f'{source_ref}_PVfree.{type}')
         itk.imwrite(output_forward_PVfree,output_filename_PVfree)
 
         # proj PVE
-        forward_projector_PVE.SetInput(1, src_img)
+        forward_projector_PVE.SetInput(1, src_img_normedToTotalCounts)
         forward_projector_PVE.Update()
         output_forward_PVE = forward_projector_PVE.GetOutput()
         output_filename_PVE = os.path.join(output_folder,f'{source_ref}_PVE.{type}')
