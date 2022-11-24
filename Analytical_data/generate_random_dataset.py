@@ -7,6 +7,8 @@ import string
 from itk import RTK as rtk
 import time
 import json
+from scipy.spatial.transform import Rotation as R
+
 
 from parameters import sigma0pve_default, alphapve_default
 
@@ -144,15 +146,24 @@ def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacin
         for s  in range(random_nb_of_sphers):
             random_activity = round(np.random.rand(),3)*(max_activity-1)+1
 
+            center = (2 * np.random.rand(3) - 1) * (lengths / 2)
+
             # random radius and center
             if ellipse:
                 radius = np.random.rand(3)*(max_radius-min_radius) + min_radius
+                rotation_angles = np.random.rand(3)*np.pi
+                rot = R.from_rotvec([[rotation_angles[0], 0, 0], [0, rotation_angles[1], 0], [0, 0, rotation_angles[2]]])
+                rotation_matrices = rot.as_matrix()
+                rot_matrice = rotation_matrices[0].dot((rotation_matrices[1].dot(rotation_matrices[2])))
+                lesion = random_activity * ((       ( (X-center[0])*rot_matrice[0,0] + (Y-center[1])*rot_matrice[0,1] + (Z - center[2])*rot_matrice[0,2])**2/(radius[0]**2) +
+                                                     ( (X-center[0])*rot_matrice[1,0] + (Y-center[1])*rot_matrice[1,1] + (Z - center[2])*rot_matrice[1,2])**2/(radius[1]**2) +
+                                                     ( (X-center[0])*rot_matrice[2,0] + (Y-center[1])*rot_matrice[2,1] + (Z - center[2])*rot_matrice[2,2])**2/(radius[2]**2) < 1).astype(float))
             else:
                 radius = np.random.rand()*(max_radius-min_radius) + min_radius
                 radius = [radius, radius, radius]
+                lesion = random_activity * ((((X - center[0]) / radius[0]) ** 2 + ((Y - center[1]) / radius[1]) ** 2 + ((Z - center[2]) / radius[2]) ** 2) < 1).astype(float)
 
-            center = (2*np.random.rand(3)-1)*(lengths/2-np.max(radius)) # the sphere borders remain inside the phantom
-            src_array += random_activity  * ( ( ((X-center[0]) / radius[0]) ** 2 + ((Y-center[1]) / radius[1]) ** 2 + ((Z-center[2])/ radius[2]) ** 2  ) < 1).astype(float)
+            src_array += lesion
 
         total_counts_in_proj = np.random.randint(total_counts_in_proj_min,total_counts_in_proj_max)
         src_array_normedToTotalCounts = src_array / np.sum(src_array) * total_counts_in_proj * spacing_proj**2 / spacing_volume**3
@@ -164,7 +175,7 @@ def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacin
         # Random output filename
         letters = string.ascii_uppercase
         filenamelength = 5
-        source_ref = ''.join(random.choice(letters) for i in range(filenamelength))
+        source_ref = ''.join(random.choice(letters) for _ in range(filenamelength))
 
 
         # saving of source 3D image
