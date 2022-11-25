@@ -84,10 +84,6 @@ def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacin
         vOffset = [(-sp*size + sp)/2 for (sp,size) in zip(vSpacing,vSize)]
 
 
-    print(vSize)
-    print(vSpacing)
-    print(vOffset)
-
     # matrix settings
     lengths = vSize*vSpacing
     lspaceX = np.linspace(-vSize[0] * vSpacing[0] / 2, vSize[0] * vSpacing[0] / 2, vSize[0])
@@ -95,7 +91,6 @@ def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacin
     lspaceZ = np.linspace(-vSize[2] * vSpacing[2] / 2, vSize[2] * vSpacing[2] / 2, vSize[2])
 
     X,Y,Z = np.meshgrid(lspaceX,lspaceY,lspaceZ, indexing='ij')
-    print(X.shape)
 
     # Prepare Forward Projection
     xmlReader = rtk.ThreeDCircularProjectionGeometryXMLFileReader.New()
@@ -103,7 +98,6 @@ def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacin
     xmlReader.GenerateOutputInformation()
     geometry = xmlReader.GetOutputObject()
     nproj = len(geometry.GetGantryAngles())
-
 
     pixelType = itk.F
     imageType = itk.Image[pixelType, 3]
@@ -118,14 +112,12 @@ def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacin
 
     forward_projector_PVfree = rtk.ZengForwardProjectionImageFilter.New()
     forward_projector_PVfree.SetInput(0, output_image.GetOutput())
-
     forward_projector_PVfree.SetGeometry(geometry)
     forward_projector_PVfree.SetSigmaZero(0)
     forward_projector_PVfree.SetAlpha(0)
 
     forward_projector_PVE = rtk.ZengForwardProjectionImageFilter.New()
     forward_projector_PVE.SetInput(0, output_image.GetOutput())
-
     forward_projector_PVE.SetGeometry(geometry)
     forward_projector_PVE.SetSigmaZero(sigma0pve)
     forward_projector_PVE.SetAlpha(alphapve)
@@ -149,14 +141,10 @@ def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacin
             # backgroun = cylinder with revolution axis = Y
             bg_center = np.random.randint(-50,50,2)
             bg_radius = np.random.randint(background_radius_min, background_radius_max, 2)
-            print(bg_radius)
-
             bg_level = round(np.random.rand(),3)*1/float(background)
 
-            src_array += (bg_level) * ((((X - bg_center[0]) / bg_radius[0]) ** 2 + ((Z - bg_center[1]) / bg_radius[1]) ** 2) < 1).astype(float)
-
-            # src_array += (bg_level) * ((((X - bg_center[0]) / bg_radius[0]) ** 2 + ((Y - bg_center[1]) / bg_radius[1]) ** 2 + (
-            #             (Z - bg_center[2]) / bg_radius[2]) ** 2) < 1).astype(float)
+            background_array = (bg_level) * ((((X - bg_center[0]) / bg_radius[0]) ** 2 + ((Z - bg_center[1]) / bg_radius[1]) ** 2) < 1).astype(float)
+            src_array += background_array
 
 
         random_nb_of_sphers = np.random.randint(1,nspheres+1)
@@ -164,18 +152,26 @@ def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacin
         for s  in range(random_nb_of_sphers):
             random_activity = round(np.random.rand(),3)*(max_activity-1)+1
 
-            center = (2 * np.random.rand(3) - 1) * (lengths / 2)
+            if background is None:
+                center = (2 * np.random.rand(3) - 1) * (lengths / 2)
+            else:
+                # center of the sphere inside the background
+                center_index = np.random.randint(X.shape)
+                while (background_array[center_index[0], center_index[1], center_index[2]]==0):
+                    center_index = np.random.randint(X.shape)
+                center = [lspaceX[center_index[0]], lspaceY[center_index[1]], lspaceZ[center_index[2]]]
 
-            # random radius and center
+
             if ellipse:
                 radius = np.random.rand(3)*(max_radius-min_radius) + min_radius
                 rotation_angles = np.random.rand(3)*np.pi
                 rot = R.from_rotvec([[rotation_angles[0], 0, 0], [0, rotation_angles[1], 0], [0, 0, rotation_angles[2]]])
                 rotation_matrices = rot.as_matrix()
                 rot_matrice = rotation_matrices[0].dot((rotation_matrices[1].dot(rotation_matrices[2])))
-                lesion = random_activity * ((       ( (X-center[0])*rot_matrice[0,0] + (Y-center[1])*rot_matrice[0,1] + (Z - center[2])*rot_matrice[0,2])**2/(radius[0]**2) +
-                                                     ( (X-center[0])*rot_matrice[1,0] + (Y-center[1])*rot_matrice[1,1] + (Z - center[2])*rot_matrice[1,2])**2/(radius[1]**2) +
-                                                     ( (X-center[0])*rot_matrice[2,0] + (Y-center[1])*rot_matrice[2,1] + (Z - center[2])*rot_matrice[2,2])**2/(radius[2]**2) < 1).astype(float))
+                lesion = random_activity * ((  (    (  (X-center[0])*rot_matrice[0,0] + (Y-center[1])*rot_matrice[0,1] + (Z - center[2])*rot_matrice[0,2])**2/(radius[0]**2) +
+                                                    ( (X-center[0])*rot_matrice[1,0] + (Y-center[1])*rot_matrice[1,1] + (Z - center[2])*rot_matrice[1,2])**2/(radius[1]**2) +
+                                                    ( (X-center[0])*rot_matrice[2,0] + (Y-center[1])*rot_matrice[2,1] + (Z - center[2])*rot_matrice[2,2])**2/(radius[2]**2) < 1)
+                                            ).astype(float))
             else:
                 radius = np.random.rand()*(max_radius-min_radius) + min_radius
                 radius = [radius, radius, radius]
