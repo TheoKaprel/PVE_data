@@ -13,12 +13,20 @@ from scipy.spatial.transform import Rotation as R
 from parameters import sigma0pve_default, alphapve_default
 
 
+def strParamToArray(str_param):
+    array_param = np.array(str_param.split(','))
+    array_param = array_param.astype(np.float)
+    if len(array_param) == 1:
+        array_param = [array_param[0].astype(np.float)] * 3
+    return array_param[::-1]
+
+
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 @click.command(context_settings = CONTEXT_SETTINGS)
 @click.option('--nb_data','-n', type = int, required = True, help = 'number of desired data = (src,projPVE,projPVfree)')
-@click.option('--size_volume', type = int, default = 128, help = 'Size of the desired image i.e. number of voxels per dim', show_default=True)
-@click.option('--spacing_volume', type = float, default = 4, help = 'Spacing of the desired image i.e phyisical length of a voxels (mm)', show_default=True)
+@click.option('--size_volume', type = str, default = "128", help = 'Size of the desired image i.e. number of voxels per dim', show_default=True)
+@click.option('--spacing_volume', type = str, default = "4", help = 'Spacing of the desired image i.e phyisical length of a voxels (mm)', show_default=True)
 @click.option('--size_proj', type = int, default = 128, help = 'Size of the desired projections', show_default=True)
 @click.option('--spacing_proj', type = float, default = 4.41806, help = 'Spacing of the desired projection', show_default=True)
 @click.option('--type', default = 'mha', show_default = True, help = "Create mha or mhd image")
@@ -71,18 +79,23 @@ def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacin
         vSize = np.array(itk.size(im_like))
         vOffset = np.array(im_like.GetOrigin())
     else:
-        vSize = np.array([size_volume,size_volume,size_volume])
-        vSpacing = np.array([spacing_volume,spacing_volume,spacing_volume])
-        offset = (-spacing_volume*size_volume + spacing_volume)/2
-        vOffset = np.array([offset,offset,offset])
+        vSize = strParamToArray(size_volume).astype(int)
+        vSpacing = strParamToArray(spacing_volume)
+        vOffset = [(-sp*size + sp)/2 for (sp,size) in zip(vSpacing,vSize)]
+
+
+    print(vSize)
+    print(vSpacing)
+    print(vOffset)
 
     # matrix settings
     lengths = vSize*vSpacing
-    lspaceX = np.linspace(-vSize[0] * vSpacing[0] / 2, vSize[0] * vSpacing[0] / 2, vSize[0])+vSpacing[0] / 2
-    lspaceY = np.linspace(-vSize[1] * vSpacing[1] / 2, vSize[1] * vSpacing[1] / 2, vSize[1])+vSpacing[1] / 2
-    lspaceZ = np.linspace(-vSize[2] * vSpacing[2] / 2, vSize[2] * vSpacing[2] / 2, vSize[2])+vSpacing[2] / 2
-    X, Y, Z = np.meshgrid(lspaceX,lspaceY,lspaceZ)
+    lspaceX = np.linspace(-vSize[0] * vSpacing[0] / 2, vSize[0] * vSpacing[0] / 2, vSize[0])
+    lspaceY = np.linspace(-vSize[1] * vSpacing[1] / 2, vSize[1] * vSpacing[1] / 2, vSize[1])
+    lspaceZ = np.linspace(-vSize[2] * vSpacing[2] / 2, vSize[2] * vSpacing[2] / 2, vSize[2])
 
+    X,Y,Z = np.meshgrid(lspaceX,lspaceY,lspaceZ, indexing='ij')
+    print(X.shape)
 
     # Prepare Forward Projection
     xmlReader = rtk.ThreeDCircularProjectionGeometryXMLFileReader.New()
@@ -132,13 +145,18 @@ def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacin
     for n in range(nb_data):
         src_array = np.zeros_like(X)
 
-        if background:
-            bg_center = np.random.randint(-50,50,3)
-            bg_radius = np.random.randint(background_radius_min, background_radius_max, 3)
+        if background is not None:
+            # backgroun = cylinder with revolution axis = Y
+            bg_center = np.random.randint(-50,50,2)
+            bg_radius = np.random.randint(background_radius_min, background_radius_max, 2)
+            print(bg_radius)
+
             bg_level = round(np.random.rand(),3)*1/float(background)
 
-            src_array += (bg_level) * ((((X - bg_center[0]) / bg_radius[0]) ** 2 + ((Y - bg_center[1]) / bg_radius[1]) ** 2 + (
-                        (Z - bg_center[2]) / bg_radius[2]) ** 2) < 1).astype(float)
+            src_array += (bg_level) * ((((X - bg_center[0]) / bg_radius[0]) ** 2 + ((Z - bg_center[1]) / bg_radius[1]) ** 2) < 1).astype(float)
+
+            # src_array += (bg_level) * ((((X - bg_center[0]) / bg_radius[0]) ** 2 + ((Y - bg_center[1]) / bg_radius[1]) ** 2 + (
+            #             (Z - bg_center[2]) / bg_radius[2]) ** 2) < 1).astype(float)
 
 
         random_nb_of_sphers = np.random.randint(1,nspheres+1)
@@ -166,10 +184,10 @@ def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacin
             src_array += lesion
 
         total_counts_in_proj = np.random.randint(total_counts_in_proj_min,total_counts_in_proj_max)
-        src_array_normedToTotalCounts = src_array / np.sum(src_array) * total_counts_in_proj * spacing_proj**2 / spacing_volume**3
+        src_array_normedToTotalCounts = src_array / np.sum(src_array) * total_counts_in_proj * spacing_proj**2 / (vSpacing[0]*vSpacing[1]*vSpacing[2])
 
         src_img_normedToTotalCounts = itk.image_from_array(src_array_normedToTotalCounts.astype(np.float32))
-        src_img_normedToTotalCounts.SetSpacing(vSpacing)
+        src_img_normedToTotalCounts.SetSpacing(vSpacing[::-1])
         src_img_normedToTotalCounts.SetOrigin(vOffset)
 
         # Random output filename
@@ -181,7 +199,7 @@ def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacin
         # saving of source 3D image
         if save_src:
             src_img = itk.image_from_array(src_array.astype(np.float32))
-            src_img.SetSpacing(vSpacing)
+            src_img.SetSpacing(vSpacing[::-1])
             src_img.SetOrigin(vOffset)
             source_path = os.path.join(output_folder,f'{source_ref}.{type}')
             itk.imwrite(src_img,source_path)
