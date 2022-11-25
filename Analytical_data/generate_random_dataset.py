@@ -25,7 +25,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 @click.command(context_settings = CONTEXT_SETTINGS)
 @click.option('--nb_data','-n', type = int, required = True, help = 'number of desired data = (src,projPVE,projPVfree)')
-@click.option('--size_volume', type = str, default = "128", help = 'Size of the desired image i.e. number of voxels per dim', show_default=True)
+@click.option('--size_volume', type = str, default = "150", help = 'Size of the desired image i.e. number of voxels per dim', show_default=True)
 @click.option('--spacing_volume', type = str, default = "4", help = 'Spacing of the desired image i.e phyisical length of a voxels (mm)', show_default=True)
 @click.option('--size_proj', type = int, default = 128, help = 'Size of the desired projections', show_default=True)
 @click.option('--spacing_proj', type = float, default = 4.41806, help = 'Spacing of the desired projection', show_default=True)
