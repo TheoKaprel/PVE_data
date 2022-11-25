@@ -17,7 +17,7 @@ def strParamToArray(str_param):
     array_param = np.array(str_param.split(','))
     array_param = array_param.astype(np.float)
     if len(array_param) == 1:
-        array_param = [array_param[0].astype(np.float)] * 3
+        array_param = np.array([array_param[0].astype(np.float)] * 3)
     return array_param[::-1]
 
 
@@ -128,8 +128,10 @@ def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacin
         forward_projector_PVE.SetInput(2, attenuation_image)
 
     if background is not None:
-        background_radius_min,background_radius_max = 160,240
-        print(f'Background radius between {background_radius_min} and {background_radius_max} mm')
+        background_radius_x_mean = 200
+        background_radius_x_std = 20
+        background_radius_y_mean = 120
+        background_radius_y_std = 10
 
     total_counts_in_proj_min,total_counts_in_proj_max = 2e4,1e5
     print(f'Total counts in projections between {total_counts_in_proj_min} and {total_counts_in_proj_max}')
@@ -140,10 +142,13 @@ def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacin
         if background is not None:
             # backgroun = cylinder with revolution axis = Y
             bg_center = np.random.randint(-50,50,2)
-            bg_radius = np.random.randint(background_radius_min, background_radius_max, 2)
+            bg_radius_x =  background_radius_x_std*np.random.randn() + background_radius_x_mean
+            bg_radius_y = background_radius_y_std*np.random.randn() + background_radius_y_mean
+            rotation = np.random.rand()*2*np.pi
             bg_level = round(np.random.rand(),3)*1/float(background)
 
-            background_array = (bg_level) * ((((X - bg_center[0]) / bg_radius[0]) ** 2 + ((Z - bg_center[1]) / bg_radius[1]) ** 2) < 1).astype(float)
+            background_array = (bg_level) * (((((X - bg_center[0])*np.cos(rotation) - (Z - bg_center[1])*np.sin(rotation) )/ bg_radius_x) ** 2 +
+                                              (((X - bg_center[0])*np.sin(rotation) + (Z - bg_center[1])*np.cos(rotation) ) / bg_radius_y) ** 2) < 1).astype(float)
             src_array += background_array
 
 
@@ -164,7 +169,7 @@ def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacin
 
             if ellipse:
                 radius = np.random.rand(3)*(max_radius-min_radius) + min_radius
-                rotation_angles = np.random.rand(3)*np.pi
+                rotation_angles = np.random.rand(3)*2*np.pi
                 rot = R.from_rotvec([[rotation_angles[0], 0, 0], [0, rotation_angles[1], 0], [0, 0, rotation_angles[2]]])
                 rotation_matrices = rot.as_matrix()
                 rot_matrice = rotation_matrices[0].dot((rotation_matrices[1].dot(rotation_matrices[2])))
