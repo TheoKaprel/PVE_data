@@ -20,6 +20,10 @@ def strParamToArray(str_param):
         array_param = np.array([array_param[0].astype(np.float)] * 3)
     return array_param[::-1]
 
+def chooseRandomRef(Nletters):
+    letters = string.ascii_uppercase
+    source_ref = ''.join(random.choice(letters) for _ in range(Nletters))
+    return source_ref
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -192,10 +196,9 @@ def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacin
         src_img_normedToTotalCounts.SetOrigin(vOffset)
 
         # Random output filename
-        letters = string.ascii_uppercase
-        filenamelength = 5
-        source_ref = ''.join(random.choice(letters) for _ in range(filenamelength))
-
+        source_ref = chooseRandomRef(Nletters=5)
+        while os.path.exists(os.path.join(output_folder, f'{source_ref}_PVE.{type}')):
+            source_ref = chooseRandomRef(Nletters=5)
 
         # saving of source 3D image
         if save_src:
