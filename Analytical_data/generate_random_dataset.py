@@ -197,7 +197,10 @@ def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacin
 
         # Random output filename
         source_ref = chooseRandomRef(Nletters=5)
+        mc  = 0
         while os.path.exists(os.path.join(output_folder, f'{source_ref}_PVE.{type}')):
+            mc+=1
+            print(f'Pas chance ({mc})')
             source_ref = chooseRandomRef(Nletters=5)
 
         # saving of source 3D image
