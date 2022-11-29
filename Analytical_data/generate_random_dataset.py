@@ -136,6 +136,8 @@ def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacin
         background_radius_x_std = 20
         background_radius_y_mean = 120
         background_radius_y_std = 10
+        min_background_level = 1e-3
+        max_background_level = 1/float(background)
 
     total_counts_in_proj_min,total_counts_in_proj_max = 2e4,1e5
     print(f'Total counts in projections between {total_counts_in_proj_min} and {total_counts_in_proj_max}')
@@ -144,15 +146,18 @@ def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacin
         src_array = np.zeros_like(X)
 
         if background is not None:
-            # backgroun = cylinder with revolution axis = Y
-            bg_center = np.random.randint(-50,50,2)
-            bg_radius_x =  background_radius_x_std*np.random.randn() + background_radius_x_mean
-            bg_radius_y = background_radius_y_std*np.random.randn() + background_radius_y_mean
-            rotation = np.random.rand()*2*np.pi
-            bg_level = round(np.random.rand(),3)*1/float(background)
+            # background = cylinder with revolution axis = Y
+            background_array = np.zeros_like(X)
+            while (background_array.max()==0): # to avoid empty background
+                bg_center = np.random.randint(-50,50,2)
+                bg_radius_x =  background_radius_x_std*np.random.randn() + background_radius_x_mean
+                bg_radius_y = background_radius_y_std*np.random.randn() + background_radius_y_mean
+                rotation = np.random.rand()*2*np.pi
+                bg_level = round(np.random.rand(),3)*(max_background_level- min_background_level) + min_background_level
 
-            background_array = (bg_level) * (((((X - bg_center[0])*np.cos(rotation) - (Z - bg_center[1])*np.sin(rotation) )/ bg_radius_x) ** 2 +
-                                              (((X - bg_center[0])*np.sin(rotation) + (Z - bg_center[1])*np.cos(rotation) ) / bg_radius_y) ** 2) < 1).astype(float)
+                background_array = (bg_level) * (((((X - bg_center[0])*np.cos(rotation) - (Z - bg_center[1])*np.sin(rotation) )/ bg_radius_x) ** 2 +
+                                                  (((X - bg_center[0])*np.sin(rotation) + (Z - bg_center[1])*np.cos(rotation) ) / bg_radius_y) ** 2) < 1).astype(float)
+
             src_array += background_array
 
 
@@ -197,10 +202,7 @@ def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacin
 
         # Random output filename
         source_ref = chooseRandomRef(Nletters=5)
-        mc  = 0
         while os.path.exists(os.path.join(output_folder, f'{source_ref}_PVE.{type}')):
-            mc+=1
-            print(f'Pas chance ({mc})')
             source_ref = chooseRandomRef(Nletters=5)
 
         # saving of source 3D image
