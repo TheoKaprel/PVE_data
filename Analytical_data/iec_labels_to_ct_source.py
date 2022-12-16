@@ -102,7 +102,8 @@ def make_src_from_labels(dict_labels, img_labels, output_src, background):
     array_src = np.zeros(array_labels.shape)
 
     # background activity
-    array_src[array_labels >= 2] = 1 / (background)
+    if background is not None:
+        array_src[array_labels >= 2] = 1 / (background)
 
     for l in dict_labels:
         # hot source activity
