@@ -155,8 +155,10 @@ def generate(nb_data, output_folder,size_volume, spacing_volume,size_proj,spacin
                 rotation = np.random.rand()*2*np.pi
                 bg_level = round(np.random.rand(),3)*(max_background_level- min_background_level) + min_background_level
 
-                background_array = (bg_level) * (((((X - bg_center[0])*np.cos(rotation) - (Z - bg_center[1])*np.sin(rotation) )/ bg_radius_x) ** 2 +
-                                                  (((X - bg_center[0])*np.sin(rotation) + (Z - bg_center[1])*np.cos(rotation) ) / bg_radius_y) ** 2) < 1).astype(float)
+                background_array = (bg_level) * (((((X - bg_center[0])*np.cos(rotation)
+                                                    - (Z - bg_center[1])*np.sin(rotation) )/ bg_radius_x) ** 2 +
+                                                  (((X - bg_center[0])*np.sin(rotation)
+                                                    + (Z - bg_center[1])*np.cos(rotation) ) / bg_radius_y) ** 2) < 1).astype(float)
 
             src_array += background_array
 
