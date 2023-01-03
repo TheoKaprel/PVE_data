@@ -64,12 +64,14 @@ def generate_cylinder(X,Y,Z,activity, center, min_radius,max_radius):
 
 
 
-def generate_bg_cylinder(X,Y,Z,activity, center, radius_x,radius_y):
+def generate_bg_cylinder(X,Y,Z,activity, center, radius_xzy):
     rotation = np.random.rand() * 2 * np.pi
-    background_array = (activity) * (((((X - center[0]) * np.cos(rotation)
-                                        - (Z - center[1]) * np.sin(rotation)) / radius_x) ** 2 +
+    background_array = (activity) * ((((((X - center[0]) * np.cos(rotation)
+                                        - (Z - center[1]) * np.sin(rotation)) / radius_xzy[0]) ** 2 +
                                       (((X - center[0]) * np.sin(rotation)
-                                        + (Z - center[1]) * np.cos(rotation)) / radius_y) ** 2) < 1).astype(float)
+                                        + (Z - center[1]) * np.cos(rotation)) / radius_xzy[1]) ** 2) < 1) *
+                                     (np.abs(Y - center[2]) < radius_xzy[2])
+                                     ).astype(float)
     return background_array
 
 def generate_sphere(X,Y,Z,activity,center,radius):
@@ -163,12 +165,9 @@ def generate(opt):
         forward_projector_PVE.SetInput(2, attenuation_image)
 
     if opt.background is not None:
-        background_radius_x_mean = 200
-        background_radius_x_std = 20
-        background_radius_y_mean = 120
-        background_radius_y_std = 10
-        min_background_level = 1e-3
-        max_background_level = 1/float(opt.background)
+        background_radius_x_mean, background_radius_z_mean,background_radius_y_mean = 200, 120,lengths[1]/2
+        background_radius_x_std, background_radius_z_std,background_radius_y_std = 20, 10, 50
+        min_background_level, max_background_level = 1e-3, 1/float(opt.background)
 
     total_counts_in_proj_min,total_counts_in_proj_max = 2e4,1e5
     print(f'Total counts in projections between {total_counts_in_proj_min} and {total_counts_in_proj_max}')
@@ -180,16 +179,16 @@ def generate(opt):
             # background = cylinder with revolution axis = Y
             background_array = np.zeros_like(X)
             while (background_array.max()==0): # to avoid empty background
-                bg_center = np.random.randint(-50,50,2)
-                bg_radius_x =  background_radius_x_std*np.random.randn() + background_radius_x_mean
-                bg_radius_y = background_radius_y_std*np.random.randn() + background_radius_y_mean
+                bg_center = np.random.randint(-50,50,3)
+                bg_radius_xzy = (background_radius_x_std, background_radius_z_std, background_radius_y_std) * np.random.randn(3) + (background_radius_x_mean, background_radius_z_mean, background_radius_y_mean)
                 bg_level = round(np.random.rand(),3)*(max_background_level- min_background_level) + min_background_level
-                background_array = generate_bg_cylinder(X,Y,Z,activity=bg_level,center=bg_center,radius_x=bg_radius_x,radius_y=bg_radius_y)
+                background_array = generate_bg_cylinder(X,Y,Z,activity=bg_level,center=bg_center,radius_xzy=bg_radius_xzy)
 
             src_array += background_array
 
 
         random_nb_of_sphers = np.random.randint(1,opt.nspheres+1)
+
 
         for s  in range(random_nb_of_sphers):
             random_activity = round(np.random.rand(),3)*(opt.max_activity-1)+1
@@ -274,7 +273,7 @@ def generate(opt):
     print(f'Total time elapsed for data generation : {elapsed_time_min} min    (i.e. {elapsed_time} s)')
 
     formatted_dataset_infos = json.dumps(dataset_infos, indent=4)
-    output_info_json = os.path.join(opt.output_folder, 'dataset_infos.json')
+    output_info_json = os.path.join(opt.output_folder, f'dataset_infos_{current_date}.json')
     jsonfile = open(output_info_json, "w")
     jsonfile.write(formatted_dataset_infos)
     jsonfile.close()
