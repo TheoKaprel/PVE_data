@@ -100,6 +100,7 @@ parser.add_argument('--sigma0pve', default = sigma0pve_default,type = float, hel
 parser.add_argument('--alphapve', default = alphapve_default, type = float, help = 'Slope of the PSF against the detector distance')
 parser.add_argument('--save_src',action ="store_true", help = "if you want to also save the source that will be forward projected")
 parser.add_argument('--noise',action ="store_true", help = "Add Poisson noise ONLY to ProjPVE")
+parser.add_argument('--merge',action="store_true", help = "If --merge, the 3 (or 2) projections are stored in the same file ABCDE(_noisy)_PVE_PVfree.mha. In this order : noisy, PVE, PVfree")
 opt = parser.parse_args()
 def generate(opt):
     print(opt)
@@ -245,15 +246,14 @@ def generate(opt):
         forward_projector_PVfree.SetInput(1, src_img_normedToTotalCounts)
         forward_projector_PVfree.Update()
         output_forward_PVfree = forward_projector_PVfree.GetOutput()
-        output_filename_PVfree = os.path.join(opt.output_folder,f'{source_ref}_PVfree.{opt.type}')
-        itk.imwrite(output_forward_PVfree,output_filename_PVfree)
+
+
+
 
         # proj PVE
         forward_projector_PVE.SetInput(1, src_img_normedToTotalCounts)
         forward_projector_PVE.Update()
         output_forward_PVE = forward_projector_PVE.GetOutput()
-        output_filename_PVE = os.path.join(opt.output_folder,f'{source_ref}_PVE.{opt.type}')
-        itk.imwrite(output_forward_PVE,output_filename_PVE)
 
 
         if opt.noise:
@@ -262,9 +262,32 @@ def generate(opt):
             output_forward_PVE_noisy = itk.image_from_array(noisy_projection_array)
             output_forward_PVE_noisy.SetSpacing(output_forward_PVE.GetSpacing())
             output_forward_PVE_noisy.SetOrigin(output_forward_PVE.GetOrigin())
-            output_filename_PVE_noisy = os.path.join(opt.output_folder, f'{source_ref}_PVE_noisy.{opt.type}')
-            itk.imwrite(output_forward_PVE_noisy, output_filename_PVE_noisy)
 
+
+        # Write projections :
+        if opt.merge:
+            output_forward_PVfree_array = itk.array_from_image(output_forward_PVfree)
+            output_forward_PVE_array = itk.array_from_image(output_forward_PVE)
+            output_forward_merged_array = np.concatenate((output_forward_PVE_array,output_forward_PVfree_array),axis=0)
+            if opt.noise:
+                output_forward_merged_array = np.concatenate((noisy_projection_array,output_forward_merged_array),axis=0)
+                output_filename_merged = os.path.join(opt.output_folder, f'{source_ref}_noisy_PVE_PVfree.{opt.type}')
+            else:
+                output_filename_merged = os.path.join(opt.output_folder, f'{source_ref}_PVE_PVfree.{opt.type}')
+            output_forward_merged = itk.image_from_array(output_forward_merged_array)
+            output_forward_merged.SetSpacing(output_forward_PVE.GetSpacing())
+            output_forward_merged.SetOrigin(output_forward_PVE.GetOrigin())
+            itk.imwrite(output_forward_merged,output_filename_merged)
+        else:
+            output_filename_PVfree = os.path.join(opt.output_folder, f'{source_ref}_PVfree.{opt.type}')
+            itk.imwrite(output_forward_PVfree, output_filename_PVfree)
+
+            output_filename_PVE = os.path.join(opt.output_folder, f'{source_ref}_PVE.{opt.type}')
+            itk.imwrite(output_forward_PVE, output_filename_PVE)
+
+            if opt.noise:
+                output_filename_PVE_noisy = os.path.join(opt.output_folder, f'{source_ref}_PVE_noisy.{opt.type}')
+                itk.imwrite(output_forward_PVE_noisy, output_filename_PVE_noisy)
 
     tf = time.time()
     elapsed_time = round(tf - t0)
