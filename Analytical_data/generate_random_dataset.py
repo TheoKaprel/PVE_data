@@ -101,7 +101,7 @@ parser.add_argument('--alphapve', default = alphapve_default, type = float, help
 parser.add_argument('--save_src',action ="store_true", help = "if you want to also save the source that will be forward projected")
 parser.add_argument('--noise',action ="store_true", help = "Add Poisson noise ONLY to ProjPVE")
 parser.add_argument('--merge',action="store_true", help = "If --merge, the 3 (or 2) projections are stored in the same file ABCDE(_noisy)_PVE_PVfree.mha. In this order : noisy, PVE, PVfree")
-opt = parser.parse_args()
+
 def generate(opt):
     print(opt)
     current_date = time.strftime("%d_%m_%Y_%Hh_%Mm_%Ss", time.localtime())
@@ -303,4 +303,5 @@ def generate(opt):
 
 
 if __name__ == '__main__':
+    opt = parser.parse_args()
     generate(opt=opt)

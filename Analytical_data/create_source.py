@@ -2,6 +2,7 @@ import itk
 import numpy as np
 import click
 
+from generate_random_dataset import generate_bg_cylinder
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -65,11 +66,12 @@ def create_source(size, spacing, like,n_source, value,type, center, radius, back
 
     if background:
         bg_center = [0,0,0]
-        bg_radius = 180
+        # bg_radius = 180
         bg_level =  1 / float(background)
+        src_array += generate_bg_cylinder(X=X, Y=Y, Z=Z, activity=bg_level, center=bg_center, radius_xzy=[180,180,90])
 
-        src_array += (bg_level) * ((((X - bg_center[0]) / bg_radius) ** 2 +
-                ((Z - bg_center[2]) / bg_radius) ** 2) < 1).astype(float)
+        # src_array += (bg_level) * ((((X - bg_center[0]) / bg_radius) ** 2 +
+        #         ((Z - bg_center[2]) / bg_radius) ** 2) < 1).astype(float)
 
 
     for s in range(n_source):
