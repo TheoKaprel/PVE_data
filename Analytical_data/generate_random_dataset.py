@@ -12,6 +12,15 @@ from scipy.spatial.transform import Rotation as R
 
 from parameters import sigma0pve_default, alphapve_default
 
+def get_dtype(opt_dtype):
+    if opt_dtype=='float' or opt_dtype=='float32':
+        return np.float
+    elif opt_dtype=='float16' or opt_dtype=='half':
+        return np.float16
+    elif opt_dtype=='uint16':
+        return np.uint16
+    elif opt_dtype=='uint64' or opt_dtype=='uint':
+        return np.uint
 
 def strParamToArray(str_param):
     array_param = np.array(str_param.split(','))
@@ -84,7 +93,8 @@ parser.add_argument('--size_volume', type = str, default = "150", help = 'Size o
 parser.add_argument('--spacing_volume', type = str, default = "4", help = 'Spacing of the desired image i.e phyisical length of a voxels (mm)')
 parser.add_argument('--size_proj', type = int, default = 128, help = 'Size of the desired projections')
 parser.add_argument('--spacing_proj', type = float, default = 4.41806, help = 'Spacing of the desired projection')
-parser.add_argument('--type', default = 'mha', help = "Create mha or mhd image")
+parser.add_argument('--type', default = 'mha', help = "Create mha, mhd,npy image")
+parser.add_argument('--dtype', default = 'float', help = "if npy, image dtype")
 parser.add_argument('--like', default = None, help = "Instead of specifying spacing/size, you can specify an image as a metadata model")
 parser.add_argument('--min_radius', default = 4,type = float, help = 'minimum radius of the random spheres')
 parser.add_argument('--max_radius', default = 32,type = float, help = 'max radius of the random spheres')
@@ -136,6 +146,11 @@ def generate(opt):
     xmlReader.GenerateOutputInformation()
     geometry = xmlReader.GetOutputObject()
     nproj = len(geometry.GetGantryAngles())
+
+
+    dtype = get_dtype(opt.dtype)
+
+
 
     pixelType = itk.F
     imageType = itk.Image[pixelType, 3]
@@ -246,48 +261,54 @@ def generate(opt):
         forward_projector_PVfree.SetInput(1, src_img_normedToTotalCounts)
         forward_projector_PVfree.Update()
         output_forward_PVfree = forward_projector_PVfree.GetOutput()
-
-
-
+        output_forward_PVfree_array = itk.array_from_image(output_forward_PVfree).astype(dtype=dtype)
 
         # proj PVE
         forward_projector_PVE.SetInput(1, src_img_normedToTotalCounts)
         forward_projector_PVE.Update()
         output_forward_PVE = forward_projector_PVE.GetOutput()
-
+        output_forward_PVE_array = itk.array_from_image(output_forward_PVE).astype(dtype=dtype)
 
         if opt.noise:
-            output_forward_PVE_array = itk.array_from_image(output_forward_PVE)
-            noisy_projection_array = np.random.poisson(lam=output_forward_PVE_array, size=output_forward_PVE_array.shape).astype(float)
-            output_forward_PVE_noisy = itk.image_from_array(noisy_projection_array)
-            output_forward_PVE_noisy.SetSpacing(output_forward_PVE.GetSpacing())
-            output_forward_PVE_noisy.SetOrigin(output_forward_PVE.GetOrigin())
-
+            noisy_projection_array = np.random.poisson(lam=output_forward_PVE_array, size=output_forward_PVE_array.shape).astype(dtype=dtype)
 
         # Write projections :
         if opt.merge:
-            output_forward_PVfree_array = itk.array_from_image(output_forward_PVfree)
-            output_forward_PVE_array = itk.array_from_image(output_forward_PVE)
             output_forward_merged_array = np.concatenate((output_forward_PVE_array,output_forward_PVfree_array),axis=0)
             if opt.noise:
                 output_forward_merged_array = np.concatenate((noisy_projection_array,output_forward_merged_array),axis=0)
                 output_filename_merged = os.path.join(opt.output_folder, f'{source_ref}_noisy_PVE_PVfree.{opt.type}')
             else:
                 output_filename_merged = os.path.join(opt.output_folder, f'{source_ref}_PVE_PVfree.{opt.type}')
-            output_forward_merged = itk.image_from_array(output_forward_merged_array)
-            output_forward_merged.SetSpacing(output_forward_PVE.GetSpacing())
-            output_forward_merged.SetOrigin(output_forward_PVE.GetOrigin())
-            itk.imwrite(output_forward_merged,output_filename_merged)
+
+            if opt.type!='npy':
+                output_forward_merged = itk.image_from_array(output_forward_merged_array)
+                output_forward_merged.SetSpacing(output_forward_PVE.GetSpacing())
+                output_forward_merged.SetOrigin(output_forward_PVE.GetOrigin())
+                itk.imwrite(output_forward_merged,output_filename_merged)
+            else:
+                np.save(output_filename_merged,output_forward_merged_array)
         else:
             output_filename_PVfree = os.path.join(opt.output_folder, f'{source_ref}_PVfree.{opt.type}')
-            itk.imwrite(output_forward_PVfree, output_filename_PVfree)
-
             output_filename_PVE = os.path.join(opt.output_folder, f'{source_ref}_PVE.{opt.type}')
-            itk.imwrite(output_forward_PVE, output_filename_PVE)
+            if opt.type!='npy':
+                itk.imwrite(output_forward_PVfree, output_filename_PVfree)
+                itk.imwrite(output_forward_PVE, output_filename_PVE)
+            else:
+                np.save(output_filename_PVfree,output_forward_PVfree_array)
+                np.save(output_filename_PVE, output_forward_PVE_array)
 
             if opt.noise:
                 output_filename_PVE_noisy = os.path.join(opt.output_folder, f'{source_ref}_PVE_noisy.{opt.type}')
-                itk.imwrite(output_forward_PVE_noisy, output_filename_PVE_noisy)
+                if opt.type!='npy':
+                    output_forward_PVE_noisy = itk.image_from_array(noisy_projection_array)
+                    output_forward_PVE_noisy.SetSpacing(output_forward_PVE.GetSpacing())
+                    output_forward_PVE_noisy.SetOrigin(output_forward_PVE.GetOrigin())
+                    itk.imwrite(output_forward_PVE_noisy, output_filename_PVE_noisy)
+                else:
+                    np.save(output_filename_PVE_noisy,noisy_projection_array)
+
+
 
     tf = time.time()
     elapsed_time = round(tf - t0)
