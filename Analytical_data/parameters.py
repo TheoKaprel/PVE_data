@@ -18,10 +18,6 @@ leff = l - 2/mu
 # Distance center of FOV / detector's head
 b = 380
 
-# OLD PARAMETERS
-# sigma0pve_default = 0.9008418065898374
-# alphapve_default = 0.025745123547513887
-
 
 sigma0pve_default = d / (2*np.sqrt(2*np.log(2)))
 alphapve_default = d / (2*np.sqrt(2*np.log(2))) / leff
@@ -29,5 +25,9 @@ alphapve_default = d / (2*np.sqrt(2*np.log(2))) / leff
 
 FWHM_b = d*(1 + b / leff)
 
+print(f'FWHM(d)={d} + {d/leff} d')
 
+print(sigma0pve_default)
+print(alphapve_default)
+print(d)
 print(FWHM_b)

@@ -99,6 +99,8 @@ parser.add_argument('--like', default = None, help = "Instead of specifying spac
 parser.add_argument('--min_radius', default = 4,type = float, help = 'minimum radius of the random spheres')
 parser.add_argument('--max_radius', default = 32,type = float, help = 'max radius of the random spheres')
 parser.add_argument('--max_activity', default = 1,type = float, help = 'max activity in spheres')
+parser.add_argument('--min_counts', default = 2e4, type = int, help = "minimum number of counts per proj (noise level)")
+parser.add_argument('--max_counts', default = 1e5, type = int, help = "maximum number of counts per proj (noise level)")
 parser.add_argument('--nspheres', default = 1,type = int, help = 'max number of spheres to generate on each source')
 parser.add_argument('--background', default = None,type = float, help = 'If you want background activity specify the maximal activity:background ratio. For example --background 10 for a maximum 1/10 background activity.')
 parser.add_argument('--ellipse',action ="store_true", help = "if --ellipse, activity spheres are in fact ellipses")
@@ -185,7 +187,7 @@ def generate(opt):
         background_radius_x_std, background_radius_z_std,background_radius_y_std = 20, 10, 50
         min_background_level, max_background_level = 1e-3, 1/float(opt.background)
 
-    total_counts_in_proj_min,total_counts_in_proj_max = 2e4,1e5
+    total_counts_in_proj_min,total_counts_in_proj_max = opt.min_counts, opt.max_counts
     print(f'Total counts in projections between {total_counts_in_proj_min} and {total_counts_in_proj_max}')
 
     for n in range(opt.nb_data):
