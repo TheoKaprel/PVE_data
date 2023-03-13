@@ -20,7 +20,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--type', type = str, default = "sphere", help = 'sphere or square')
 @click.option('--radius', type = float,multiple = True, default = [64],
               help = 'Radius of activity source (mm)', show_default=True)
-@click.option('--center', type = (int,int,int), multiple = True,
+@click.option('--center', type = (float,float,float), multiple = True,
               help = 'Center of the point source (Ox,Oy,Oz) (mm)')
 @click.option('--background', default = None,
               help = 'If you want background activity specify the activity:background ratio. For example --background 10 for a 1/10 background ratio.')
@@ -75,7 +75,7 @@ def create_source(size, spacing, like,n_source, value,type, center, radius, back
 
 
     for s in range(n_source):
-        center_s = [center[s][0], center[s][1], center[s][2]]
+        center_s = [center[s][0]+vSpacing[0]/2, center[s][1]+vSpacing[1]/2, center[s][2]+vSpacing[2]/2]
         radius_s = radius[s]
         if type == 'sphere':
             src_array += value[s]*(( ( ((X - center_s[0]) / radius_s) ** 2

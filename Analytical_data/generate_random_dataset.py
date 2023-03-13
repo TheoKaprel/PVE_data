@@ -10,7 +10,7 @@ import json
 from scipy.spatial.transform import Rotation as R
 
 
-from parameters import sigma0pve_default, alphapve_default
+from parameters import get_psf_params
 
 def get_dtype(opt_dtype):
     if opt_dtype=='float' or opt_dtype=='float32':
@@ -108,8 +108,7 @@ parser.add_argument('--ell_cyl',type = float, default = None, help = "if --ell_c
 parser.add_argument('--geom', '-g', default = None, help = 'geometry file to forward project. Default is the proj on one detector')
 parser.add_argument('--attenuationmap', '-a',default = None, help = 'path to the attenuation map file')
 parser.add_argument('--output_folder','-o', default = './dataset', help = " Absolute or relative path to the output folder")
-parser.add_argument('--sigma0pve', default = sigma0pve_default,type = float, help = 'sigma at distance 0 of the detector')
-parser.add_argument('--alphapve', default = alphapve_default, type = float, help = 'Slope of the PSF against the detector distance')
+parser.add_argument('--spect_system', default = "ge-discovery", choices=['ge-discovery', 'siemens-intevo'], help = 'SPECT system simulated for PVE projections')
 parser.add_argument('--save_src',action ="store_true", help = "if you want to also save the source that will be forward projected")
 parser.add_argument('--noise',action ="store_true", help = "Add Poisson noise ONLY to ProjPVE")
 parser.add_argument('--merge',action="store_true", help = "If --merge, the 3 (or 2) projections are stored in the same file ABCDE(_noisy)_PVE_PVfree.mha. In this order : noisy, PVE, PVfree")
@@ -121,6 +120,8 @@ def generate(opt):
     dataset_infos = vars(opt)
     print(json.dumps(dataset_infos, indent = 3))
     t0 = time.time()
+
+    sigma0_psf, alpha_psf = get_psf_params(opt.spect_system)
 
     # get output image parameters
     if opt.like is not None:
@@ -174,8 +175,8 @@ def generate(opt):
     forward_projector_PVE = rtk.ZengForwardProjectionImageFilter.New()
     forward_projector_PVE.SetInput(0, output_image.GetOutput())
     forward_projector_PVE.SetGeometry(geometry)
-    forward_projector_PVE.SetSigmaZero(opt.sigma0pve)
-    forward_projector_PVE.SetAlpha(opt.alphapve)
+    forward_projector_PVE.SetSigmaZero(sigma0_psf)
+    forward_projector_PVE.SetAlpha(alpha_psf)
 
     if opt.attenuationmap is not None:
         attenuation_image = itk.imread(opt.attenuationmap, itk.F)
