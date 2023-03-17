@@ -37,7 +37,7 @@ def chooseRandomRef(Nletters):
 def generate_ellipse(X,Y,Z,activity, center, min_radius,max_radius, prop_radius):
     if prop_radius=='uniform':
         radius = np.random.rand(3) * (max_radius - min_radius) + min_radius
-    elif prop_radius=='squared_prop':
+    elif prop_radius=='squared_inv':
         radius = min_radius / (1 + np.random.rand(3) * (min_radius/max_radius - 1))
 
     rotation_angles = np.random.rand(3) * 2 * np.pi
@@ -101,7 +101,7 @@ parser.add_argument('--dtype', default = 'float', help = "if npy, image dtype")
 parser.add_argument('--like', default = None, help = "Instead of specifying spacing/size, you can specify an image as a metadata model")
 parser.add_argument('--min_radius', default = 4,type = float, help = 'minimum radius of the random spheres')
 parser.add_argument('--max_radius', default = 32,type = float, help = 'max radius of the random spheres')
-parser.add_argument('--prop_radius', default = "uniform", choices=['uniform', 'squared_prop'], help = 'proportion of radius between min/max')
+parser.add_argument('--prop_radius', default = "uniform", choices=['uniform', 'squared_inv'], help = 'proportion of radius between min/max')
 parser.add_argument('--max_activity', default = 1,type = float, help = 'max activity in spheres')
 parser.add_argument('--min_counts', default = 2e4, type = float, help = "minimum number of counts per proj (noise level)")
 parser.add_argument('--max_counts', default = 1e5, type = float, help = "maximum number of counts per proj (noise level)")
