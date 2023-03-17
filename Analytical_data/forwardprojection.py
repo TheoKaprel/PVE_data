@@ -17,14 +17,11 @@ import numpy as np
 from itk import RTK as rtk
 
 try:
-    from .parameters import sigma0pve_default, alphapve_default
+    from .parameters import get_psf_params
 except:
-    from parameters import sigma0pve_default,alphapve_default
+    from parameters import get_psf_params
 
 
-
-print(sigma0pve_default)
-print(alphapve_default)
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings = CONTEXT_SETTINGS)
@@ -35,23 +32,23 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--nproj',type=int, default = None, help = 'Precise the number of projections needed')
 @click.option('--pve',is_flag = True, default = False, help = 'To project the input source without partial volume effect')
 @click.option('--pvfree', is_flag = True, default = False, help = 'To project the input source without partial volume effect')
-@click.option('--sigma0pve', default = sigma0pve_default,type = float, help = 'sigma at distance 0 of the detector', show_default=True)
-@click.option('--alphapve', default = alphapve_default, type = float, help = 'Slope of the PSF against the detector distance', show_default=True)
+@click.option('--spect_system', default = "ge-discovery",type = str, help = 'spect system for psf', show_default=True)
 @click.option('--size', default = 128, show_default = True)
 @click.option('--spacing', default = 4.41806, show_default = True)
 @click.option('--type', default = 'mhd', show_default = True)
 @click.option('--noise', is_flag = True, default = False, help= 'Apply poisson noise to the projection')
+@click.option('--save_src', is_flag = True, default = False, help= 'to save the scaled source (the one that is actually projected)')
 @click.option('--total_count', default = 5e5, show_default = True)
 @click.option('--output_ref', default = None, type = str, help = 'ref to append to output_filename')
-def forwardproject_click(inputsrc, output_folder,geometry_filename,attmap, nproj,pve, pvfree, sigma0pve, alphapve, size,spacing, type,noise,total_count, output_ref):
+def forwardproject_click(inputsrc, output_folder,geometry_filename,attmap, nproj,pve, pvfree, spect_system, size,spacing, type,noise, save_src,total_count, output_ref):
 
     forwardprojectRTK(inputsrc=inputsrc, output_folder=output_folder,geometry_filename=geometry_filename,attmap=attmap,
-                      nproj=nproj,pve=pve, pvfree=pvfree,size=size,spacing=spacing, type = type,
-                      sigma0pve=sigma0pve, alphapve=alphapve, noise=noise,total_count=total_count, output_ref=output_ref)
+                      nproj=nproj,pve=pve, pvfree=pvfree,size=size,spacing=spacing, type = type,save_src=save_src,
+                      spect_system=spect_system, noise=noise,total_count=total_count, output_ref=output_ref)
 
 
 
-def forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj,pve, pvfree, size,spacing,type,total_count, sigma0pve=sigma0pve_default, alphapve=alphapve_default, noise=False, output_ref=None):
+def forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj,pve, pvfree, size,spacing,type,total_count, spect_system,save_src=False, noise=False, output_ref=None):
     # projection parameters
     offset = (-spacing*size + spacing)/2
 
@@ -86,6 +83,9 @@ def forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj,pv
     source_image_act.SetOrigin(source_image.GetOrigin())
     source_image_act.SetSpacing(source_image.GetSpacing())
 
+    if save_src:
+        itk.imwrite(source_image_act, inputsrc.replace(".mhd", "_scaled.mhd"))
+
 
     # readerType = itk.ImageFileReader[imageType]
     # source_image_reader = readerType.New()
@@ -117,6 +117,11 @@ def forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj,pv
 
     forward_projector.SetGeometry(geometry)
 
+    if output_ref is None:
+        _,output_ref = os.path.split(inputsrc)
+        output_ref = output_ref.replace(".mhd", "").replace(".mha", "")
+
+
     if pvfree:
         forward_projector.SetSigmaZero(0)
         forward_projector.SetAlpha(0)
@@ -128,8 +133,9 @@ def forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj,pv
         itk.imwrite(output_forward_PVfree,output_filename_PVfree)
 
     if pve:
-        forward_projector.SetSigmaZero(sigma0pve)
-        forward_projector.SetAlpha(alphapve)
+        sigma0_psf, alpha_psf = get_psf_params(machine=spect_system)
+        forward_projector.SetSigmaZero(sigma0_psf)
+        forward_projector.SetAlpha(alpha_psf)
         forward_projector.Update()
 
         output_forward_PVE = forward_projector.GetOutput()

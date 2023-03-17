@@ -68,14 +68,14 @@ def create_source(size, spacing, like,n_source, value,type, center, radius, back
         bg_center = [0,0,0]
         # bg_radius = 180
         bg_level =  1 / float(background)
-        src_array += generate_bg_cylinder(X=X, Y=Y, Z=Z, activity=bg_level, center=bg_center, radius_xzy=[180,180,90])
+        src_array += generate_bg_cylinder(X=X, Y=Y, Z=Z, activity=bg_level, center=bg_center, radius_xzy=[180,180,256])
 
         # src_array += (bg_level) * ((((X - bg_center[0]) / bg_radius) ** 2 +
         #         ((Z - bg_center[2]) / bg_radius) ** 2) < 1).astype(float)
 
 
     for s in range(n_source):
-        center_s = [center[s][0]+vSpacing[0]/2, center[s][1]+vSpacing[1]/2, center[s][2]+vSpacing[2]/2]
+        center_s = [center[s][0], center[s][1], center[s][2]]
         radius_s = radius[s]
         if type == 'sphere':
             src_array += value[s]*(( ( ((X - center_s[0]) / radius_s) ** 2

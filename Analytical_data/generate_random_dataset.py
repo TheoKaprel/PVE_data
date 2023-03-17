@@ -34,8 +34,12 @@ def chooseRandomRef(Nletters):
     source_ref = ''.join(random.choice(letters) for _ in range(Nletters))
     return source_ref
 
-def generate_ellipse(X,Y,Z,activity, center, min_radius,max_radius):
-    radius = np.random.rand(3) * (max_radius - min_radius) + min_radius
+def generate_ellipse(X,Y,Z,activity, center, min_radius,max_radius, prop_radius):
+    if prop_radius=='uniform':
+        radius = np.random.rand(3) * (max_radius - min_radius) + min_radius
+    elif prop_radius=='squared_prop':
+        radius = min_radius / (1 + np.random.rand(3) * (min_radius/max_radius - 1))
+
     rotation_angles = np.random.rand(3) * 2 * np.pi
     rot = R.from_rotvec([[rotation_angles[0], 0, 0], [0, rotation_angles[1], 0], [0, 0, rotation_angles[2]]])
     rotation_matrices = rot.as_matrix()
@@ -72,7 +76,6 @@ def generate_cylinder(X,Y,Z,activity, center, min_radius,max_radius):
     return lesion
 
 
-
 def generate_bg_cylinder(X,Y,Z,activity, center, radius_xzy):
     rotation = np.random.rand() * 2 * np.pi
     background_array = (activity) * ((((((X - center[0]) * np.cos(rotation)
@@ -98,6 +101,7 @@ parser.add_argument('--dtype', default = 'float', help = "if npy, image dtype")
 parser.add_argument('--like', default = None, help = "Instead of specifying spacing/size, you can specify an image as a metadata model")
 parser.add_argument('--min_radius', default = 4,type = float, help = 'minimum radius of the random spheres')
 parser.add_argument('--max_radius', default = 32,type = float, help = 'max radius of the random spheres')
+parser.add_argument('--prop_radius', default = "uniform", choices=['uniform', 'squared_prop'], help = 'proportion of radius between min/max')
 parser.add_argument('--max_activity', default = 1,type = float, help = 'max activity in spheres')
 parser.add_argument('--min_counts', default = 2e4, type = float, help = "minimum number of counts per proj (noise level)")
 parser.add_argument('--max_counts', default = 1e5, type = float, help = "maximum number of counts per proj (noise level)")
@@ -223,11 +227,11 @@ def generate(opt):
 
 
             if opt.ellipse:
-                lesion = generate_ellipse(activity=random_activity,center=center,X=X,Y=Y,Z=Z,min_radius=opt.min_radius, max_radius = opt.max_radius)
+                lesion = generate_ellipse(activity=random_activity,center=center,X=X,Y=Y,Z=Z,min_radius=opt.min_radius, max_radius = opt.max_radius, prop_radius = opt.prop_radius)
             elif (opt.ell_cyl >= 0) and (opt.ell_cyl <= 1):
                 p = random.random()
                 if p<opt.ell_cyl:
-                    lesion = generate_ellipse(X=X,Y=Y,Z=Z,activity=random_activity,center=center,min_radius=opt.min_radius, max_radius = opt.max_radius)
+                    lesion = generate_ellipse(X=X,Y=Y,Z=Z,activity=random_activity,center=center,min_radius=opt.min_radius, max_radius = opt.max_radius, prop_radius=opt.prop_radius)
                 else:
                     lesion = generate_cylinder(X=X,Y=Y,Z=Z,activity=random_activity,center=center,min_radius=opt.min_radius, max_radius = opt.max_radius)
             else:
