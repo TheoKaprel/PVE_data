@@ -95,7 +95,7 @@ parser.add_argument('--nb_data','-n', type = int, required = True, help = 'numbe
 parser.add_argument('--size_volume', type = str, default = "150", help = 'Size of the desired image i.e. number of voxels per dim')
 parser.add_argument('--spacing_volume', type = str, default = "4", help = 'Spacing of the desired image i.e phyisical length of a voxels (mm)')
 parser.add_argument('--size_proj', type = int, default = 128, help = 'Size of the desired projections')
-parser.add_argument('--spacing_proj', type = float, default = 4.41806, help = 'Spacing of the desired projection')
+parser.add_argument('--spacing_proj', type = float, default = 4.41806, help = 'Spacing of the desired projection. Ex intevo : 2.3976')
 parser.add_argument('--type', default = 'mha', help = "Create mha, mhd,npy image")
 parser.add_argument('--dtype', default = 'float', help = "if npy, image dtype")
 parser.add_argument('--like', default = None, help = "Instead of specifying spacing/size, you can specify an image as a metadata model")
@@ -189,7 +189,7 @@ def generate(opt):
 
     if opt.background is not None:
         background_radius_x_mean, background_radius_z_mean,background_radius_y_mean = 200, 120,lengths[1]/2
-        background_radius_x_std, background_radius_z_std,background_radius_y_std = 20, 10, 50
+        background_radius_x_std, background_radius_z_std,background_radius_y_std = 20, 10, 100
         min_background_level, max_background_level = 1e-3, 1/float(opt.background)
 
     total_counts_in_proj_min,total_counts_in_proj_max = opt.min_counts, opt.max_counts
