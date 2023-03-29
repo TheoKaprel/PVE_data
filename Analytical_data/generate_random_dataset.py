@@ -13,8 +13,10 @@ from scipy.spatial.transform import Rotation as R
 from parameters import get_psf_params
 
 def get_dtype(opt_dtype):
-    if opt_dtype=='float' or opt_dtype=='float32':
-        return np.float
+    if opt_dtype=='float64':
+        return np.float64
+    elif opt_dtype=='float32':
+        return np.float32
     elif opt_dtype=='float16' or opt_dtype=='half':
         return np.float16
     elif opt_dtype=='uint16':
@@ -29,8 +31,9 @@ def strParamToArray(str_param):
         array_param = np.array([array_param[0].astype(np.float)] * 3)
     return array_param[::-1]
 
+letters = string.ascii_uppercase
+
 def chooseRandomRef(Nletters):
-    letters = string.ascii_uppercase
     source_ref = ''.join(random.choice(letters) for _ in range(Nletters))
     return source_ref
 
@@ -97,7 +100,7 @@ parser.add_argument('--spacing_volume', type = str, default = "4", help = 'Spaci
 parser.add_argument('--size_proj', type = int, default = 128, help = 'Size of the desired projections')
 parser.add_argument('--spacing_proj', type = float, default = 4.41806, help = 'Spacing of the desired projection. Ex intevo : 2.3976')
 parser.add_argument('--type', default = 'mha', help = "Create mha, mhd,npy image")
-parser.add_argument('--dtype', default = 'float', help = "if npy, image dtype")
+parser.add_argument('--dtype', default = 'float32', help = "if npy, image dtype")
 parser.add_argument('--like', default = None, help = "Instead of specifying spacing/size, you can specify an image as a metadata model")
 parser.add_argument('--min_radius', default = 4,type = float, help = 'minimum radius of the random spheres')
 parser.add_argument('--max_radius', default = 32,type = float, help = 'max radius of the random spheres')
@@ -116,6 +119,7 @@ parser.add_argument('--spect_system', default = "ge-discovery", choices=['ge-dis
 parser.add_argument('--save_src',action ="store_true", help = "if you want to also save the source that will be forward projected")
 parser.add_argument('--noise',action ="store_true", help = "Add Poisson noise ONLY to ProjPVE")
 parser.add_argument('--merge',action="store_true", help = "If --merge, the 3 (or 2) projections are stored in the same file ABCDE(_noisy)_PVE_PVfree.mha. In this order : noisy, PVE, PVfree")
+parser.add_argument('--rec_fp',action="store_true", help = "noisy projections are reconstructed with 1 osem-rm iter and forward-projected w/o rm to obtain ABCDE_rec_fp.mha")
 
 def generate(opt):
     print(opt)
@@ -182,10 +186,38 @@ def generate(opt):
     forward_projector_PVE.SetSigmaZero(sigma0_psf)
     forward_projector_PVE.SetAlpha(alpha_psf)
 
+
     if opt.attenuationmap is not None:
         attenuation_image = itk.imread(opt.attenuationmap, itk.F)
         forward_projector_PVfree.SetInput(2, attenuation_image)
         forward_projector_PVE.SetInput(2, attenuation_image)
+
+    if opt.rec_fp:
+        constant_image = rtk.ConstantImageSource[imageType].New()
+        constant_image.SetSpacing(vSpacing)
+        constant_image.SetOrigin(vOffset)
+        constant_image.SetSize([int(s) for s in vSize])
+        constant_image.SetConstant(1)
+        output_rec = constant_image.GetOutput()
+
+        OSEMType = rtk.OSEMConeBeamReconstructionFilter[imageType, imageType]
+        osem = OSEMType.New()
+        osem.SetInput(0, output_rec)
+        osem.SetGeometry(geometry)
+        osem.SetNumberOfIterations(1)
+        osem.SetNumberOfProjectionsPerSubset(10)
+        osem.SetBetaRegularization(0)
+
+        if opt.attenuationmap is not None:
+            osem.SetInput(2, attenuation_image)
+
+        FP = osem.ForwardProjectionType_FP_ZENG
+        BP = osem.BackProjectionType_BP_ZENG
+        osem.SetSigmaZero(sigma0_psf)
+        osem.SetAlpha(alpha_psf)
+        osem.SetForwardProjectionFilter(FP)
+        osem.SetBackProjectionFilter(BP)
+
 
     if opt.background is not None:
         background_radius_x_mean, background_radius_z_mean,background_radius_y_mean = 200, 120,lengths[1]/2
@@ -309,9 +341,20 @@ def generate(opt):
                 output_filename_PVE_noisy = os.path.join(opt.output_folder, f'{source_ref}_PVE_noisy.{opt.type}')
                 if opt.type!='npy':
                     output_forward_PVE_noisy = itk.image_from_array(noisy_projection_array)
-                    output_forward_PVE_noisy.SetSpacing(output_forward_PVE.GetSpacing())
-                    output_forward_PVE_noisy.SetOrigin(output_forward_PVE.GetOrigin())
+                    output_forward_PVE_noisy.CopyInformation(output_forward_PVE)
                     itk.imwrite(output_forward_PVE_noisy, output_filename_PVE_noisy)
+
+                    if opt.rec_fp:
+                        osem.SetInput(1, output_forward_PVE_noisy)
+                        osem.Update()
+                        # output_rec_done = osem.GetOutput()
+                        # itk.imwrite(output_rec_done, os.path.join(opt.output_folder, f'{source_ref}_rec.mhd'))
+                        forward_projector_PVfree.SetInput(1, osem.GetOutput())
+                        forward_projector_PVfree.Update()
+                        output_rec_fp = forward_projector_PVfree.GetOutput()
+                        itk.imwrite(output_rec_fp, os.path.join(opt.output_folder, f'{source_ref}_rec_fp.mhd'))
+                        print('fp done')
+
                 else:
                     np.save(output_filename_PVE_noisy,noisy_projection_array)
 
