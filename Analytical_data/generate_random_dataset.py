@@ -142,7 +142,6 @@ def generate(opt):
         vSpacing = strParamToArray(opt.spacing_volume)
         vOffset = [(-sp*size + sp)/2 for (sp,size) in zip(vSpacing,vSize)]
 
-
     # matrix settings
     lengths = vSize*vSpacing
     lspaceX = np.linspace(-vSize[0] * vSpacing[0] / 2, vSize[0] * vSpacing[0] / 2, vSize[0])
@@ -158,10 +157,7 @@ def generate(opt):
     geometry = xmlReader.GetOutputObject()
     nproj = len(geometry.GetGantryAngles())
 
-
     dtype = get_dtype(opt.dtype)
-
-
 
     pixelType = itk.F
     imageType = itk.Image[pixelType, 3]
@@ -174,23 +170,16 @@ def generate(opt):
     output_image.SetSize([opt.size_proj, opt.size_proj, nproj])
     output_image.SetConstant(0.)
 
-    forward_projector_PVfree = rtk.ZengForwardProjectionImageFilter.New()
-    forward_projector_PVfree.SetInput(0, output_image.GetOutput())
-    forward_projector_PVfree.SetGeometry(geometry)
-    forward_projector_PVfree.SetSigmaZero(0)
-    forward_projector_PVfree.SetAlpha(0)
 
-    forward_projector_PVE = rtk.ZengForwardProjectionImageFilter.New()
-    forward_projector_PVE.SetInput(0, output_image.GetOutput())
-    forward_projector_PVE.SetGeometry(geometry)
-    forward_projector_PVE.SetSigmaZero(sigma0_psf)
-    forward_projector_PVE.SetAlpha(alpha_psf)
+    forward_projector = rtk.ZengForwardProjectionImageFilter.New()
+    forward_projector.SetInput(0, output_image.GetOutput())
+    forward_projector.SetGeometry(geometry)
 
 
     if opt.attenuationmap is not None:
         attenuation_image = itk.imread(opt.attenuationmap, itk.F)
-        forward_projector_PVfree.SetInput(2, attenuation_image)
-        forward_projector_PVE.SetInput(2, attenuation_image)
+        forward_projector.SetInput(2, attenuation_image)
+        forward_projector.SetInput(2, attenuation_image)
 
     if opt.rec_fp:
         constant_image = rtk.ConstantImageSource[imageType].New()
@@ -296,17 +285,23 @@ def generate(opt):
         #compute fowardprojections :
         print(source_ref)
 
-        # proj PVfree
-        forward_projector_PVfree.SetInput(1, src_img_normedToTotalCounts)
-        forward_projector_PVfree.Update()
-        output_forward_PVfree = forward_projector_PVfree.GetOutput()
-        output_forward_PVfree_array = itk.array_from_image(output_forward_PVfree).astype(dtype=dtype)
+        #proj PVE
+        forward_projector.SetInput(1, src_img_normedToTotalCounts)
 
-        # proj PVE
-        forward_projector_PVE.SetInput(1, src_img_normedToTotalCounts)
-        forward_projector_PVE.Update()
-        output_forward_PVE = forward_projector_PVE.GetOutput()
+        forward_projector.SetSigmaZero(sigma0_psf)
+        forward_projector.SetAlpha(alpha_psf)
+        forward_projector.Update()
+        output_forward_PVE = forward_projector.GetOutput()
+        output_forward_PVE.DisconnectPipeline()
         output_forward_PVE_array = itk.array_from_image(output_forward_PVE).astype(dtype=dtype)
+
+        #proj PVfree
+        forward_projector.SetSigmaZero(0)
+        forward_projector.SetAlpha(0)
+        forward_projector.Update()
+        output_forward_PVfree = forward_projector.GetOutput()
+        output_forward_PVfree.DisconnectPipeline()
+        output_forward_PVfree_array = itk.array_from_image(output_forward_PVfree).astype(dtype=dtype)
 
         if opt.noise:
             noisy_projection_array = np.random.poisson(lam=output_forward_PVE_array, size=output_forward_PVE_array.shape).astype(dtype=dtype)
@@ -347,13 +342,12 @@ def generate(opt):
                     if opt.rec_fp:
                         osem.SetInput(1, output_forward_PVE_noisy)
                         osem.Update()
-                        # output_rec_done = osem.GetOutput()
-                        # itk.imwrite(output_rec_done, os.path.join(opt.output_folder, f'{source_ref}_rec.mhd'))
-                        forward_projector_PVfree.SetInput(1, osem.GetOutput())
-                        forward_projector_PVfree.Update()
-                        output_rec_fp = forward_projector_PVfree.GetOutput()
+                        forward_projector.SetSigmaZero(0)
+                        forward_projector.SetAlpha(0)
+                        forward_projector.SetInput(1, osem.GetOutput())
+                        forward_projector.Update()
+                        output_rec_fp = forward_projector.GetOutput()
                         itk.imwrite(output_rec_fp, os.path.join(opt.output_folder, f'{source_ref}_rec_fp.mhd'))
-                        print('fp done')
 
                 else:
                     np.save(output_filename_PVE_noisy,noisy_projection_array)
