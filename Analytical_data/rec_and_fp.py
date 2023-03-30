@@ -60,17 +60,17 @@ def main():
     osem.SetAlpha(alpha_psf)
 
     forward_projector = rtk.ZengForwardProjectionImageFilter.New()
-    output_proj_spacing = [args.spacing_proj,args.spacing_proj, 1]
+    output_proj_spacing = np.array([args.spacing_proj,args.spacing_proj, 1])
     proj_offset = (-args.spacing_proj * args.size_proj + args.spacing_proj) / 2
     output_proj_offset = [proj_offset, proj_offset, (-nproj+1)/2]
-    output_proj = rtk.ConstantImageSource[imageType].New()
+    output_proj_array = np.zeros((nproj,args.size_proj, args.size_proj), dtype=np.float32)
+    output_proj = itk.image_from_array(output_proj_array)
     output_proj.SetSpacing(output_proj_spacing)
     output_proj.SetOrigin(output_proj_offset)
-    output_proj.SetSize([args.size_proj, args.size_proj, nproj])
-    output_proj.SetConstant(0.)
-    forward_projector.SetInput(0, output_proj.GetOutput())
+    forward_projector.SetInput(0, output_proj)
     forward_projector.SetGeometry(geometry)
-
+    forward_projector.SetSigmaZero(0)
+    forward_projector.SetAlpha(0)
 
 
     for proj_filename in list_files:
@@ -84,7 +84,7 @@ def main():
                 projections = itk.image_from_array(projections_np)
             projections.CopyInformation(output_proj)
         else:
-            projections = itk.imread(proj_filename)
+            projections = itk.imread(proj_filename, pixelType)
             if args.merged:
                 projections_np = itk.array_from_image(projections)
                 projections_ = itk.image_from_array(projections_np[:nproj,:,:])
