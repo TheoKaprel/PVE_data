@@ -95,18 +95,25 @@ def main():
         osem.SetInput(1, projections)
         osem.Update()
 
-        if args.merged:
-            itk.imwrite(osem.GetOutput(), proj_filename.replace(f'_noisy_PVE_PVfree.{args.filetype}', f'_rec.{args.filetype}'))
-        else:
-            itk.imwrite(osem.GetOutput(), proj_filename.replace(f'_PVE_noisy.{args.filetype}', f'_rec.{args.filetype}'))
+        # if args.merged:
+        #     itk.imwrite(osem.GetOutput(), proj_filename.replace(f'_noisy_PVE_PVfree.{args.filetype}', f'_rec.{args.filetype}'))
+        # else:
+        #     itk.imwrite(osem.GetOutput(), proj_filename.replace(f'_PVE_noisy.{args.filetype}', f'_rec.{args.filetype}'))
 
         forward_projector.SetInput(1, osem.GetOutput())
         forward_projector.Update()
 
         if args.merged:
-            itk.imwrite(forward_projector.GetOutput(), proj_filename.replace(f'_noisy_PVE_PVfree.{args.filetype}', f'_rec_fp.{args.filetype}'))
+            output_proj_rec_fp_filename = proj_filename.replace(f'_noisy_PVE_PVfree.{args.filetype}', f'_rec_fp.{args.filetype}')
         else:
-            itk.imwrite(forward_projector.GetOutput(), proj_filename.replace(f'_PVE_noisy.{args.filetype}', f'_rec_fp.{args.filetype}'))
+            output_proj_rec_fp_filename = proj_filename.replace(f'_PVE_noisy.{args.filetype}', f'_rec_fp.{args.filetype}')
+
+        if args.filetype=='npy':
+            output_proj_rec_fp = forward_projector.GetOutput()
+            output_proj_rec_fp_np = itk.array_from_image(output_proj_rec_fp)
+            np.save(output_proj_rec_fp_filename,output_proj_rec_fp_np)
+        else:
+            itk.imwrite(forward_projector.GetOutput(), output_proj_rec_fp_filename)
 
 
 
