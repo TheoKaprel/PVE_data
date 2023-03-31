@@ -2,16 +2,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-
-
 # Units in mm
-
 d = 1.5
 l = 35
 mu = 1.91*11.35*10
 leff = l - 2/mu
 b = 380
 
+
+# cf Cherry (2012), Chap 14, Section C
 FWHM = d*(leff + b)/leff
 beta = FWHM/(2*np.sqrt(np.log(2)))
 print(f'FWHM = {FWHM} mm')

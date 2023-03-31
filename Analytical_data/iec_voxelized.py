@@ -51,20 +51,6 @@ def create_iec(spacing, output):
     labels, image = gate.voxelize_volume(sim, iec.name, image)
     print(f"Output labels: {labels}")
 
-    # materials = ["G4_WATER", "G4_LUNG_ICRP", "G4_AIR", "IEC_PLASTIC", "G4_LEAD_OXIDE"]
-    #
-    # for mat in materials:
-    #     print(gate.dump_material_like_Gate(mat))
-    #
-
-
-    n = g4.G4NistManager.Instance()
-    water = n.FindMaterial("G4_WATER")
-    print(water)
-
-
-
-    # n.PrintG4Material("G4_WATER")
 
     # write labels
     lf = str(output).replace('.mhd', '.json')

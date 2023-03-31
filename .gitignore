@@ -22,4 +22,3 @@ datasets/
 Analytical_data/comparison_reconstructions.py
 Analytical_data/convergence_iteration_recons.py
 Analytical_data/deconvolve.py
-

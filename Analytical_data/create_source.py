@@ -2,20 +2,30 @@ import itk
 import numpy as np
 import click
 
+from generate_random_dataset import generate_bg_cylinder
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 @click.command(context_settings = CONTEXT_SETTINGS)
-@click.option('--size', type = int, default = 128, help = 'Size of the desired image i.e. number of voxels per dim', show_default=True)
-@click.option('--spacing', type = float, default = 4, help = 'Spacing of the desired image i.e phyisical length of a voxels (mm)', show_default=True)
-@click.option('--like', default = None, help = "Instead of specifying spacing/size, you can specify an image as a metadata model")
-@click.option('--n_source', default = 1, type = int, help = "Number of spherical sources")
-@click.option('--value', type = float,multiple = True, default = [1], help = 'Activity concentration to assign to the source', show_default=True)
+@click.option('--size', type = int, default = 128,
+              help = 'Size of the desired image i.e. number of voxels per dim', show_default=True)
+@click.option('--spacing', type = float, default = 4,
+              help = 'Spacing of the desired image i.e phyisical length of a voxels (mm)', show_default=True)
+@click.option('--like', default = None,
+              help = "Instead of specifying spacing/size, you can specify an image as a metadata model")
+@click.option('--n_source', default = 1, type = int,
+              help = "Number of spherical sources")
+@click.option('--value', type = float,multiple = True, default = [1],
+              help = 'Activity concentration to assign to the source', show_default=True)
 @click.option('--type', type = str, default = "sphere", help = 'sphere or square')
-@click.option('--radius', type = float,multiple = True, default = [64], help = 'Radius of activity source (mm)', show_default=True)
-@click.option('--center', type = (int,int,int), multiple = True, help = 'Center of the point source (Ox,Oy,Oz) (mm)')
-@click.option('--background', default = None, help = 'If you want background activity specify the activity:background ratio. For example --background 10 for a 1/10 background ratio.')
-@click.option('--output','-o', 'output_filename', required = True, help = "Output filename (should be .mha or .mhd)")
+@click.option('--radius', type = float,multiple = True, default = [64],
+              help = 'Radius of activity source (mm)', show_default=True)
+@click.option('--center', type = (float,float,float), multiple = True,
+              help = 'Center of the point source (Ox,Oy,Oz) (mm)')
+@click.option('--background', default = None,
+              help = 'If you want background activity specify the activity:background ratio. For example --background 10 for a 1/10 background ratio.')
+@click.option('--output','-o', 'output_filename', required = True,
+              help = "Output filename (should be .mha or .mhd)")
 def create_source_click(size,spacing, value,type, like,n_source, center, radius,background, output_filename):
     """
     Creates source
@@ -47,31 +57,34 @@ def create_source(size, spacing, like,n_source, value,type, center, radius, back
         offset = (-spacing*size + spacing)/2
         vOffset = np.array([offset,offset,offset])
 
+    lspaceX = np.linspace(-vSize[0] * vSpacing[0] / 2, vSize[0] * vSpacing[0] / 2, vSize[0])
+    lspaceY = np.linspace(-vSize[1] * vSpacing[1] / 2, vSize[1] * vSpacing[1] / 2, vSize[1])
+    lspaceZ = np.linspace(-vSize[2] * vSpacing[2] / 2, vSize[2] * vSpacing[2] / 2, vSize[2])
 
-    # itk coordinate system
-    lspaceZ = np.linspace(-vSize[0] * vSpacing[0] / 2, vSize[0] * vSpacing[0] / 2, vSize[0])
-    lspaceX = np.linspace(-vSize[1] * vSpacing[1] / 2, vSize[1] * vSpacing[1] / 2, vSize[1])
-    lspaceY = np.linspace(-vSize[2] * vSpacing[2] / 2, vSize[2] * vSpacing[2] / 2, vSize[2])
-
-    X, Y, Z = np.meshgrid(lspaceX,lspaceY,lspaceZ)
+    X,Y,Z = np.meshgrid(lspaceX,lspaceY,lspaceZ, indexing='ij')
     src_array = np.zeros_like(X)
 
     if background:
         bg_center = [0,0,0]
-        bg_radius = 100
+        # bg_radius = 180
         bg_level =  1 / float(background)
+        src_array += generate_bg_cylinder(X=X, Y=Y, Z=Z, activity=bg_level, center=bg_center, radius_xzy=[180,180,256])
 
-        src_array += (bg_level) * ((((X - bg_center[0]) / bg_radius) ** 2 + ((Y - bg_center[1]) / bg_radius) ** 2 + (
-                (Z - bg_center[2]) / bg_radius) ** 2) < 1).astype(float)
+        # src_array += (bg_level) * ((((X - bg_center[0]) / bg_radius) ** 2 +
+        #         ((Z - bg_center[2]) / bg_radius) ** 2) < 1).astype(float)
 
 
     for s in range(n_source):
-        center_s = [center[s][1], center[s][2], center[s][0]]
+        center_s = [center[s][0], center[s][1], center[s][2]]
         radius_s = radius[s]
         if type == 'sphere':
-            src_array += value[s]*(( ( ((X - center_s[0]) / radius_s) ** 2 + ((Y - center_s[1]) / radius_s) ** 2 + ((Z - center_s[2])/ radius_s) ** 2  ) < 1).astype(float))
+            src_array += value[s]*(( ( ((X - center_s[0]) / radius_s) ** 2
+                                       + ((Y - center_s[1]) / radius_s) ** 2
+                                       + ((Z - center_s[2])/ radius_s) ** 2  ) < 1).astype(float))
         elif type=='square':
-            src_array += value[s]*(((np.abs(X-center_s[0])<radius_s)*(np.abs(Y-center_s[1])<radius_s)*(np.abs(Z-center_s[2])<radius_s)).astype(float))
+            src_array += value[s]*(((np.abs(X-center_s[0])<radius_s)*
+                                    (np.abs(Y-center_s[1])<radius_s)*
+                                    (np.abs(Z-center_s[2])<radius_s)).astype(float))
 
 
 
