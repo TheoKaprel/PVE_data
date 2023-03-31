@@ -79,9 +79,9 @@ def main():
         if args.filetype=="npy":
             projections_np = np.load(proj_filename)
             if args.merged:
-                projections = itk.image_from_array(projections_np[:nproj,:,:])
+                projections = itk.image_from_array(projections_np[:nproj,:,:].astype(np.float32))
             else:
-                projections = itk.image_from_array(projections_np)
+                projections = itk.image_from_array(projections_np.astype(np.float32))
             projections.CopyInformation(output_proj)
         else:
             projections = itk.imread(proj_filename, pixelType)
