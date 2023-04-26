@@ -6,10 +6,12 @@ from itk import RTK as rtk
 import numpy as np
 import glob
 
-from parameters import get_psf_params
+from parameters import get_psf_params,get_detector_params
 
 def main():
     print(args)
+
+    size_proj,spacing_proj = get_detector_params(machine=args.spect_system)
 
     if args.merged:
         list_files = glob.glob(f'{args.folder}/?????_noisy_PVE_PVfree.{args.filetype}')
@@ -60,10 +62,10 @@ def main():
     osem.SetAlpha(alpha_psf)
 
     forward_projector = rtk.ZengForwardProjectionImageFilter.New()
-    output_proj_spacing = np.array([args.spacing_proj,args.spacing_proj, 1])
-    proj_offset = (-args.spacing_proj * args.size_proj + args.spacing_proj) / 2
+    output_proj_spacing = np.array([spacing_proj,spacing_proj, 1])
+    proj_offset = (-spacing_proj * size_proj + spacing_proj) / 2
     output_proj_offset = [proj_offset, proj_offset, (-nproj+1)/2]
-    output_proj_array = np.zeros((nproj,args.size_proj, args.size_proj), dtype=np.float32)
+    output_proj_array = np.zeros((nproj,size_proj, size_proj), dtype=np.float32)
     output_proj = itk.image_from_array(output_proj_array)
     output_proj.SetSpacing(output_proj_spacing)
     output_proj.SetOrigin(output_proj_offset)
@@ -125,9 +127,7 @@ if __name__ == '__main__':
     parser.add_argument('--spect_system', default="ge-discovery", choices=['ge-discovery', 'siemens-intevo'],help='SPECT system simulated for PVE projections')
     parser.add_argument('--like', type = str)
     parser.add_argument('--size', type = int)
-    parser.add_argument('--size_proj', type = int)
     parser.add_argument('--spacing', type = float)
-    parser.add_argument('--spacing_proj', type = float)
     parser.add_argument("-n", "--niterations",default = 1, type = int, help = "number of iterations")
     parser.add_argument("--filetype",default = "mhd", choices = ['mhd', 'mha', 'npy'])
     parser.add_argument("--merged",action ="store_true")
