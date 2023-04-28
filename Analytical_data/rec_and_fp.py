@@ -5,6 +5,8 @@ import itk
 from itk import RTK as rtk
 import numpy as np
 import glob
+import os
+import random
 
 from parameters import get_psf_params,get_detector_params
 
@@ -17,6 +19,14 @@ def main():
         list_files = glob.glob(f'{args.folder}/?????_noisy_PVE_PVfree.{args.filetype}')
     else:
         list_files = glob.glob(f'{args.folder}/?????_PVE_noisy.{args.filetype}')
+
+    list_files_ready_to_rec_fp = []
+    for p in list_files:
+        if not (os.path.exists(p.replace('noisy_PVE_PVfree', 'rec_fp'))):
+            list_files_ready_to_rec_fp.append(p)
+
+    list_files_to_rec_fp = random.sample(list_files_ready_to_rec_fp, args.n)
+
 
     Dimension = 3
     pixelType = itk.F
@@ -75,7 +85,7 @@ def main():
     forward_projector.SetAlpha(0)
 
 
-    for proj_filename in list_files:
+    for proj_filename in list_files_to_rec_fp:
         print(proj_filename)
 
         if args.filetype=="npy":
@@ -128,9 +138,10 @@ if __name__ == '__main__':
     parser.add_argument('--like', type = str)
     parser.add_argument('--size', type = int)
     parser.add_argument('--spacing', type = float)
-    parser.add_argument("-n", "--niterations",default = 1, type = int, help = "number of iterations")
+    parser.add_argument("--niterations",default = 1, type = int, help = "number of iterations")
     parser.add_argument("--filetype",default = "mhd", choices = ['mhd', 'mha', 'npy'])
     parser.add_argument("--merged",action ="store_true")
+    parser.add_argument("-n", type = int, default = -1, help = "number of data to rec&fp")
     args = parser.parse_args()
 
     main()
