@@ -1,7 +1,7 @@
 import numpy as np
 import argparse
 
-def get_psf_params(machine):
+def get_psf_params(machine, verbose = True):
     assert (machine in ['ge-discovery', 'siemens-intevo'])
 
     # Units in mm
@@ -17,7 +17,7 @@ def get_psf_params(machine):
 
 
     # mass attenuation coefficient at 150 keV in Pb
-    mu = 1.91 * 11.35 * 10
+    mu = 1.91 * 11.35 / 10
 
     # Effective length
     leff = l - 2 / mu
@@ -25,11 +25,13 @@ def get_psf_params(machine):
     sigma0_psf = d / (2*np.sqrt(2*np.log(2)))
     alpha_psf= d / (2*np.sqrt(2*np.log(2))) / leff
 
-    print(f'FWHM(d)={d} + {d/leff} d')
-    print(f'FWHM(10cm) = {d*(1 + 100 / leff)}')
+    if verbose:
+        print(f'FWHM(d)={d} + {d/leff} d')
+        print(f'FWHM(10cm) = {d*(1 + 100 / leff)}')
 
-    print(f'sigma0 = {sigma0_psf}')
-    print(f'alpha = {alpha_psf}')
+        print(f'sigma0 = {sigma0_psf}')
+        print(f'alpha = {alpha_psf}')
+
     return sigma0_psf, alpha_psf
 
 
@@ -45,27 +47,10 @@ def get_detector_params(machine):
     return size,spacing
 
 def get_FWHM_b(machine, b):
-    assert (machine in ['ge-discovery', 'siemens-intevo'])
-
-    # Units in mm
-
-    if machine=="ge-discovery":
-        # holes diameter
-        d = 1.5
-        # holes length
-        l = 35
-    elif machine=="siemens-intevo":
-        d = 1.11
-        l = 24.05
-
-    # mass attenuation coefficient at 150 keV in Pb
-    mu = 1.91 * 11.35 * 10
-
-    # Effective length
-    leff = l - 2 / mu
-
-    FWHM_b = d + b * d / leff
+    sigma0_psf, alpha_psf = get_psf_params(machine=machine, verbose=False)
+    FWHM_b = (2*np.sqrt(2*np.log(2))) * (sigma0_psf + b * alpha_psf)
     return FWHM_b
+
 
 
 
