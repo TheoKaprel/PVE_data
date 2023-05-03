@@ -11,9 +11,17 @@ def get_psf_params(machine, verbose = True):
         d = 1.5
         # holes length
         l = 35
+        # septal thickness
+        t = 0.2
+
     elif machine=="siemens-intevo":
-        d = 1.11
+        d1 = 1.11
+        d2 = 2/np.sqrt(3) * d1
+
+        d = d1 * 3 *np.log(3)/np.pi
+
         l = 24.05
+        t = 0.16
 
 
     # mass attenuation coefficient at 150 keV in Pb
@@ -27,10 +35,20 @@ def get_psf_params(machine, verbose = True):
 
     if verbose:
         print(f'FWHM(d)={d} + {d/leff} d')
-        print(f'FWHM(10cm) = {d*(1 + 100 / leff)}')
-
+        print(f'FWHM(10cm) = {d*((leff + 100) / leff)}')
         print(f'sigma0 = {sigma0_psf}')
         print(f'alpha = {alpha_psf}')
+
+        w = t*l / (2*d+t)
+        septal_penetration = np.exp(-w*mu)
+        print(f'septal penetration : {round(septal_penetration*100,3)} %')
+
+        K = 0.26 # hexagonal holes
+
+        efficiency = (K*(d/leff)*d/(d+t))**2
+        sensitivity = efficiency * 60 * 3.7* 10**4
+        print(f'efficiency : {round(efficiency*100, 8)} %  ({round(sensitivity, 1)} cpm/microCi)')
+
 
     return sigma0_psf, alpha_psf
 
