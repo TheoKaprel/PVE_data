@@ -363,7 +363,7 @@ def generate(opt):
     print(f'Total time elapsed for data generation : {elapsed_time_min} min    (i.e. {elapsed_time} s)')
 
     formatted_dataset_infos = json.dumps(dataset_infos, indent=4)
-    output_info_json = os.path.join(opt.output_folder, f'dataset_infos_{current_date}.json')
+    output_info_json = os.path.join(opt.output_folder, f'dataset_infos_{current_date}_{source_ref}.json')
     jsonfile = open(output_info_json, "w")
     jsonfile.write(formatted_dataset_infos)
     jsonfile.close()
