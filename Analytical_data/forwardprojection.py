@@ -28,8 +28,9 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--inputsrc', '-i', help = 'path to the input 3D image to forward project')
 @click.option('--output_folder', '-o', help = 'output folder.')
 @click.option('--geom', '-g', 'geometry_filename', default = None, help = 'If the geometry file you want to use is already created, precise here the path to the xml file')
+@click.option('--nproj', type=int, default = None, help = 'if not geom: Precise the number of projections needed (ex 120)')
+@click.option('--sid', type=float, default = None, help = 'if not geom: Precise the detector-to-isocenter distance (mm)')
 @click.option('--attmap', '-a', help = 'Path to the attenuation map if the default is not ok)')
-@click.option('--nproj',type=int, default = None, help = 'Precise the number of projections needed')
 @click.option('--pve',is_flag = True, default = False, help = 'To project the input source without partial volume effect')
 @click.option('--pvfree', is_flag = True, default = False, help = 'To project the input source without partial volume effect')
 @click.option('--spect_system', default = "ge-discovery",type = str, help = 'spect system for psf', show_default=True)
@@ -40,37 +41,31 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--save_src', is_flag = True, default = False, help= 'to save the scaled source (the one that is actually projected)')
 @click.option('--total_count', default = 5e5, show_default = True)
 @click.option('--output_ref', default = None, type = str, help = 'ref to append to output_filename')
-def forwardproject_click(inputsrc, output_folder,geometry_filename,attmap, nproj,pve, pvfree, spect_system, size,spacing, type,noise, save_src,total_count, output_ref):
+def forwardproject_click(inputsrc, output_folder,geometry_filename,attmap, nproj, sid,pve, pvfree, spect_system, size,spacing, type,noise, save_src,total_count, output_ref):
 
     forwardprojectRTK(inputsrc=inputsrc, output_folder=output_folder,geometry_filename=geometry_filename,attmap=attmap,
-                      nproj=nproj,pve=pve, pvfree=pvfree,size=size,spacing=spacing, type = type,save_src=save_src,
+                      nproj=nproj,sid = sid, pve=pve, pvfree=pvfree,size=size,spacing=spacing, type = type,save_src=save_src,
                       spect_system=spect_system, noise=noise,total_count=total_count, output_ref=output_ref)
 
 
 
-def forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj,pve, pvfree, size,spacing,type,total_count, spect_system,save_src=False, noise=False, output_ref=None):
+def forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj, sid,pve, pvfree, size,spacing,type,total_count, spect_system,save_src=False, noise=False, output_ref=None):
     # projection parameters
     offset = (-spacing*size + spacing)/2
 
-    if (geometry_filename and not nproj):
+    if ((geometry_filename is not None) and (nproj is None) and (sid is None)):
         xmlReader = rtk.ThreeDCircularProjectionGeometryXMLFileReader.New()
         xmlReader.SetFilename(geometry_filename)
         xmlReader.GenerateOutputInformation()
         geometry = xmlReader.GetOutputObject()
         nproj = len(geometry.GetGantryAngles())
-    elif (nproj and not geometry_filename):
-
+    elif ((geometry_filename is None) and (nproj is not None) and (sid is not None)):
         list_angles = np.linspace(0,360,nproj+1)
         geometry = rtk.ThreeDCircularProjectionGeometry.New()
         for i in range(nproj):
-            geometry.AddProjection(380, 0, list_angles[i], offset, offset)
-        # geom_fn = f'./data/geom_{nproj}.xml'
-        # xmlWriter = rtk.ThreeDCircularProjectionGeometryXMLFileWriter.New()
-        # xmlWriter.SetFilename(geom_fn)
-        # xmlWriter.SetObject(geometry)
-        # xmlWriter.WriteFile()
+            geometry.AddProjection(sid, 0, list_angles[i], offset, offset)
     else:
-        print('ERROR: give me geom xor nproj')
+        print('ERROR: give me geom xor (nproj and sid)')
         exit(0)
 
     pixelType = itk.F
