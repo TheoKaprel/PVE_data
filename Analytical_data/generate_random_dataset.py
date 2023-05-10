@@ -112,7 +112,9 @@ parser.add_argument('--nspheres', default = 1,type = int, help = 'max number of 
 parser.add_argument('--background', default = None,type = float, help = 'If you want background activity specify the maximal activity:background ratio. For example --background 10 for a maximum 1/10 background activity.')
 parser.add_argument('--ellipse',action ="store_true", help = "if --ellipse, activity spheres are in fact ellipses")
 parser.add_argument('--ell_cyl',type = float, default = None, help = "if --ell_cyl p, activity spheres are ellipse with proba p and cylinder with proba (1-p)")
-parser.add_argument('--geom', '-g', default = None, help = 'geometry file to forward project. Default is the proj on one detector')
+parser.add_argument('--geom', '-g', default = None, help = 'geometry file to forward project')
+parser.add_argument('--nproj',type = int, default = None, help = 'if no geom, precise nb of proj angles')
+parser.add_argument('--sid',type = float, default = None, help = 'if no geom, precise detector-to-isocenter distance (mm)')
 parser.add_argument('--attenuationmap', '-a',default = None, help = 'path to the attenuation map file')
 parser.add_argument('--output_folder','-o', default = './dataset', help = " Absolute or relative path to the output folder")
 parser.add_argument('--spect_system', default = "ge-discovery", choices=['ge-discovery', 'siemens-intevo'], help = 'SPECT system simulated for PVE projections')
@@ -126,7 +128,7 @@ def generate(opt):
     current_date = time.strftime("%d_%m_%Y_%Hh_%Mm_%Ss", time.localtime())
     opt.date = current_date
     dataset_infos = vars(opt)
-    print(json.dumps(dataset_infos, indent = 3))
+
     t0 = time.time()
 
     sigma0_psf, alpha_psf = get_psf_params(opt.spect_system)
@@ -152,15 +154,31 @@ def generate(opt):
 
     X,Y,Z = np.meshgrid(lspaceX,lspaceY,lspaceZ, indexing='ij')
 
+    offset = (-opt.spacing_proj * opt.size_proj + opt.spacing_proj) / 2 #proj offset
+
     # Prepare Forward Projection
-    xmlReader = rtk.ThreeDCircularProjectionGeometryXMLFileReader.New()
-    xmlReader.SetFilename(opt.geom)
-    xmlReader.GenerateOutputInformation()
-    geometry = xmlReader.GetOutputObject()
-    nproj = len(geometry.GetGantryAngles())
 
+    # Geometry
+    if ((opt.geom is not None) and (opt.nproj is None) and (opt.sid is None)):
+        xmlReader = rtk.ThreeDCircularProjectionGeometryXMLFileReader.New()
+        xmlReader.SetFilename(opt.geom)
+        xmlReader.GenerateOutputInformation()
+        geometry = xmlReader.GetOutputObject()
+        nproj = len(geometry.GetGantryAngles())
+        dataset_infos['nproj'] = nproj
+        dataset_infos['sid'] = geometry.GetSourceToIsocenterDistances()[0]
+    elif ((opt.geom is None) and (opt.nproj is not None) and (opt.sid is not None)):
+        list_angles = np.linspace(0,360,opt.nproj+1)
+        geometry = rtk.ThreeDCircularProjectionGeometry.New()
+        for i in range(opt.nproj):
+            geometry.AddProjection(opt.sid, 0, list_angles[i], offset, offset)
+        nproj = opt.nproj
+    else:
+        print('ERROR: give me geom xor (nproj and sid)')
+        exit(0)
+
+    # Projections infos
     dtype = get_dtype(opt.dtype)
-
     pixelType = itk.F
     imageType = itk.Image[pixelType, 3]
     output_spacing = [opt.spacing_proj,opt.spacing_proj, 1]
@@ -217,6 +235,8 @@ def generate(opt):
 
     total_counts_in_proj_min,total_counts_in_proj_max = opt.min_counts, opt.max_counts
     print(f'Total counts in projections between {total_counts_in_proj_min} and {total_counts_in_proj_max}')
+
+    print(json.dumps(dataset_infos, indent=3))
 
     for n in range(opt.nb_data):
         src_array = np.zeros_like(X)
@@ -363,7 +383,7 @@ def generate(opt):
     print(f'Total time elapsed for data generation : {elapsed_time_min} min    (i.e. {elapsed_time} s)')
 
     formatted_dataset_infos = json.dumps(dataset_infos, indent=4)
-    output_info_json = os.path.join(opt.output_folder, f'dataset_infos_{current_date}.json')
+    output_info_json = os.path.join(opt.output_folder, f'dataset_infos_{current_date}_{source_ref}.json')
     jsonfile = open(output_info_json, "w")
     jsonfile.write(formatted_dataset_infos)
     jsonfile.close()
