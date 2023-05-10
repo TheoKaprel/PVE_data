@@ -16,16 +16,19 @@ def get_psf_params(machine, verbose = True):
 
     elif machine=="siemens-intevo":
         d1 = 1.11
-        d2 = 2/np.sqrt(3) * d1
 
-        d = d1 * 3 *np.log(3)/np.pi
+        # i dont knoow
+        # d2 = 2/np.sqrt(3) * d1
+        # d = d1 * 3 *np.log(3)/np.pi
+
+        d = d1
 
         l = 24.05
         t = 0.16
 
 
     # mass attenuation coefficient at 150 keV in Pb
-    mu = 1.91 * 11.35 / 10
+    mu = 1.91 * 11.35 / 10 # (mm)^-1
 
     # Effective length
     leff = l - 2 / mu

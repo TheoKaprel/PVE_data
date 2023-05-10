@@ -3,6 +3,8 @@
 import argparse
 import pydicom
 import matplotlib.pyplot as plt
+import numpy as np
+
 
 def main():
     print(args)
@@ -10,9 +12,16 @@ def main():
     print(ds)
 
     radialPosition1,radialPosition2 = [],[]
-    for v in ds[0x54, 0x22][0][0x18, 0x1142].value:
+    radial_pos_detect_1 = ds[0x54, 0x22][0][0x18, 0x1142].value._list
+    # print(isinstance(radial_pos_detect_1._list, list))
+
+    radial_pos_detect_1=[radial_pos_detect_1] if (not isinstance(radial_pos_detect_1,list)) else radial_pos_detect_1
+    radial_pos_detect_2 = ds[0x54, 0x22][1][0x18, 0x1142].value._list
+    radial_pos_detect_2 = [radial_pos_detect_2] if (not isinstance(radial_pos_detect_2, list)) else radial_pos_detect_2
+
+    for v in radial_pos_detect_1:
         radialPosition1.append(float(v))
-    for v in ds[0x54, 0x22][1][0x18, 0x1142].value:
+    for v in radial_pos_detect_2:
         radialPosition2.append(float(v))
 
     print("radial positions 1 : ")
@@ -25,6 +34,21 @@ def main():
 
     fig,ax = plt.subplots()
     ax.plot(radialPosition1+radialPosition2)
+    # plt.show()
+
+    r1,r2 = radialPosition1,radialPosition2
+    theta1 = np.linspace(np.pi, 2*np.pi, 60)
+    theta2 = np.linspace(0,np.pi, 60)
+
+    fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
+    ax.plot(theta1, r1)
+    ax.plot(theta2, r2)
+    # ax.set_rmax(2)
+    # ax.set_rticks([0.5, 1, 1.5, 2])  # Less radial ticks
+    # ax.set_rlabel_position(-22.5)  # Move radial labels away from plotted line
+    ax.grid(True)
+
+    ax.set_title("A line plot on a polar axis", va='bottom')
     plt.show()
 
 

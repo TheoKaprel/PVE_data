@@ -130,6 +130,8 @@ def generate(opt):
     t0 = time.time()
 
     sigma0_psf, alpha_psf = get_psf_params(opt.spect_system)
+    dataset_infos['sigma0_psf'] = sigma0_psf
+    dataset_infos['alpha_psf'] = alpha_psf
 
     # get output image parameters
     if opt.like is not None:
