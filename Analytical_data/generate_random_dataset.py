@@ -128,7 +128,7 @@ def generate(opt):
     current_date = time.strftime("%d_%m_%Y_%Hh_%Mm_%Ss", time.localtime())
     opt.date = current_date
     dataset_infos = vars(opt)
-    print(json.dumps(dataset_infos, indent = 3))
+
     t0 = time.time()
 
     sigma0_psf, alpha_psf = get_psf_params(opt.spect_system)
@@ -165,6 +165,8 @@ def generate(opt):
         xmlReader.GenerateOutputInformation()
         geometry = xmlReader.GetOutputObject()
         nproj = len(geometry.GetGantryAngles())
+        dataset_infos['nproj'] = nproj
+        dataset_infos['sid'] = geometry.GetSourceToIsocenterDistances()[0]
     elif ((opt.geom is None) and (opt.nproj is not None) and (opt.sid is not None)):
         list_angles = np.linspace(0,360,opt.nproj+1)
         geometry = rtk.ThreeDCircularProjectionGeometry.New()
@@ -233,6 +235,8 @@ def generate(opt):
 
     total_counts_in_proj_min,total_counts_in_proj_max = opt.min_counts, opt.max_counts
     print(f'Total counts in projections between {total_counts_in_proj_min} and {total_counts_in_proj_max}')
+
+    print(json.dumps(dataset_infos, indent=3))
 
     for n in range(opt.nb_data):
         src_array = np.zeros_like(X)
