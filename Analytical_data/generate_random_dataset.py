@@ -232,11 +232,13 @@ def generate(opt):
         background_radius_x_mean, background_radius_z_mean,background_radius_y_mean = 200, 120,lengths[1]/2
         background_radius_x_std, background_radius_z_std,background_radius_y_std = 20, 10, 100
         min_background_level, max_background_level = 1e-3, 1/float(opt.background)
+        dataset_infos['bg_shape_params'] = {'mean_xzy': f'({background_radius_x_mean},{background_radius_z_mean},{background_radius_y_mean})',
+                                            'std_xzy': f'({background_radius_x_std},{background_radius_z_std},{background_radius_y_std})'}
 
     total_counts_in_proj_min,total_counts_in_proj_max = opt.min_counts, opt.max_counts
     print(f'Total counts in projections between {total_counts_in_proj_min} and {total_counts_in_proj_max}')
 
-    print(json.dumps(dataset_infos, indent=3))
+    print(json.dumps(dataset_infos, indent = 3))
 
     for n in range(opt.nb_data):
         src_array = np.zeros_like(X)
