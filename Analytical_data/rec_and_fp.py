@@ -14,6 +14,7 @@ def main():
     print(args)
 
     size_proj,spacing_proj = get_detector_params(machine=args.spect_system)
+    proj_offset = (-spacing_proj * size_proj + spacing_proj) / 2
 
     if args.merged:
         list_files = glob.glob(f'{args.folder}/?????_noisy_PVE_PVfree.{args.filetype}')
@@ -46,11 +47,22 @@ def main():
         output_image.SetOrigin([offset, offset, offset])
         output_image = output_image.astype(pixelType)
 
-    xmlReader = rtk.ThreeDCircularProjectionGeometryXMLFileReader.New()
-    xmlReader.SetFilename(args.geom)
-    xmlReader.GenerateOutputInformation()
-    geometry = xmlReader.GetOutputObject()
-    nproj = len(geometry.GetGantryAngles())
+    # Geometry
+    if ((args.geom is not None) and (args.nproj is None) and (args.sid is None)):
+        xmlReader = rtk.ThreeDCircularProjectionGeometryXMLFileReader.New()
+        xmlReader.SetFilename(args.geom)
+        xmlReader.GenerateOutputInformation()
+        geometry = xmlReader.GetOutputObject()
+        nproj = len(geometry.GetGantryAngles())
+    elif ((args.geom is None) and (args.nproj is not None) and (args.sid is not None)):
+        list_angles = np.linspace(0,360,args.nproj+1)
+        geometry = rtk.ThreeDCircularProjectionGeometry.New()
+        for i in range(args.nproj):
+            geometry.AddProjection(args.sid, 0, list_angles[i], proj_offset, proj_offset)
+        nproj = args.nproj
+    else:
+        print('ERROR: give me geom xor (nproj and sid)')
+        exit(0)
 
     OSEMType = rtk.OSEMConeBeamReconstructionFilter[imageType, imageType]
     osem = OSEMType.New()
@@ -73,7 +85,6 @@ def main():
 
     forward_projector = rtk.ZengForwardProjectionImageFilter.New()
     output_proj_spacing = np.array([spacing_proj,spacing_proj, 1])
-    proj_offset = (-spacing_proj * size_proj + spacing_proj) / 2
     output_proj_offset = [proj_offset, proj_offset, (-nproj+1)/2]
     output_proj_array = np.zeros((nproj,size_proj, size_proj), dtype=np.float32)
     output_proj = itk.image_from_array(output_proj_array)
@@ -134,6 +145,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--folder")
     parser.add_argument("--geom")
+    parser.add_argument("--nproj", type=int)
+    parser.add_argument("--sid", type=float)
     parser.add_argument('--spect_system', default="ge-discovery", choices=['ge-discovery', 'siemens-intevo'],help='SPECT system simulated for PVE projections')
     parser.add_argument('--like', type = str)
     parser.add_argument('--size', type = int)
