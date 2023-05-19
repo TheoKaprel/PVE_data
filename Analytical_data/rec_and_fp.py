@@ -16,17 +16,6 @@ def main():
     size_proj,spacing_proj = get_detector_params(machine=args.spect_system)
     proj_offset = (-spacing_proj * size_proj + spacing_proj) / 2
 
-    if args.merged:
-        list_files = glob.glob(f'{args.folder}/?????_noisy_PVE_PVfree.{args.filetype}')
-    else:
-        list_files = glob.glob(f'{args.folder}/?????_PVE_noisy.{args.filetype}')
-
-    list_files_ready_to_rec_fp = []
-    for p in list_files:
-        if not (os.path.exists(p.replace('noisy_PVE_PVfree', 'rec_fp'))):
-            list_files_ready_to_rec_fp.append(p)
-
-    list_files_to_rec_fp = random.sample(list_files_ready_to_rec_fp, args.n)
 
 
     Dimension = 3
@@ -95,8 +84,17 @@ def main():
     forward_projector.SetSigmaZero(0)
     forward_projector.SetAlpha(0)
 
+    if args.merged:
+        list_files = glob.glob(f'{args.folder}/?????_noisy_PVE_PVfree.{args.filetype}')
+    else:
+        list_files = glob.glob(f'{args.folder}/?????_PVE_noisy.{args.filetype}')
 
-    for proj_filename in list_files_to_rec_fp:
+    list_ready_to_rec_fp = [l for l in list_files if not os.path.exists(l.replace('noisy_PVE_PVfree', 'rec_fp'))]
+    list_to_rec_fp = random.sample(list_ready_to_rec_fp, args.n)
+
+    for proj_filename in list_to_rec_fp:
+        while (os.path.exists(proj_filename.replace('noisy_PVE_PVfree', 'rec_fp'))):
+            proj_filename = random.choice(list_ready_to_rec_fp)
         print(proj_filename)
 
         if args.filetype=="npy":
