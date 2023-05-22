@@ -86,14 +86,16 @@ def main():
 
     if args.merged:
         list_files = glob.glob(f'{args.folder}/?????_noisy_PVE_PVfree.{args.filetype}')
+        base = "noisy_PVE_PVfree"
     else:
         list_files = glob.glob(f'{args.folder}/?????_PVE_noisy.{args.filetype}')
+        base = "PVE_noisy"
 
-    list_ready_to_rec_fp = [l for l in list_files if not os.path.exists(l.replace('noisy_PVE_PVfree', 'rec_fp'))]
+    list_ready_to_rec_fp = [l for l in list_files if not os.path.exists(l.replace(base, 'rec_fp'))]
     list_to_rec_fp = random.sample(list_ready_to_rec_fp, args.n)
 
     for proj_filename in list_to_rec_fp:
-        while (os.path.exists(proj_filename.replace('noisy_PVE_PVfree', 'rec_fp'))):
+        while (os.path.exists(proj_filename.replace(base, 'rec_fp'))):
             proj_filename = random.choice(list_ready_to_rec_fp)
         print(proj_filename)
 
@@ -116,18 +118,10 @@ def main():
         osem.SetInput(1, projections)
         osem.Update()
 
-        # if args.merged:
-        #     itk.imwrite(osem.GetOutput(), proj_filename.replace(f'_noisy_PVE_PVfree.{args.filetype}', f'_rec.{args.filetype}'))
-        # else:
-        #     itk.imwrite(osem.GetOutput(), proj_filename.replace(f'_PVE_noisy.{args.filetype}', f'_rec.{args.filetype}'))
-
         forward_projector.SetInput(1, osem.GetOutput())
         forward_projector.Update()
 
-        if args.merged:
-            output_proj_rec_fp_filename = proj_filename.replace(f'_noisy_PVE_PVfree.{args.filetype}', f'_rec_fp.{args.filetype}')
-        else:
-            output_proj_rec_fp_filename = proj_filename.replace(f'_PVE_noisy.{args.filetype}', f'_rec_fp.{args.filetype}')
+        output_proj_rec_fp_filename = proj_filename.replace(f'{base}.{args.filetype}', f'rec_fp.{args.filetype}')
 
         if args.filetype=='npy':
             output_proj_rec_fp = forward_projector.GetOutput()
