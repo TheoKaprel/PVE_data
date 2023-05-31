@@ -16,8 +16,6 @@ def main():
     size_proj,spacing_proj = get_detector_params(machine=args.spect_system)
     proj_offset = (-spacing_proj * size_proj + spacing_proj) / 2
 
-
-
     Dimension = 3
     pixelType = itk.F
     imageType = itk.Image[pixelType, Dimension]
@@ -84,19 +82,29 @@ def main():
     forward_projector.SetSigmaZero(0)
     forward_projector.SetAlpha(0)
 
-    if args.merged:
-        list_files = glob.glob(f'{args.folder}/?????_noisy_PVE_PVfree.{args.filetype}')
-        base = "noisy_PVE_PVfree"
+    if args.input is not None:
+        list_to_rec_fp = [args.input]
+        choose_random = False
+        base = ''
     else:
-        list_files = glob.glob(f'{args.folder}/?????_PVE_noisy.{args.filetype}')
-        base = "PVE_noisy"
-
-    list_ready_to_rec_fp = [l for l in list_files if not os.path.exists(l.replace(base, 'rec_fp'))]
-    list_to_rec_fp = random.sample(list_ready_to_rec_fp, args.n)
+        assert(args.folder is not None)
+        assert(args.filetype is not None)
+        assert(args.n is not None)
+        if args.merged:
+            list_files = glob.glob(f'{args.folder}/?????_noisy_PVE_PVfree.{args.filetype}')
+            base = "_noisy_PVE_PVfree"
+        else:
+            list_files = glob.glob(f'{args.folder}/?????_PVE_noisy.{args.filetype}')
+            base = "_PVE_noisy"
+        list_ready_to_rec_fp = [l for l in list_files if not os.path.exists(l.replace(base, '_rec_fp'))]
+        list_to_rec_fp = random.sample(list_ready_to_rec_fp, args.n)
+        choose_random = True
 
     for proj_filename in list_to_rec_fp:
-        while (os.path.exists(proj_filename.replace(base, 'rec_fp'))):
-            proj_filename = random.choice(list_ready_to_rec_fp)
+        if choose_random:
+            while (os.path.exists(proj_filename.replace(base, '_rec_fp'))):
+                proj_filename = random.choice(list_ready_to_rec_fp)
+
         print(proj_filename)
 
         if args.filetype=="npy":
@@ -114,28 +122,33 @@ def main():
                 projections_.CopyInformation(projections)
                 projections=projections_
 
-
+        print('1')
         osem.SetInput(1, projections)
         osem.Update()
-
+        print('2')
         forward_projector.SetInput(1, osem.GetOutput())
         forward_projector.Update()
+        print('3')
+        output_proj_rec_fp_filename = proj_filename.replace(f'{base}.{args.filetype}', f'_rec_fp.{args.filetype}')
 
-        output_proj_rec_fp_filename = proj_filename.replace(f'{base}.{args.filetype}', f'rec_fp.{args.filetype}')
-
+        print('4')
         if args.filetype=='npy':
             output_proj_rec_fp = forward_projector.GetOutput()
             output_proj_rec_fp_np = itk.array_from_image(output_proj_rec_fp)
             np.save(output_proj_rec_fp_filename,output_proj_rec_fp_np)
         else:
             itk.imwrite(forward_projector.GetOutput(), output_proj_rec_fp_filename)
-
+        print(f'output at : {output_proj_rec_fp_filename}')
 
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument("-n", type = int, default = -1, help = "number of data to rec&fp")
     parser.add_argument("--folder")
+    parser.add_argument("--filetype",default = "mhd", choices = ['mhd', 'mha', 'npy'])
+    parser.add_argument("--merged",action ="store_true")
+    parser.add_argument("--input")
     parser.add_argument("--geom")
     parser.add_argument("--nproj", type=int)
     parser.add_argument("--sid", type=float)
@@ -144,9 +157,6 @@ if __name__ == '__main__':
     parser.add_argument('--size', type = int)
     parser.add_argument('--spacing', type = float)
     parser.add_argument("--niterations",default = 1, type = int, help = "number of iterations")
-    parser.add_argument("--filetype",default = "mhd", choices = ['mhd', 'mha', 'npy'])
-    parser.add_argument("--merged",action ="store_true")
-    parser.add_argument("-n", type = int, default = -1, help = "number of data to rec&fp")
     args = parser.parse_args()
 
     main()

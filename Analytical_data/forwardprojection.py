@@ -17,9 +17,9 @@ import numpy as np
 from itk import RTK as rtk
 
 try:
-    from .parameters import get_psf_params
+    from .parameters import get_psf_params,get_detector_params
 except:
-    from parameters import get_psf_params
+    from parameters import get_psf_params,get_detector_params
 
 
 
@@ -34,8 +34,8 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--pve',is_flag = True, default = False, help = 'To project the input source without partial volume effect')
 @click.option('--pvfree', is_flag = True, default = False, help = 'To project the input source without partial volume effect')
 @click.option('--spect_system', default = "ge-discovery",type = str, help = 'spect system for psf', show_default=True)
-@click.option('--size', default = 128, show_default = True)
-@click.option('--spacing', default = 4.41806, show_default = True)
+@click.option('--size')
+@click.option('--spacing')
 @click.option('--type', default = 'mhd', show_default = True)
 @click.option('--noise', is_flag = True, default = False, help= 'Apply poisson noise to the projection')
 @click.option('--save_src', is_flag = True, default = False, help= 'to save the scaled source (the one that is actually projected)')
@@ -50,6 +50,11 @@ def forwardproject_click(inputsrc, output_folder,geometry_filename,attmap, nproj
 
 
 def forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj, sid,pve, pvfree, size,spacing,type,total_count, spect_system,save_src=False, noise=False, output_ref=None):
+
+    if (spacing is None) and (size is None) and (spect_system is not None):
+        size,spacing = get_detector_params(machine=spect_system)
+        print(f'size / spacing derived from spect_system ({spect_system}) : size={size}    spacing={spacing}')
+
     # projection parameters
     offset = (-spacing*size + spacing)/2
 
