@@ -8,7 +8,7 @@ import argparse
 def convert():
     list_noisy_PVE_PVfree = glob.glob(os.path.join(args.folder, "?????_noisy_PVE_PVfree.npy"))
 
-    f = h5py.File(os.path.join(args.folfer, args.output), 'w')
+    f = h5py.File(os.path.join(args.folder, args.output), 'w')
 
     for i,fn_noisy_PVE_PVfree in enumerate(list_noisy_PVE_PVfree):
         print(fn_noisy_PVE_PVfree)
