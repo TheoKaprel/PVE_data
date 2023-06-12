@@ -1,15 +1,5 @@
 #!/usr/bin/env python3
 
-
-"""
-Forward projection of an input 3D acitvity map
-
-
-Can be used either as a function callable from command line or as a module
-
-
-"""
-
 import click
 import os
 import itk
@@ -21,6 +11,13 @@ try:
 except:
     from parameters import get_psf_params,get_detector_params
 
+
+def norm_projs_to_total_counts(projs,total_counts):
+    projs_array = itk.array_from_image(projs)
+    projs_array = projs_array / np.sum(projs_array, axis=(1, 2),keepdims=True) * total_counts
+    projs_total_counts = itk.image_from_array(projs_array)
+    projs_total_counts.CopyInformation(projs)
+    return projs_total_counts
 
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -78,7 +75,8 @@ def forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj, s
 
     source_image= itk.imread(inputsrc, itk.F)
     source_array = itk.array_from_image(source_image)
-    source_array_act = source_array / np.sum(source_array) * float(total_count) * spacing ** 2 / (source_image.GetSpacing()[0] ** 3)
+    source_array_act = source_array / np.sum(source_array) * float(total_count) * spacing ** 2 / (source_image.GetSpacing()[0]*source_image.GetSpacing()[1]*source_image.GetSpacing()[2] )
+    # source_array_act = source_array
     source_image_act = itk.image_from_array(source_array_act).astype(itk.F)
     source_image_act.SetOrigin(source_image.GetOrigin())
     source_image_act.SetSpacing(source_image.GetSpacing())
@@ -86,21 +84,9 @@ def forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj, s
     if save_src:
         itk.imwrite(source_image_act, inputsrc.replace(".mhd", "_scaled.mhd"))
 
-
-    # readerType = itk.ImageFileReader[imageType]
-    # source_image_reader = readerType.New()
-    # source_image_reader.SetFileName(inputsrc)
-    # source_image_reader.Update()
-
-
-
-
-
-
-
     output_spacing = [spacing,spacing, 1]
     offset = (-spacing * size + spacing) / 2
-    output_offset = [offset, offset, (-nproj+1)/2]
+    output_offset = [offset, offset, 0.5]
 
     output_image = rtk.ConstantImageSource[imageType].New()
     output_image.SetSpacing(output_spacing)
@@ -128,6 +114,7 @@ def forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj, s
         forward_projector.Update()
 
         output_forward_PVfree = forward_projector.GetOutput()
+        output_forward_PVfree = norm_projs_to_total_counts(projs=output_forward_PVfree,total_counts=total_count)
 
         output_filename_PVfree = os.path.join(output_folder,f'{output_ref}_PVfree.{type}')
         itk.imwrite(output_forward_PVfree,output_filename_PVfree)
@@ -139,6 +126,8 @@ def forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj, s
         forward_projector.Update()
 
         output_forward_PVE = forward_projector.GetOutput()
+        output_forward_PVE = norm_projs_to_total_counts(projs=output_forward_PVE,total_counts=total_count)
+
         output_filename_PVE = os.path.join(output_folder,f'{output_ref}_PVE.{type}')
         itk.imwrite(output_forward_PVE,output_filename_PVE)
 

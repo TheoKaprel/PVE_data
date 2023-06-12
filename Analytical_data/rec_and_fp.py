@@ -122,16 +122,14 @@ def main():
                 projections_.CopyInformation(projections)
                 projections=projections_
 
-        print('1')
         osem.SetInput(1, projections)
         osem.Update()
-        print('2')
         forward_projector.SetInput(1, osem.GetOutput())
         forward_projector.Update()
-        print('3')
         output_proj_rec_fp_filename = proj_filename.replace(f'{base}.{args.filetype}', f'_rec_fp.{args.filetype}')
+        if args.output is not None:
+            output_proj_rec_fp_filename = args.output
 
-        print('4')
         if args.filetype=='npy':
             output_proj_rec_fp = forward_projector.GetOutput()
             output_proj_rec_fp_np = itk.array_from_image(output_proj_rec_fp)
@@ -149,6 +147,7 @@ if __name__ == '__main__':
     parser.add_argument("--filetype",default = "mhd", choices = ['mhd', 'mha', 'npy'])
     parser.add_argument("--merged",action ="store_true")
     parser.add_argument("--input")
+    parser.add_argument("--output")
     parser.add_argument("--geom")
     parser.add_argument("--nproj", type=int)
     parser.add_argument("--sid", type=float)

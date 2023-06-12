@@ -49,7 +49,7 @@ def create_source(size, spacing, like,n_source, value,type, center, radius, back
     if like:
         im_like = itk.imread(like)
         vSpacing = np.array(im_like.GetSpacing())
-        vSize = np.array(itk.size(im_like))
+        vSize = np.array(itk.size(im_like))[::-1]
         vOffset = np.array(im_like.GetOrigin())
     else:
         vSize = np.array([size,size,size])
