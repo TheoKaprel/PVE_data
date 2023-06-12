@@ -15,11 +15,9 @@ def get_psf_params(machine, verbose = True):
         t = 0.2
 
     elif machine=="siemens-intevo":
-        d1 = 1.11
-
-        # i dont knoow
-        # d2 = 2/np.sqrt(3) * d1
-        # d = d1 * 3 *np.log(3)/np.pi
+        d1 = 1.11 # diameters across the flats
+        d2 = 2/np.sqrt(3) * d1  # long diameters
+        d_mean = d1 * 3 *np.log(3)/np.pi # mean diameter
 
         d = d1
 
