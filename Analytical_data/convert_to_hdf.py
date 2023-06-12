@@ -8,7 +8,6 @@ import argparse
 def convert():
     list_noisy_PVE_PVfree = glob.glob(os.path.join(args.folder, "?????_noisy_PVE_PVfree.npy"))
 
-
     f = h5py.File(os.path.join(args.folfer, args.output), 'w')
 
     for i,fn_noisy_PVE_PVfree in enumerate(list_noisy_PVE_PVfree):
@@ -38,3 +37,4 @@ if __name__ == '__main__':
     # parser.add_argument('--opt3',action ="store_true", help = "One global .h5 file, divided in N groups, each one conaining 4 datasets (PVE_noisy,PVE,PVfree,rec_fp)")
     parser.add_argument('--output')
     args = parser.parse_args()
+    convert()
