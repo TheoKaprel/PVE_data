@@ -1,4 +1,5 @@
 import itk
+import matplotlib.pyplot as plt
 import numpy as np
 import argparse
 import os
@@ -92,6 +93,16 @@ def generate_bg_cylinder(X,Y,Z,activity, center, radius_xzy):
 def generate_sphere(X,Y,Z,activity,center,radius):
     return activity * ((((X - center[0]) / radius) ** 2 + ((Y - center[1]) / radius) ** 2 + ((Z - center[2]) / radius) ** 2) < 1).astype(float)
 
+def sample_activity(min_r,max_r,lbda,with_bg):
+    if with_bg:
+        S = 1 / (max_r + np.log(np.random.rand()) / lbda)
+        if 1/S < min_r:
+            return 1/min_r
+        else:
+            return S
+    else:
+        S = np.random.rand()*(max_r-min_r)+min_r
+        return S
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--nb_data','-n', type = int, required = True, help = 'number of desired data = (src,projPVE,projPVfree)')
@@ -105,11 +116,12 @@ parser.add_argument('--like', default = None, help = "Instead of specifying spac
 parser.add_argument('--min_radius', default = 4,type = float, help = 'minimum radius of the random spheres')
 parser.add_argument('--max_radius', default = 32,type = float, help = 'max radius of the random spheres')
 parser.add_argument('--prop_radius', default = "uniform", choices=['uniform', 'squared_inv'], help = 'proportion of radius between min/max')
-parser.add_argument('--max_activity', default = 1,type = float, help = 'max activity in spheres')
+parser.add_argument('--min_ratio', default = 1/1000,type = float, help = 'min bg:src ratio. If no background, it is the min activity')
+parser.add_argument('--max_ratio', default = 1/8,type = float, help = 'max bg:src ratio. If no background, it is the max activity')
 parser.add_argument('--min_counts', default = 2e4, type = float, help = "minimum number of counts per proj (noise level)")
 parser.add_argument('--max_counts', default = 1e5, type = float, help = "maximum number of counts per proj (noise level)")
 parser.add_argument('--nspheres', default = 1,type = int, help = 'max number of spheres to generate on each source')
-parser.add_argument('--background', default = None,type = float, help = 'If you want background activity specify the maximal activity:background ratio. For example --background 10 for a maximum 1/10 background activity.')
+parser.add_argument('--background', action= 'store_true', help = 'If you want background add --background')
 parser.add_argument('--ellipse',action ="store_true", help = "if --ellipse, activity spheres are in fact ellipses")
 parser.add_argument('--ell_cyl',type = float, default = None, help = "if --ell_cyl p, activity spheres are ellipse with proba p and cylinder with proba (1-p)")
 parser.add_argument('--geom', '-g', default = None, help = 'geometry file to forward project')
@@ -122,7 +134,7 @@ parser.add_argument('--save_src',action ="store_true", help = "if you want to al
 parser.add_argument('--noise',action ="store_true", help = "Add Poisson noise ONLY to ProjPVE")
 parser.add_argument('--merge',action="store_true", help = "If --merge, the 3 (or 2) projections are stored in the same file ABCDE(_noisy)_PVE_PVfree.mha. In this order : noisy, PVE, PVfree")
 parser.add_argument('--rec_fp',action="store_true", help = "noisy projections are reconstructed with 1 osem-rm iter and forward-projected w/o rm to obtain ABCDE_rec_fp.mha")
-
+lsrc = []
 def generate(opt):
     print(opt)
     current_date = time.strftime("%d_%m_%Y_%Hh_%Mm_%Ss", time.localtime())
@@ -227,13 +239,17 @@ def generate(opt):
         osem.SetForwardProjectionFilter(FP)
         osem.SetBackProjectionFilter(BP)
 
-
-    if opt.background is not None:
+    min_ratio, Max_ratio = opt.min_ratio, opt.max_ratio
+    if opt.background:
         background_radius_x_mean, background_radius_z_mean,background_radius_y_mean = 200, 120,lengths[1]/2
         background_radius_x_std, background_radius_z_std,background_radius_y_std = 20, 10, 100
-        min_background_level, max_background_level = 1e-3, 1/float(opt.background)
         dataset_infos['bg_shape_params'] = {'mean_xzy': f'({background_radius_x_mean},{background_radius_z_mean},{background_radius_y_mean})',
                                             'std_xzy': f'({background_radius_x_std},{background_radius_z_std},{background_radius_y_std})'}
+
+        R = 100 # proba ratio max/min : p(M)/p(m)=R
+        lbda = np.log(R) / (Max_ratio - min_ratio)
+    else:
+        lbda = None
 
     total_counts_in_proj_min,total_counts_in_proj_max = opt.min_counts, opt.max_counts
     print(f'Total counts in projections between {total_counts_in_proj_min} and {total_counts_in_proj_max}')
@@ -243,24 +259,24 @@ def generate(opt):
     for n in range(opt.nb_data):
         src_array = np.zeros_like(X)
 
-        if opt.background is not None:
+        if opt.background:
             # background = cylinder with revolution axis = Y
             background_array = np.zeros_like(X)
             while (background_array.max()==0): # to avoid empty background
                 bg_center = np.random.randint(-50,50,3)
                 bg_radius_xzy = (background_radius_x_std, background_radius_z_std, background_radius_y_std) * np.random.randn(3) + (background_radius_x_mean, background_radius_z_mean, background_radius_y_mean)
-                bg_level = round(np.random.rand(),3)*(max_background_level- min_background_level) + min_background_level
+                bg_level = 1
                 background_array = generate_bg_cylinder(X,Y,Z,activity=bg_level,center=bg_center,radius_xzy=bg_radius_xzy)
 
             src_array += background_array
 
 
-        random_nb_of_sphers = np.random.randint(1,opt.nspheres+1)
+        random_nb_of_sphers = np.random.randint(1,opt.nspheres)
 
 
         for s  in range(random_nb_of_sphers):
-            random_activity = round(np.random.rand(),3)*(opt.max_activity-1)+1
-
+            random_activity = sample_activity(min_r=min_ratio,max_r=Max_ratio,lbda=lbda,with_bg=opt.background)
+            lsrc.append(random_activity)
             if opt.background is None:
                 center = (2 * np.random.rand(3) - 1) * (lengths / 2)
             else:
@@ -389,7 +405,6 @@ def generate(opt):
     jsonfile = open(output_info_json, "w")
     jsonfile.write(formatted_dataset_infos)
     jsonfile.close()
-
 
 if __name__ == '__main__':
     opt = parser.parse_args()
