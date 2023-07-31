@@ -104,6 +104,15 @@ def sample_activity(min_r,max_r,lbda,with_bg):
         S = np.random.rand()*(max_r-min_r)+min_r
         return S
 
+def grad_activity_fct(a0,x,y,z,g,phi,M,period,delta):
+    p = period
+    linsp_x, linsp_y,linsp_z = np.mgrid[-M:M+1, -M:M+1, -M:M+1]
+    xx_yy_zz = x*linsp_x+y*linsp_y+z*linsp_z
+    powers = (linsp_x**2 +linsp_y**2 + linsp_z**2)**(delta)
+    powers[powers==0] = np.infty
+    F = np.sum(g*np.cos(2*np.pi * xx_yy_zz / p + phi)/powers)+a0
+    return F
+
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--nb_data','-n', type = int, required = True, help = 'number of desired data = (src,projPVE,projPVfree)')
 parser.add_argument('--size_volume', type = str, default = "150", help = 'Size of the desired image i.e. number of voxels per dim')
@@ -124,6 +133,7 @@ parser.add_argument('--nspheres', default = 1,type = int, help = 'max number of 
 parser.add_argument('--background', action= 'store_true', help = 'If you want background add --background')
 parser.add_argument('--ellipse',action ="store_true", help = "if --ellipse, activity spheres are in fact ellipses")
 parser.add_argument('--ell_cyl',type = float, default = None, help = "if --ell_cyl p, activity spheres are ellipse with proba p and cylinder with proba (1-p)")
+parser.add_argument('--grad_act',action ="store_true", help = "if --grad_act, hot sources are not homogeneous")
 parser.add_argument('--geom', '-g', default = None, help = 'geometry file to forward project')
 parser.add_argument('--nproj',type = int, default = None, help = 'if no geom, precise nb of proj angles')
 parser.add_argument('--sid',type = float, default = None, help = 'if no geom, precise detector-to-isocenter distance (mm)')
@@ -134,7 +144,6 @@ parser.add_argument('--save_src',action ="store_true", help = "if you want to al
 parser.add_argument('--noise',action ="store_true", help = "Add Poisson noise ONLY to ProjPVE")
 parser.add_argument('--merge',action="store_true", help = "If --merge, the 3 (or 2) projections are stored in the same file ABCDE(_noisy)_PVE_PVfree.mha. In this order : noisy, PVE, PVfree")
 parser.add_argument('--rec_fp',action="store_true", help = "noisy projections are reconstructed with 1 osem-rm iter and forward-projected w/o rm to obtain ABCDE_rec_fp.mha")
-lsrc = []
 def generate(opt):
     print(opt)
     current_date = time.strftime("%d_%m_%Y_%Hh_%Mm_%Ss", time.localtime())
@@ -274,9 +283,9 @@ def generate(opt):
         random_nb_of_sphers = np.random.randint(1,opt.nspheres)
 
 
-        for s  in range(random_nb_of_sphers):
+        for s in range(random_nb_of_sphers):
             random_activity = sample_activity(min_r=min_ratio,max_r=Max_ratio,lbda=lbda,with_bg=opt.background)
-            lsrc.append(random_activity)
+
             if opt.background is None:
                 center = (2 * np.random.rand(3) - 1) * (lengths / 2)
             else:
@@ -298,6 +307,16 @@ def generate(opt):
             else:
                 radius = np.random.rand()*(opt.max_radius-opt.min_radius) + opt.min_radius
                 lesion = generate_sphere(X,Y,Z,activity=random_activity,center=center,radius=radius)
+
+            if opt.grad_act:
+                #277
+                M = 8
+                g, phi = np.random.randn(2 * M + 1, 2 * M + 1, 2 * M + 1), (np.random.rand(2 * M + 1, 2 * M + 1, 2 * M + 1) * 2 * np.pi - np.pi)
+                idx,idy,idz = np.where(lesion>0)
+                for i in range(len(idx)):
+                    x,y,z = lspaceX[idx[i]],lspaceY[idy[i]],lspaceZ[idz[i]]
+                    lesion[idx[i],idy[i],idz[i]] = grad_activity_fct(a0 = random_activity,x=x,y=y,z=z,g=g,phi=phi,M=M,period=X.shape[0],delta=0.9)
+
 
             src_array += lesion
 
