@@ -9,6 +9,8 @@ from itk import RTK as rtk
 import time
 import json
 from scipy.spatial.transform import Rotation as R
+from scipy.interpolate import RegularGridInterpolator
+
 
 
 from parameters import get_psf_params
@@ -38,7 +40,7 @@ def chooseRandomRef(Nletters):
     source_ref = ''.join(random.choice(letters) for _ in range(Nletters))
     return source_ref
 
-def generate_ellipse(X,Y,Z,activity, center, min_radius,max_radius, prop_radius):
+def generate_ellipse(X,Y,Z, center, min_radius,max_radius, prop_radius):
     if prop_radius=='uniform':
         radius = np.random.rand(3) * (max_radius - min_radius) + min_radius
     elif prop_radius=='squared_inv':
@@ -48,7 +50,7 @@ def generate_ellipse(X,Y,Z,activity, center, min_radius,max_radius, prop_radius)
     rot = R.from_rotvec([[rotation_angles[0], 0, 0], [0, rotation_angles[1], 0], [0, 0, rotation_angles[2]]])
     rotation_matrices = rot.as_matrix()
     rot_matrice = rotation_matrices[0].dot((rotation_matrices[1].dot(rotation_matrices[2])))
-    lesion = activity * ((((      (X - center[0]) * rot_matrice[0, 0] + (Y - center[1]) * rot_matrice[0, 1] + (
+    lesion = ((((      (X - center[0]) * rot_matrice[0, 0] + (Y - center[1]) * rot_matrice[0, 1] + (
                                               Z - center[2]) * rot_matrice[0, 2]) ** 2 / (radius[0] ** 2) +
                                   ((X - center[0]) * rot_matrice[1, 0] + (Y - center[1]) * rot_matrice[1, 1] + (
                                               Z - center[2]) * rot_matrice[1, 2]) ** 2 / (radius[1] ** 2) +
@@ -57,7 +59,7 @@ def generate_ellipse(X,Y,Z,activity, center, min_radius,max_radius, prop_radius)
                                 ).astype(float))
     return lesion
 
-def generate_cylinder(X,Y,Z,activity, center, min_radius,max_radius):
+def generate_cylinder(X,Y,Z, center, min_radius,max_radius):
     radius = np.random.rand(3) * (max_radius - min_radius) + min_radius
     rotation = np.random.rand() * 2 * np.pi
     rotation_angles = np.random.rand(3) * 2 * np.pi
@@ -71,7 +73,7 @@ def generate_cylinder(X,Y,Z,activity, center, min_radius,max_radius):
     Yrot = XYZrot[:, 1].reshape(X.shape)
     Zrot = XYZrot[:, 2].reshape(X.shape)
 
-    lesion = (activity) * ((((((Xrot - center[0]) * np.cos(rotation)
+    lesion =((((((Xrot - center[0]) * np.cos(rotation)
                                         - (Yrot - center[1]) * np.sin(rotation)) / radius[0]) ** 2 +
                                       (((Xrot - center[0]) * np.sin(rotation)
                                         + (Yrot - center[1]) * np.cos(rotation)) / radius[1]) ** 2) < 1) *
@@ -90,8 +92,8 @@ def generate_bg_cylinder(X,Y,Z,activity, center, radius_xzy):
                                      ).astype(float)
     return background_array
 
-def generate_sphere(X,Y,Z,activity,center,radius):
-    return activity * ((((X - center[0]) / radius) ** 2 + ((Y - center[1]) / radius) ** 2 + ((Z - center[2]) / radius) ** 2) < 1).astype(float)
+def generate_sphere(X,Y,Z,center,radius):
+    return ((((X - center[0]) / radius) ** 2 + ((Y - center[1]) / radius) ** 2 + ((Z - center[2]) / radius) ** 2) < 1).astype(float)
 
 def sample_activity(min_r,max_r,lbda,with_bg):
     if with_bg:
@@ -104,14 +106,36 @@ def sample_activity(min_r,max_r,lbda,with_bg):
         S = np.random.rand()*(max_r-min_r)+min_r
         return S
 
-def grad_activity_fct(a0,x,y,z,g,phi,M,period,delta):
-    p = period
-    linsp_x, linsp_y,linsp_z = np.mgrid[-M:M+1, -M:M+1, -M:M+1]
-    xx_yy_zz = x*linsp_x+y*linsp_y+z*linsp_z
-    powers = (linsp_x**2 +linsp_y**2 + linsp_z**2)**(delta)
-    powers[powers==0] = np.infty
-    F = np.sum(g*np.cos(2*np.pi * xx_yy_zz / p + phi)/powers)+a0
-    return F
+def random_3d_function(a0, xx, yy, zz, M):
+    # Coarser grid for function generation
+    N = 64
+    size_x, size_y, size_z = N,N,N
+    # Define the range of the 3D grid (adjust as needed)
+    x0 = np.linspace(xx[0,0,0], xx[-1,0,0], size_x)
+    y0 = np.linspace(yy[0,0,0], yy[0,-1,0], size_y)
+    z0 = np.linspace(zz[0,0,0], zz[0,0,-1], size_z)
+    period = xx[-1,0,0]-xx[0,0,0]
+    xx0, yy0, zz0 = np.meshgrid(x0, y0, z0, indexing='ij')
+
+    # Generate random Fourier coefficients
+    coeffs_real = 2*np.random.rand(2*M+1,2*M+1,2*M+1)-1
+    coeffs_imag = 2*np.random.rand(2*M+1,2*M+1,2*M+1)-1
+    coeffs = coeffs_real + 1j * coeffs_imag
+
+    # Compute the Fourier Transform
+    coarse_f = np.zeros_like(xx0, dtype=np.float64)
+    for m_x in range(-M,M+1):
+        for m_y in range(-M,M+1):
+            for m_z in range(-M,M+1):
+                coarse_f += np.real(coeffs[m_x+M, m_y+M, m_z+M] * np.exp(2j * np.pi * (m_x * xx0 + m_y * yy0 + m_z * zz0)/period)\
+                               / (m_x**2 + m_y**2 + m_z**2)) if (m_x,m_y,m_z)!=(0,0,0) else 0
+    coarse_f += a0
+
+    interp = RegularGridInterpolator((x0, y0, z0), coarse_f)
+    interpolated_values = interp((xx, yy, zz))
+    return interpolated_values
+
+
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--nb_data','-n', type = int, required = True, help = 'number of desired data = (src,projPVE,projPVfree)')
@@ -277,11 +301,19 @@ def generate(opt):
                 bg_level = 1
                 background_array = generate_bg_cylinder(X,Y,Z,activity=bg_level,center=bg_center,radius_xzy=bg_radius_xzy)
 
+
+            if opt.grad_act:
+                M = 5
+                background_array = background_array * random_3d_function(a0 = 100,xx = X,yy=Y,zz=Z,M=M)/100
+
+
             src_array += background_array
 
 
         random_nb_of_sphers = np.random.randint(1,opt.nspheres)
-
+        if opt.grad_act:
+            M = 8
+            rndm_grad_act = random_3d_function(a0=0, xx=X, yy=Y, zz=Z, M=M)
 
         for s in range(random_nb_of_sphers):
             random_activity = sample_activity(min_r=min_ratio,max_r=Max_ratio,lbda=lbda,with_bg=opt.background)
@@ -297,26 +329,21 @@ def generate(opt):
 
 
             if opt.ellipse:
-                lesion = generate_ellipse(activity=random_activity,center=center,X=X,Y=Y,Z=Z,min_radius=opt.min_radius, max_radius = opt.max_radius, prop_radius = opt.prop_radius)
+                lesion = generate_ellipse(center=center,X=X,Y=Y,Z=Z,min_radius=opt.min_radius, max_radius = opt.max_radius, prop_radius = opt.prop_radius)
             elif (opt.ell_cyl >= 0) and (opt.ell_cyl <= 1):
                 p = random.random()
                 if p<opt.ell_cyl:
-                    lesion = generate_ellipse(X=X,Y=Y,Z=Z,activity=random_activity,center=center,min_radius=opt.min_radius, max_radius = opt.max_radius, prop_radius=opt.prop_radius)
+                    lesion = generate_ellipse(X=X,Y=Y,Z=Z,center=center,min_radius=opt.min_radius, max_radius = opt.max_radius, prop_radius=opt.prop_radius)
                 else:
-                    lesion = generate_cylinder(X=X,Y=Y,Z=Z,activity=random_activity,center=center,min_radius=opt.min_radius, max_radius = opt.max_radius)
+                    lesion = generate_cylinder(X=X,Y=Y,Z=Z,center=center,min_radius=opt.min_radius, max_radius = opt.max_radius)
             else:
                 radius = np.random.rand()*(opt.max_radius-opt.min_radius) + opt.min_radius
-                lesion = generate_sphere(X,Y,Z,activity=random_activity,center=center,radius=radius)
+                lesion = generate_sphere(X,Y,Z,center=center,radius=radius)
 
             if opt.grad_act:
-                #277
-                M = 8
-                g, phi = np.random.randn(2 * M + 1, 2 * M + 1, 2 * M + 1), (np.random.rand(2 * M + 1, 2 * M + 1, 2 * M + 1) * 2 * np.pi - np.pi)
-                idx,idy,idz = np.where(lesion>0)
-                for i in range(len(idx)):
-                    x,y,z = lspaceX[idx[i]],lspaceY[idy[i]],lspaceZ[idz[i]]
-                    lesion[idx[i],idy[i],idz[i]] = grad_activity_fct(a0 = random_activity,x=x,y=y,z=z,g=g,phi=phi,M=M,period=X.shape[0],delta=0.9)
-
+                lesion = lesion * (((1-random_activity)/np.min(rndm_grad_act)) * rndm_grad_act + random_activity)
+            else:
+                lesion = random_activity * lesion
 
             src_array += lesion
 
