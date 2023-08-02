@@ -30,9 +30,9 @@ def get_dtype(opt_dtype):
 
 def strParamToArray(str_param):
     array_param = np.array(str_param.split(','))
-    array_param = array_param.astype(np.float32)
+    array_param = array_param.astype(np.float64)
     if len(array_param) == 1:
-        array_param = np.array([array_param[0].astype(np.float32)] * 3)
+        array_param = np.array([array_param[0].astype(np.float64)] * 3)
     return array_param[::-1]
 
 letters = string.ascii_uppercase
@@ -147,7 +147,7 @@ def random_3d_function(a0, xx, yy, zz, M):
     coeffs = coeffs_real + 1j * coeffs_imag
 
     # Compute the Fourier Transform
-    coarse_f = np.zeros_like(xx0, dtype=np.float32)
+    coarse_f = np.zeros_like(xx0, dtype=np.float64)
     for m_x in range(-M,M+1):
         for m_y in range(-M,M+1):
             for m_z in range(-M,M+1):
@@ -168,7 +168,7 @@ parser.add_argument('--spacing_volume', type = str, default = "4", help = 'Spaci
 parser.add_argument('--size_proj', type = int, default = 128, help = 'Size of the desired projections')
 parser.add_argument('--spacing_proj', type = float, default = 4.41806, help = 'Spacing of the desired projection. Ex intevo : 2.3976')
 parser.add_argument('--type', default = 'mha', help = "Create mha, mhd,npy image")
-parser.add_argument('--dtype', default = 'float32', help = "if npy, image dtype")
+parser.add_argument('--dtype', default = 'float64', help = "if npy, image dtype")
 parser.add_argument('--like', default = None, help = "Instead of specifying spacing/size, you can specify an image as a metadata model")
 parser.add_argument('--min_radius', default = 4,type = float, help = 'minimum radius of the random spheres')
 parser.add_argument('--max_radius', default = 32,type = float, help = 'max radius of the random spheres')
@@ -379,7 +379,7 @@ def generate(opt):
         total_counts_in_proj = np.random.randint(total_counts_in_proj_min,total_counts_in_proj_max)
         src_array_normedToTotalCounts = src_array / np.sum(src_array) * total_counts_in_proj * opt.spacing_proj**2 / (vSpacing[0]*vSpacing[1]*vSpacing[2])
 
-        src_img_normedToTotalCounts = itk.image_from_array(src_array_normedToTotalCounts.astype(np.float32))
+        src_img_normedToTotalCounts = itk.image_from_array(src_array_normedToTotalCounts.astype(np.float64))
         src_img_normedToTotalCounts.SetSpacing(vSpacing[::-1])
         src_img_normedToTotalCounts.SetOrigin(vOffset)
 
@@ -390,7 +390,7 @@ def generate(opt):
 
         # saving of source 3D image
         if opt.save_src:
-            src_img = itk.image_from_array(src_array.astype(np.float32))
+            src_img = itk.image_from_array(src_array.astype(np.float64))
             src_img.SetSpacing(vSpacing[::-1])
             src_img.SetOrigin(vOffset)
             source_path = os.path.join(opt.output_folder,f'{source_ref}.{opt.type}')
