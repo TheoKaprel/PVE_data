@@ -8,8 +8,9 @@ import string
 from itk import RTK as rtk
 import time
 import json
-from scipy.spatial.transform import Rotation as R
+from scipy.spatial.transform import Rotation as Rot
 from scipy.interpolate import RegularGridInterpolator
+from skimage.morphology import convex_hull_image
 
 
 
@@ -47,7 +48,7 @@ def generate_ellipse(X,Y,Z, center, min_radius,max_radius, prop_radius):
         radius = min_radius / (1 + np.random.rand(3) * (min_radius/max_radius - 1))
 
     rotation_angles = np.random.rand(3) * 2 * np.pi
-    rot = R.from_rotvec([[rotation_angles[0], 0, 0], [0, rotation_angles[1], 0], [0, 0, rotation_angles[2]]])
+    rot = Rot.from_rotvec([[rotation_angles[0], 0, 0], [0, rotation_angles[1], 0], [0, 0, rotation_angles[2]]])
     rotation_matrices = rot.as_matrix()
     rot_matrice = rotation_matrices[0].dot((rotation_matrices[1].dot(rotation_matrices[2])))
     lesion = ((((      (X - center[0]) * rot_matrice[0, 0] + (Y - center[1]) * rot_matrice[0, 1] + (
@@ -63,7 +64,7 @@ def generate_cylinder(X,Y,Z, center, min_radius,max_radius):
     radius = np.random.rand(3) * (max_radius - min_radius) + min_radius
     rotation = np.random.rand() * 2 * np.pi
     rotation_angles = np.random.rand(3) * 2 * np.pi
-    rotation_cyl = R.from_rotvec(rotation_angles)
+    rotation_cyl = Rot.from_rotvec(rotation_angles)
 
     XYZ = np.array([X.ravel(), Y.ravel(), Z.ravel()]).transpose()
     # apply rotation
@@ -94,6 +95,29 @@ def generate_bg_cylinder(X,Y,Z,activity, center, radius_xzy):
 
 def generate_sphere(X,Y,Z,center,radius):
     return ((((X - center[0]) / radius) ** 2 + ((Y - center[1]) / radius) ** 2 + ((Z - center[2]) / radius) ** 2) < 1).astype(float)
+
+def generate_convex(X,Y,Z,center,min_radius,max_radius, prop_radius):
+    if prop_radius=='uniform':
+        radius = np.random.rand(3) * (max_radius - min_radius) + min_radius
+    elif prop_radius=='squared_inv':
+        radius = min_radius / (1 + np.random.rand(3) * (min_radius/max_radius - 1))
+
+    N = 30
+    theta,phi = np.pi*np.random.rand(N), 2*np.pi*np.random.rand(N)
+    vertices_x,vertices_y,vertices_z = radius[0]*np.sin(theta)*np.cos(phi)+center[0],\
+                                       radius[1]*np.sin(theta)*np.sin(phi)+center[1],\
+                                       radius[2]*np.cos(theta) + center[2]
+    lesion = np.zeros_like(X,dtype=bool)
+    for vx,vy,vz in zip(vertices_x,vertices_y,vertices_z):
+        id_center_x = np.argmin(np.abs(X[:,0,0]-vx))
+        id_center_y = np.argmin(np.abs(Y[0,:,0]-vy))
+        id_center_z = np.argmin(np.abs(Z[0,0,:]-vz))
+        lesion[id_center_x,id_center_y,id_center_z] = True
+
+    lesion = convex_hull_image(lesion).astype(float)
+    return lesion
+
+
 
 def sample_activity(min_r,max_r,lbda,with_bg):
     if with_bg:
@@ -155,8 +179,10 @@ parser.add_argument('--min_counts', default = 2e4, type = float, help = "minimum
 parser.add_argument('--max_counts', default = 1e5, type = float, help = "maximum number of counts per proj (noise level)")
 parser.add_argument('--nspheres', default = 1,type = int, help = 'max number of spheres to generate on each source')
 parser.add_argument('--background', action= 'store_true', help = 'If you want background add --background')
-parser.add_argument('--ellipse',action ="store_true", help = "if --ellipse, activity spheres are in fact ellipses")
-parser.add_argument('--ell_cyl',type = float, default = None, help = "if --ell_cyl p, activity spheres are ellipse with proba p and cylinder with proba (1-p)")
+parser.add_argument('--sphere',type = float, default = 0, help = "if --sphere p, activity sources are spheres with proba p")
+parser.add_argument('--ellipse',type = float, default = 0, help = "if --ellipse p, activity sources are ellipses with proba p")
+parser.add_argument('--cylinder',type = float, default = 0, help = "if --cylinder p, activity sources are cylinders with proba p")
+parser.add_argument('--convex',type = float, default = 0, help = "if --convex p, activity sources are convexs with proba p")
 parser.add_argument('--grad_act',action ="store_true", help = "if --grad_act, hot sources are not homogeneous")
 parser.add_argument('--geom', '-g', default = None, help = 'geometry file to forward project')
 parser.add_argument('--nproj',type = int, default = None, help = 'if no geom, precise nb of proj angles')
@@ -284,6 +310,10 @@ def generate(opt):
     else:
         lbda = None
 
+    p_sphere,p_ellipse,p_cylinder,p_convex = opt.sphere,opt.ellipse,opt.cylinder,opt.convex
+    assert(p_sphere+p_ellipse+p_cylinder+p_convex==1)
+
+
     total_counts_in_proj_min,total_counts_in_proj_max = opt.min_counts, opt.max_counts
     print(f'Total counts in projections between {total_counts_in_proj_min} and {total_counts_in_proj_max}')
 
@@ -328,17 +358,16 @@ def generate(opt):
                 center = [lspaceX[center_index[0]], lspaceY[center_index[1]], lspaceZ[center_index[2]]]
 
 
-            if opt.ellipse:
+            rdn_shape = random.random()
+            if rdn_shape<p_sphere: # sphere
+                radius = np.random.rand() * (opt.max_radius - opt.min_radius) + opt.min_radius
+                lesion = generate_sphere(X, Y, Z, center=center, radius=radius)
+            elif rdn_shape<p_sphere+p_ellipse: # ellipse
                 lesion = generate_ellipse(center=center,X=X,Y=Y,Z=Z,min_radius=opt.min_radius, max_radius = opt.max_radius, prop_radius = opt.prop_radius)
-            elif (opt.ell_cyl >= 0) and (opt.ell_cyl <= 1):
-                p = random.random()
-                if p<opt.ell_cyl:
-                    lesion = generate_ellipse(X=X,Y=Y,Z=Z,center=center,min_radius=opt.min_radius, max_radius = opt.max_radius, prop_radius=opt.prop_radius)
-                else:
-                    lesion = generate_cylinder(X=X,Y=Y,Z=Z,center=center,min_radius=opt.min_radius, max_radius = opt.max_radius)
-            else:
-                radius = np.random.rand()*(opt.max_radius-opt.min_radius) + opt.min_radius
-                lesion = generate_sphere(X,Y,Z,center=center,radius=radius)
+            elif rdn_shape<p_sphere+p_ellipse+p_cylinder: # cylinder
+                lesion = generate_cylinder(X=X, Y=Y, Z=Z, center=center, min_radius=opt.min_radius,max_radius=opt.max_radius)
+            else: # convex shape
+                lesion = generate_convex(X=X,Y=Y,Z=Z,center=center,min_radius=opt.min_radius, max_radius = opt.max_radius, prop_radius = opt.prop_radius)
 
             if opt.grad_act:
                 lesion = lesion * (((1-random_activity)/np.min(rndm_grad_act)) * rndm_grad_act + random_activity)
