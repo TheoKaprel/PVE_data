@@ -159,6 +159,14 @@ def random_3d_function(a0, xx, yy, zz, M):
     interpolated_values = interp((xx, yy, zz))
     return interpolated_values
 
+def save_one_file(array, filename,ftype,img_like):
+    if ftype != 'npy':
+        output_img = itk.image_from_array(array)
+        output_img.SetSpacing(img_like.GetSpacing())
+        output_img.SetOrigin(img_like.GetOrigin())
+        itk.imwrite(output_img, filename)
+    else:
+        np.save(filename, array)
 
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -379,7 +387,7 @@ def generate(opt):
         total_counts_in_proj = np.random.randint(total_counts_in_proj_min,total_counts_in_proj_max)
         src_array_normedToTotalCounts = src_array / np.sum(src_array) * total_counts_in_proj * opt.spacing_proj**2 / (vSpacing[0]*vSpacing[1]*vSpacing[2])
 
-        src_img_normedToTotalCounts = itk.image_from_array(src_array_normedToTotalCounts.astype(np.float64))
+        src_img_normedToTotalCounts = itk.image_from_array(src_array_normedToTotalCounts.astype(np.float32))
         src_img_normedToTotalCounts.SetSpacing(vSpacing[::-1])
         src_img_normedToTotalCounts.SetOrigin(vOffset)
 
@@ -390,7 +398,7 @@ def generate(opt):
 
         # saving of source 3D image
         if opt.save_src:
-            src_img = itk.image_from_array(src_array.astype(np.float64))
+            src_img = itk.image_from_array(src_array.astype(np.float32))
             src_img.SetSpacing(vSpacing[::-1])
             src_img.SetOrigin(vOffset)
             source_path = os.path.join(opt.output_folder,f'{source_ref}.{opt.type}')
@@ -421,15 +429,30 @@ def generate(opt):
         if opt.noise:
             noisy_projection_array = np.random.poisson(lam=output_forward_PVE_array, size=output_forward_PVE_array.shape).astype(dtype=dtype)
 
+            if opt.rec_fp:
+                output_forward_PVE_noisy = itk.image_from_array(noisy_projection_array.astype(dtype=np.float32))
+                output_forward_PVE_noisy.CopyInformation(output_forward_PVE)
+                osem.SetInput(1, output_forward_PVE_noisy)
+                osem.Update()
+                forward_projector.SetSigmaZero(0)
+                forward_projector.SetAlpha(0)
+                forward_projector.SetInput(1, osem.GetOutput())
+                forward_projector.Update()
+                output_rec_fp = forward_projector.GetOutput()
+                output_rec_fp_array = itk.array_from_image(output_rec_fp)
+
         # Write projections :
         if opt.merge:
-            output_forward_merged_array = np.concatenate((output_forward_PVE_array,output_forward_PVfree_array),axis=0)
             if opt.noise:
-                output_forward_merged_array = np.concatenate((noisy_projection_array,output_forward_merged_array),axis=0)
-                output_filename_merged = os.path.join(opt.output_folder, f'{source_ref}_noisy_PVE_PVfree.{opt.type}')
+                if opt.rec_fp:
+                    output_filename_merged = os.path.join(opt.output_folder,f'{source_ref}_noisy_PVE_PVfree_rec_fp.{opt.type}')
+                    output_forward_merged_array = np.concatenate((noisy_projection_array,output_forward_PVE_array, output_forward_PVfree_array,output_rec_fp_array), axis=0)
+                else:
+                    output_filename_merged = os.path.join(opt.output_folder,f'{source_ref}_noisy_PVE_PVfree.{opt.type}')
+                    output_forward_merged_array = np.concatenate((noisy_projection_array,output_forward_PVE_array, output_forward_PVfree_array), axis=0)
             else:
                 output_filename_merged = os.path.join(opt.output_folder, f'{source_ref}_PVE_PVfree.{opt.type}')
-
+                output_forward_merged_array = np.concatenate((output_forward_PVE_array,output_forward_PVfree_array), axis=0)
             if opt.type!='npy':
                 output_forward_merged = itk.image_from_array(output_forward_merged_array)
                 output_forward_merged.SetSpacing(output_forward_PVE.GetSpacing())
@@ -440,34 +463,15 @@ def generate(opt):
         else:
             output_filename_PVfree = os.path.join(opt.output_folder, f'{source_ref}_PVfree.{opt.type}')
             output_filename_PVE = os.path.join(opt.output_folder, f'{source_ref}_PVE.{opt.type}')
-            if opt.type!='npy':
-                itk.imwrite(output_forward_PVfree, output_filename_PVfree)
-                itk.imwrite(output_forward_PVE, output_filename_PVE)
-            else:
-                np.save(output_filename_PVfree,output_forward_PVfree_array)
-                np.save(output_filename_PVE, output_forward_PVE_array)
 
+            save_one_file(array=output_forward_PVfree_array,filename=output_filename_PVfree,ftype=opt.type,img_like=output_forward_PVE)
+            save_one_file(array=output_forward_PVE_array,filename=output_filename_PVE,ftype=opt.type,img_like=output_forward_PVE)
             if opt.noise:
                 output_filename_PVE_noisy = os.path.join(opt.output_folder, f'{source_ref}_PVE_noisy.{opt.type}')
-                if opt.type!='npy':
-                    output_forward_PVE_noisy = itk.image_from_array(noisy_projection_array)
-                    output_forward_PVE_noisy.CopyInformation(output_forward_PVE)
-                    itk.imwrite(output_forward_PVE_noisy, output_filename_PVE_noisy)
-
-                    if opt.rec_fp:
-                        osem.SetInput(1, output_forward_PVE_noisy)
-                        osem.Update()
-                        forward_projector.SetSigmaZero(0)
-                        forward_projector.SetAlpha(0)
-                        forward_projector.SetInput(1, osem.GetOutput())
-                        forward_projector.Update()
-                        output_rec_fp = forward_projector.GetOutput()
-                        itk.imwrite(output_rec_fp, os.path.join(opt.output_folder, f'{source_ref}_rec_fp.mhd'))
-
-                else:
-                    np.save(output_filename_PVE_noisy,noisy_projection_array)
-
-
+                save_one_file(array=noisy_projection_array, filename=output_filename_PVE_noisy, ftype=opt.type,img_like=output_forward_PVE)
+                if opt.rec_fp:
+                    output_filename_rec_fp = os.path.join(opt.output_folder, f'{source_ref}_rec_fp.mhd')
+                    save_one_file(array=output_rec_fp_array, filename=output_filename_rec_fp, ftype=opt.type,img_like=output_forward_PVE)
 
     tf = time.time()
     elapsed_time = round(tf - t0)
