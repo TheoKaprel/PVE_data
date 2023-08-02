@@ -8,7 +8,10 @@ import string
 from itk import RTK as rtk
 import time
 import json
-from scipy.spatial.transform import Rotation as R
+from scipy.spatial.transform import Rotation as Rot
+from scipy.interpolate import RegularGridInterpolator
+from skimage.morphology import convex_hull_image
+
 
 
 from parameters import get_psf_params
@@ -38,17 +41,17 @@ def chooseRandomRef(Nletters):
     source_ref = ''.join(random.choice(letters) for _ in range(Nletters))
     return source_ref
 
-def generate_ellipse(X,Y,Z,activity, center, min_radius,max_radius, prop_radius):
+def generate_ellipse(X,Y,Z, center, min_radius,max_radius, prop_radius):
     if prop_radius=='uniform':
         radius = np.random.rand(3) * (max_radius - min_radius) + min_radius
     elif prop_radius=='squared_inv':
         radius = min_radius / (1 + np.random.rand(3) * (min_radius/max_radius - 1))
 
     rotation_angles = np.random.rand(3) * 2 * np.pi
-    rot = R.from_rotvec([[rotation_angles[0], 0, 0], [0, rotation_angles[1], 0], [0, 0, rotation_angles[2]]])
+    rot = Rot.from_rotvec([[rotation_angles[0], 0, 0], [0, rotation_angles[1], 0], [0, 0, rotation_angles[2]]])
     rotation_matrices = rot.as_matrix()
     rot_matrice = rotation_matrices[0].dot((rotation_matrices[1].dot(rotation_matrices[2])))
-    lesion = activity * ((((      (X - center[0]) * rot_matrice[0, 0] + (Y - center[1]) * rot_matrice[0, 1] + (
+    lesion = ((((      (X - center[0]) * rot_matrice[0, 0] + (Y - center[1]) * rot_matrice[0, 1] + (
                                               Z - center[2]) * rot_matrice[0, 2]) ** 2 / (radius[0] ** 2) +
                                   ((X - center[0]) * rot_matrice[1, 0] + (Y - center[1]) * rot_matrice[1, 1] + (
                                               Z - center[2]) * rot_matrice[1, 2]) ** 2 / (radius[1] ** 2) +
@@ -57,11 +60,11 @@ def generate_ellipse(X,Y,Z,activity, center, min_radius,max_radius, prop_radius)
                                 ).astype(float))
     return lesion
 
-def generate_cylinder(X,Y,Z,activity, center, min_radius,max_radius):
+def generate_cylinder(X,Y,Z, center, min_radius,max_radius):
     radius = np.random.rand(3) * (max_radius - min_radius) + min_radius
     rotation = np.random.rand() * 2 * np.pi
     rotation_angles = np.random.rand(3) * 2 * np.pi
-    rotation_cyl = R.from_rotvec(rotation_angles)
+    rotation_cyl = Rot.from_rotvec(rotation_angles)
 
     XYZ = np.array([X.ravel(), Y.ravel(), Z.ravel()]).transpose()
     # apply rotation
@@ -71,7 +74,7 @@ def generate_cylinder(X,Y,Z,activity, center, min_radius,max_radius):
     Yrot = XYZrot[:, 1].reshape(X.shape)
     Zrot = XYZrot[:, 2].reshape(X.shape)
 
-    lesion = (activity) * ((((((Xrot - center[0]) * np.cos(rotation)
+    lesion =((((((Xrot - center[0]) * np.cos(rotation)
                                         - (Yrot - center[1]) * np.sin(rotation)) / radius[0]) ** 2 +
                                       (((Xrot - center[0]) * np.sin(rotation)
                                         + (Yrot - center[1]) * np.cos(rotation)) / radius[1]) ** 2) < 1) *
@@ -90,8 +93,31 @@ def generate_bg_cylinder(X,Y,Z,activity, center, radius_xzy):
                                      ).astype(float)
     return background_array
 
-def generate_sphere(X,Y,Z,activity,center,radius):
-    return activity * ((((X - center[0]) / radius) ** 2 + ((Y - center[1]) / radius) ** 2 + ((Z - center[2]) / radius) ** 2) < 1).astype(float)
+def generate_sphere(X,Y,Z,center,radius):
+    return ((((X - center[0]) / radius) ** 2 + ((Y - center[1]) / radius) ** 2 + ((Z - center[2]) / radius) ** 2) < 1).astype(float)
+
+def generate_convex(X,Y,Z,center,min_radius,max_radius, prop_radius):
+    if prop_radius=='uniform':
+        radius = np.random.rand(3) * (max_radius - min_radius) + min_radius
+    elif prop_radius=='squared_inv':
+        radius = min_radius / (1 + np.random.rand(3) * (min_radius/max_radius - 1))
+
+    N = 30
+    theta,phi = np.pi*np.random.rand(N), 2*np.pi*np.random.rand(N)
+    vertices_x,vertices_y,vertices_z = radius[0]*np.sin(theta)*np.cos(phi)+center[0],\
+                                       radius[1]*np.sin(theta)*np.sin(phi)+center[1],\
+                                       radius[2]*np.cos(theta) + center[2]
+    lesion = np.zeros_like(X,dtype=bool)
+    for vx,vy,vz in zip(vertices_x,vertices_y,vertices_z):
+        id_center_x = np.argmin(np.abs(X[:,0,0]-vx))
+        id_center_y = np.argmin(np.abs(Y[0,:,0]-vy))
+        id_center_z = np.argmin(np.abs(Z[0,0,:]-vz))
+        lesion[id_center_x,id_center_y,id_center_z] = True
+
+    lesion = convex_hull_image(lesion).astype(float)
+    return lesion
+
+
 
 def sample_activity(min_r,max_r,lbda,with_bg):
     if with_bg:
@@ -103,6 +129,37 @@ def sample_activity(min_r,max_r,lbda,with_bg):
     else:
         S = np.random.rand()*(max_r-min_r)+min_r
         return S
+
+def random_3d_function(a0, xx, yy, zz, M):
+    # Coarser grid for function generation
+    N = 64
+    size_x, size_y, size_z = N,N,N
+    # Define the range of the 3D grid (adjust as needed)
+    x0 = np.linspace(xx[0,0,0], xx[-1,0,0], size_x)
+    y0 = np.linspace(yy[0,0,0], yy[0,-1,0], size_y)
+    z0 = np.linspace(zz[0,0,0], zz[0,0,-1], size_z)
+    period = xx[-1,0,0]-xx[0,0,0]
+    xx0, yy0, zz0 = np.meshgrid(x0, y0, z0, indexing='ij')
+
+    # Generate random Fourier coefficients
+    coeffs_real = 2*np.random.rand(2*M+1,2*M+1,2*M+1)-1
+    coeffs_imag = 2*np.random.rand(2*M+1,2*M+1,2*M+1)-1
+    coeffs = coeffs_real + 1j * coeffs_imag
+
+    # Compute the Fourier Transform
+    coarse_f = np.zeros_like(xx0, dtype=np.float64)
+    for m_x in range(-M,M+1):
+        for m_y in range(-M,M+1):
+            for m_z in range(-M,M+1):
+                coarse_f += np.real(coeffs[m_x+M, m_y+M, m_z+M] * np.exp(2j * np.pi * (m_x * xx0 + m_y * yy0 + m_z * zz0)/period)\
+                               / (m_x**2 + m_y**2 + m_z**2)) if (m_x,m_y,m_z)!=(0,0,0) else 0
+    coarse_f += a0
+
+    interp = RegularGridInterpolator((x0, y0, z0), coarse_f)
+    interpolated_values = interp((xx, yy, zz))
+    return interpolated_values
+
+
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--nb_data','-n', type = int, required = True, help = 'number of desired data = (src,projPVE,projPVfree)')
@@ -122,8 +179,11 @@ parser.add_argument('--min_counts', default = 2e4, type = float, help = "minimum
 parser.add_argument('--max_counts', default = 1e5, type = float, help = "maximum number of counts per proj (noise level)")
 parser.add_argument('--nspheres', default = 1,type = int, help = 'max number of spheres to generate on each source')
 parser.add_argument('--background', action= 'store_true', help = 'If you want background add --background')
-parser.add_argument('--ellipse',action ="store_true", help = "if --ellipse, activity spheres are in fact ellipses")
-parser.add_argument('--ell_cyl',type = float, default = None, help = "if --ell_cyl p, activity spheres are ellipse with proba p and cylinder with proba (1-p)")
+parser.add_argument('--sphere',type = float, default = 0, help = "if --sphere p, activity sources are spheres with proba p")
+parser.add_argument('--ellipse',type = float, default = 0, help = "if --ellipse p, activity sources are ellipses with proba p")
+parser.add_argument('--cylinder',type = float, default = 0, help = "if --cylinder p, activity sources are cylinders with proba p")
+parser.add_argument('--convex',type = float, default = 0, help = "if --convex p, activity sources are convexs with proba p")
+parser.add_argument('--grad_act',action ="store_true", help = "if --grad_act, hot sources are not homogeneous")
 parser.add_argument('--geom', '-g', default = None, help = 'geometry file to forward project')
 parser.add_argument('--nproj',type = int, default = None, help = 'if no geom, precise nb of proj angles')
 parser.add_argument('--sid',type = float, default = None, help = 'if no geom, precise detector-to-isocenter distance (mm)')
@@ -134,7 +194,6 @@ parser.add_argument('--save_src',action ="store_true", help = "if you want to al
 parser.add_argument('--noise',action ="store_true", help = "Add Poisson noise ONLY to ProjPVE")
 parser.add_argument('--merge',action="store_true", help = "If --merge, the 3 (or 2) projections are stored in the same file ABCDE(_noisy)_PVE_PVfree.mha. In this order : noisy, PVE, PVfree")
 parser.add_argument('--rec_fp',action="store_true", help = "noisy projections are reconstructed with 1 osem-rm iter and forward-projected w/o rm to obtain ABCDE_rec_fp.mha")
-lsrc = []
 def generate(opt):
     print(opt)
     current_date = time.strftime("%d_%m_%Y_%Hh_%Mm_%Ss", time.localtime())
@@ -251,6 +310,10 @@ def generate(opt):
     else:
         lbda = None
 
+    p_sphere,p_ellipse,p_cylinder,p_convex = opt.sphere,opt.ellipse,opt.cylinder,opt.convex
+    assert(p_sphere+p_ellipse+p_cylinder+p_convex==1)
+
+
     total_counts_in_proj_min,total_counts_in_proj_max = opt.min_counts, opt.max_counts
     print(f'Total counts in projections between {total_counts_in_proj_min} and {total_counts_in_proj_max}')
 
@@ -268,15 +331,23 @@ def generate(opt):
                 bg_level = 1
                 background_array = generate_bg_cylinder(X,Y,Z,activity=bg_level,center=bg_center,radius_xzy=bg_radius_xzy)
 
+
+            if opt.grad_act:
+                M = 5
+                background_array = background_array * random_3d_function(a0 = 100,xx = X,yy=Y,zz=Z,M=M)/100
+
+
             src_array += background_array
 
 
         random_nb_of_sphers = np.random.randint(1,opt.nspheres)
+        if opt.grad_act:
+            M = 8
+            rndm_grad_act = random_3d_function(a0=0, xx=X, yy=Y, zz=Z, M=M)
 
-
-        for s  in range(random_nb_of_sphers):
+        for s in range(random_nb_of_sphers):
             random_activity = sample_activity(min_r=min_ratio,max_r=Max_ratio,lbda=lbda,with_bg=opt.background)
-            lsrc.append(random_activity)
+
             if opt.background is None:
                 center = (2 * np.random.rand(3) - 1) * (lengths / 2)
             else:
@@ -287,17 +358,21 @@ def generate(opt):
                 center = [lspaceX[center_index[0]], lspaceY[center_index[1]], lspaceZ[center_index[2]]]
 
 
-            if opt.ellipse:
-                lesion = generate_ellipse(activity=random_activity,center=center,X=X,Y=Y,Z=Z,min_radius=opt.min_radius, max_radius = opt.max_radius, prop_radius = opt.prop_radius)
-            elif (opt.ell_cyl >= 0) and (opt.ell_cyl <= 1):
-                p = random.random()
-                if p<opt.ell_cyl:
-                    lesion = generate_ellipse(X=X,Y=Y,Z=Z,activity=random_activity,center=center,min_radius=opt.min_radius, max_radius = opt.max_radius, prop_radius=opt.prop_radius)
-                else:
-                    lesion = generate_cylinder(X=X,Y=Y,Z=Z,activity=random_activity,center=center,min_radius=opt.min_radius, max_radius = opt.max_radius)
+            rdn_shape = random.random()
+            if rdn_shape<p_sphere: # sphere
+                radius = np.random.rand() * (opt.max_radius - opt.min_radius) + opt.min_radius
+                lesion = generate_sphere(X, Y, Z, center=center, radius=radius)
+            elif rdn_shape<p_sphere+p_ellipse: # ellipse
+                lesion = generate_ellipse(center=center,X=X,Y=Y,Z=Z,min_radius=opt.min_radius, max_radius = opt.max_radius, prop_radius = opt.prop_radius)
+            elif rdn_shape<p_sphere+p_ellipse+p_cylinder: # cylinder
+                lesion = generate_cylinder(X=X, Y=Y, Z=Z, center=center, min_radius=opt.min_radius,max_radius=opt.max_radius)
+            else: # convex shape
+                lesion = generate_convex(X=X,Y=Y,Z=Z,center=center,min_radius=opt.min_radius, max_radius = opt.max_radius, prop_radius = opt.prop_radius)
+
+            if opt.grad_act:
+                lesion = lesion * (((1-random_activity)/np.min(rndm_grad_act)) * rndm_grad_act + random_activity)
             else:
-                radius = np.random.rand()*(opt.max_radius-opt.min_radius) + opt.min_radius
-                lesion = generate_sphere(X,Y,Z,activity=random_activity,center=center,radius=radius)
+                lesion = random_activity * lesion
 
             src_array += lesion
 
