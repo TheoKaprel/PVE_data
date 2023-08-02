@@ -30,9 +30,9 @@ def get_dtype(opt_dtype):
 
 def strParamToArray(str_param):
     array_param = np.array(str_param.split(','))
-    array_param = array_param.astype(np.float)
+    array_param = array_param.astype(np.float32)
     if len(array_param) == 1:
-        array_param = np.array([array_param[0].astype(np.float)] * 3)
+        array_param = np.array([array_param[0].astype(np.float32)] * 3)
     return array_param[::-1]
 
 letters = string.ascii_uppercase
@@ -147,7 +147,7 @@ def random_3d_function(a0, xx, yy, zz, M):
     coeffs = coeffs_real + 1j * coeffs_imag
 
     # Compute the Fourier Transform
-    coarse_f = np.zeros_like(xx0, dtype=np.float64)
+    coarse_f = np.zeros_like(xx0, dtype=np.float32)
     for m_x in range(-M,M+1):
         for m_y in range(-M,M+1):
             for m_z in range(-M,M+1):
