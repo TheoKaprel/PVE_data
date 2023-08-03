@@ -293,7 +293,7 @@ def generate(opt):
         osem.SetInput(0, output_rec)
         osem.SetGeometry(geometry)
         osem.SetNumberOfIterations(1)
-        osem.SetNumberOfProjectionsPerSubset(10)
+        osem.SetNumberOfProjectionsPerSubset(15)
         osem.SetBetaRegularization(0)
 
         if opt.attenuationmap is not None:
