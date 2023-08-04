@@ -108,12 +108,10 @@ def generate_convex(X,Y,Z,center,min_radius,max_radius, prop_radius):
                                        radius[1]*np.sin(theta)*np.sin(phi)+center[1],\
                                        radius[2]*np.cos(theta) + center[2]
     lesion = np.zeros_like(X,dtype=bool)
-    for vx,vy,vz in zip(vertices_x,vertices_y,vertices_z):
-        id_center_x = np.argmin(np.abs(X[:,0,0]-vx))
-        id_center_y = np.argmin(np.abs(Y[0,:,0]-vy))
-        id_center_z = np.argmin(np.abs(Z[0,0,:]-vz))
-        lesion[id_center_x,id_center_y,id_center_z] = True
-
+    id_center_x = np.searchsorted(X[:,0,0], vertices_x)
+    id_center_y = np.searchsorted(Y[0,:,0], vertices_y)
+    id_center_z = np.searchsorted(Z[0,0,:], vertices_z)
+    lesion[id_center_x, id_center_y, id_center_z] = True
     lesion = convex_hull_image(lesion).astype(float)
     return lesion
 
@@ -151,7 +149,8 @@ def random_3d_function(a0, xx, yy, zz, M):
     for m_x in range(-M,M+1):
         for m_y in range(-M,M+1):
             for m_z in range(-M,M+1):
-                coarse_f += np.real(coeffs[m_x+M, m_y+M, m_z+M] * np.exp(2j * np.pi * (m_x * xx0 + m_y * yy0 + m_z * zz0)/period)\
+                coarse_f += np.real(coeffs[m_x+M, m_y+M, m_z+M]\
+                                    * np.exp(2j * np.pi * (m_x * xx0 + m_y * yy0 + m_z * zz0)/period)\
                                / (m_x**2 + m_y**2 + m_z**2)) if (m_x,m_y,m_z)!=(0,0,0) else 0
     coarse_f += a0
 
@@ -235,8 +234,6 @@ def generate(opt):
 
     offset = (-opt.spacing_proj * opt.size_proj + opt.spacing_proj) / 2 #proj offset
 
-    # Prepare Forward Projection
-
     # Geometry
     if ((opt.geom is not None) and (opt.nproj is None) and (opt.sid is None)):
         xmlReader = rtk.ThreeDCircularProjectionGeometryXMLFileReader.New()
@@ -281,10 +278,18 @@ def generate(opt):
         forward_projector.SetInput(2, attenuation_image)
 
     if opt.rec_fp:
+        vSpacing_recpfp = np.array([4.6875, 4.6875, 4.6875])
+        vSize_recfp = np.array([128,128,128])
+        vOffset_recfp = [(-sp * size + sp) / 2 for (sp, size) in zip(vSpacing_recpfp, vSize_recfp)]
+
+        # vSpacing_recpfp = vSpacing
+        # vSize_recfp = vSize
+        # vOffset_recfp = vOffset
+
         constant_image = rtk.ConstantImageSource[imageType].New()
-        constant_image.SetSpacing(vSpacing)
-        constant_image.SetOrigin(vOffset)
-        constant_image.SetSize([int(s) for s in vSize])
+        constant_image.SetSpacing(vSpacing_recpfp)
+        constant_image.SetOrigin(vOffset_recfp)
+        constant_image.SetSize([int(s) for s in vSize_recfp])
         constant_image.SetConstant(1)
         output_rec = constant_image.GetOutput()
 
