@@ -356,8 +356,8 @@ def generate(opt):
 
             if opt.grad_act:
                 M = 5
-                background_array = background_array * random_3d_function(a0 = 100,xx = X,yy=Y,zz=Z,M=M)/100
-
+                background_array = background_array * random_3d_function(a0 = 10,xx = X,yy=Y,zz=Z,M=M)/10
+                background_array[background_array<0] = 0
 
             src_array += background_array
 
@@ -414,7 +414,7 @@ def generate(opt):
             src_img = itk.image_from_array(src_array.astype(np.float32))
             src_img.SetSpacing(vSpacing[::-1])
             src_img.SetOrigin(vOffset)
-            source_path = os.path.join(opt.output_folder,f'{source_ref}.{opt.type}')
+            source_path = os.path.join(opt.output_folder,f'{source_ref}.mhd')
             itk.imwrite(src_img,source_path)
 
 
