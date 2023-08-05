@@ -60,8 +60,12 @@ def generate_ellipse(X,Y,Z, center, min_radius,max_radius, prop_radius):
                                 ).astype(float))
     return lesion
 
-def generate_cylinder(X,Y,Z, center, min_radius,max_radius):
-    radius = np.random.rand(3) * (max_radius - min_radius) + min_radius
+def generate_cylinder(X,Y,Z, center, min_radius,max_radius, prop_radius):
+    if prop_radius=='uniform':
+        radius = np.random.rand(3) * (max_radius - min_radius) + min_radius
+    elif prop_radius=='squared_inv':
+        radius = min_radius / (1 + np.random.rand(3) * (min_radius/max_radius - 1))
+
     rotation = np.random.rand() * 2 * np.pi
     rotation_angles = np.random.rand(3) * 2 * np.pi
     rotation_cyl = Rot.from_rotvec(rotation_angles)
@@ -93,7 +97,12 @@ def generate_bg_cylinder(X,Y,Z,activity, center, radius_xzy):
                                      ).astype(float)
     return background_array
 
-def generate_sphere(X,Y,Z,center,radius):
+def generate_sphere(center,X,Y,Z,min_radius, max_radius, prop_radius):
+    if prop_radius=='uniform':
+        radius = np.random.rand() * (max_radius - min_radius) + min_radius
+    elif prop_radius=='squared_inv':
+        radius = min_radius / (1 + np.random.rand() * (min_radius/max_radius - 1))
+
     return ((((X - center[0]) / radius) ** 2 + ((Y - center[1]) / radius) ** 2 + ((Z - center[2]) / radius) ** 2) < 1).astype(float)
 
 def generate_convex(X,Y,Z,center,min_radius,max_radius, prop_radius):
@@ -347,8 +356,8 @@ def generate(opt):
 
             if opt.grad_act:
                 M = 5
-                background_array = background_array * random_3d_function(a0 = 100,xx = X,yy=Y,zz=Z,M=M)/100
-
+                background_array = background_array * random_3d_function(a0 = 10,xx = X,yy=Y,zz=Z,M=M)/10
+                background_array[background_array<0] = 0
 
             src_array += background_array
 
@@ -373,12 +382,11 @@ def generate(opt):
 
             rdn_shape = random.random()
             if rdn_shape<p_sphere: # sphere
-                radius = np.random.rand() * (opt.max_radius - opt.min_radius) + opt.min_radius
-                lesion = generate_sphere(X, Y, Z, center=center, radius=radius)
+                lesion = generate_sphere(center=center,X=X,Y=Y,Z=Z,min_radius=opt.min_radius, max_radius = opt.max_radius, prop_radius = opt.prop_radius)
             elif rdn_shape<p_sphere+p_ellipse: # ellipse
                 lesion = generate_ellipse(center=center,X=X,Y=Y,Z=Z,min_radius=opt.min_radius, max_radius = opt.max_radius, prop_radius = opt.prop_radius)
             elif rdn_shape<p_sphere+p_ellipse+p_cylinder: # cylinder
-                lesion = generate_cylinder(X=X, Y=Y, Z=Z, center=center, min_radius=opt.min_radius,max_radius=opt.max_radius)
+                lesion = generate_cylinder(X=X, Y=Y, Z=Z, center=center, min_radius=opt.min_radius,max_radius=opt.max_radius, prop_radius=opt.prop_radius)
             else: # convex shape
                 lesion = generate_convex(X=X,Y=Y,Z=Z,center=center,min_radius=opt.min_radius, max_radius = opt.max_radius, prop_radius = opt.prop_radius)
 
@@ -406,7 +414,7 @@ def generate(opt):
             src_img = itk.image_from_array(src_array.astype(np.float32))
             src_img.SetSpacing(vSpacing[::-1])
             src_img.SetOrigin(vOffset)
-            source_path = os.path.join(opt.output_folder,f'{source_ref}.{opt.type}')
+            source_path = os.path.join(opt.output_folder,f'{source_ref}.mhd')
             itk.imwrite(src_img,source_path)
 
 
