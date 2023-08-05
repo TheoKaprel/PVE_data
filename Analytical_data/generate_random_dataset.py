@@ -99,9 +99,9 @@ def generate_bg_cylinder(X,Y,Z,activity, center, radius_xzy):
 
 def generate_sphere(center,X,Y,Z,min_radius, max_radius, prop_radius):
     if prop_radius=='uniform':
-        radius = np.random.rand(3) * (max_radius - min_radius) + min_radius
+        radius = np.random.rand() * (max_radius - min_radius) + min_radius
     elif prop_radius=='squared_inv':
-        radius = min_radius / (1 + np.random.rand(3) * (min_radius/max_radius - 1))
+        radius = min_radius / (1 + np.random.rand() * (min_radius/max_radius - 1))
 
     return ((((X - center[0]) / radius) ** 2 + ((Y - center[1]) / radius) ** 2 + ((Z - center[2]) / radius) ** 2) < 1).astype(float)
 
