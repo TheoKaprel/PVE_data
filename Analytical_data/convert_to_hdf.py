@@ -15,19 +15,22 @@ def convert():
         if fn_noisy_PVE_PVfree not in keys:
             print(fn_noisy_PVE_PVfree)
             fn_rec_fp = fn_noisy_PVE_PVfree.replace("_noisy_PVE_PVfree", "_rec_fp")
+            try:
+                array_noisy_PVE_PVfree = np.load(fn_noisy_PVE_PVfree)
+                array_rec_fp = np.load(fn_rec_fp)
+                grp = f.create_group(fn_noisy_PVE_PVfree.split("_noisy_PVE_PVfree.npy")[0][-5:])
+                dset_PVE_noisy = grp.create_dataset("PVE_noisy", (120, 256, 256), dtype='float16')
+                dset_PVE = grp.create_dataset("PVE", (120, 256, 256), dtype='float16')
+                dset_PVfree = grp.create_dataset("PVfree", (120, 256, 256), dtype='float16')
+                dset_rec_fp = grp.create_dataset("rec_fp", (120, 256, 256), dtype='float16')
+                dset_PVE_noisy[:, :, :] = array_noisy_PVE_PVfree[:120, :, :]
+                dset_PVE[:, :, :] = array_noisy_PVE_PVfree[120:240, :, :]
+                dset_PVfree[:, :, :] = array_noisy_PVE_PVfree[240:, :, :]
+                dset_rec_fp[:, :, :] = array_rec_fp
+            except:
+                print(f"ERROR with {fn_noisy_PVE_PVfree}")
 
-            array_noisy_PVE_PVfree = np.load(fn_noisy_PVE_PVfree)
-            array_rec_fp = np.load(fn_rec_fp)
 
-            grp = f.create_group(fn_noisy_PVE_PVfree.split("_noisy_PVE_PVfree.npy")[0][-5:])
-            dset_PVE_noisy = grp.create_dataset("PVE_noisy",(120,256,256),dtype='float16')
-            dset_PVE = grp.create_dataset("PVE",(120,256,256),dtype='float16')
-            dset_PVfree = grp.create_dataset("PVfree",(120,256,256),dtype='float16')
-            dset_rec_fp = grp.create_dataset("rec_fp",(120,256,256),dtype='float16')
-            dset_PVE_noisy[:,:,:] = array_noisy_PVE_PVfree[:120,:,:]
-            dset_PVE[:,:,:] = array_noisy_PVE_PVfree[120:240,:,:]
-            dset_PVfree[:,:,:] = array_noisy_PVE_PVfree[240:,:,:]
-            dset_rec_fp[:,:,:] = array_rec_fp
 
     print('done!')
 
