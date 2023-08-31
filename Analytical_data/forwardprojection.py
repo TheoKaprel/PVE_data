@@ -31,8 +31,8 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--pve',is_flag = True, default = False, help = 'To project the input source without partial volume effect')
 @click.option('--pvfree', is_flag = True, default = False, help = 'To project the input source without partial volume effect')
 @click.option('--spect_system', default = "ge-discovery",type = str, help = 'spect system for psf', show_default=True)
-@click.option('--size')
-@click.option('--spacing')
+@click.option('--size', type = int)
+@click.option('--spacing', type = float)
 @click.option('--type', default = 'mhd', show_default = True)
 @click.option('--noise', is_flag = True, default = False, help= 'Apply poisson noise to the projection')
 @click.option('--save_src', is_flag = True, default = False, help= 'to save the scaled source (the one that is actually projected)')
@@ -114,7 +114,7 @@ def forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj, s
         forward_projector.Update()
 
         output_forward_PVfree = forward_projector.GetOutput()
-        output_forward_PVfree = norm_projs_to_total_counts(projs=output_forward_PVfree,total_counts=total_count)
+        # output_forward_PVfree = norm_projs_to_total_counts(projs=output_forward_PVfree,total_counts=total_count)
 
         output_filename_PVfree = os.path.join(output_folder,f'{output_ref}_PVfree.{type}')
         itk.imwrite(output_forward_PVfree,output_filename_PVfree)
@@ -126,7 +126,7 @@ def forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj, s
         forward_projector.Update()
 
         output_forward_PVE = forward_projector.GetOutput()
-        output_forward_PVE = norm_projs_to_total_counts(projs=output_forward_PVE,total_counts=total_count)
+        # output_forward_PVE = norm_projs_to_total_counts(projs=output_forward_PVE,total_counts=total_count)
 
         output_filename_PVE = os.path.join(output_folder,f'{output_ref}_PVE.{type}')
         itk.imwrite(output_forward_PVE,output_filename_PVE)

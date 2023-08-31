@@ -5,7 +5,6 @@ import opengate.contrib.phantom_nema_iec_body as gate_iec
 import numpy as np
 import pathlib
 import os
-from pathlib import Path
 from box import Box
 import itk
 from garf_helpers import *
@@ -13,8 +12,6 @@ import gaga_phsp as gaga
 import garf
 import scipy
 import torch
-from torch.autograd import Variable
-
 import matplotlib.pyplot as plt
 import time
 
@@ -31,15 +28,17 @@ class CGANSOURCE:
     def init_gan(self):
         self.gan_info = Box()
         g = self.gan_info
-        g.params, g.G, g.D, g.optim, g.dtypef = gaga.load(
+        g.params, g.G, _, __, ___ = gaga.load(
             self.pth_filename, "auto", verbose=False
         )
+        g.G = g.G.to(self.device)
+        g.G.eval()
 
         self.z_rand = self.get_z_rand(g.params)
 
         # normalize the conditional vector
-        xmean = g.params["x_mean"][0]
-        xstd = g.params["x_std"][0]
+        xmean = torch.tensor(g.params["x_mean"][0], device=self.device)
+        xstd = torch.tensor(g.params["x_std"][0], device=self.device)
         xn = g.params["x_dim"]
         cn = len(g.params["cond_keys"])
         self.ncond = cn
@@ -49,9 +48,16 @@ class CGANSOURCE:
         # mean and std for non cond
         self.xmeannc = xmean[0: xn - cn]
         self.xstdnc = xstd[0: xn - cn]
+        print(f"mean nc : {self.xmeannc}")
+        print(f"mean c : {self.xmeanc}")
+        print(f"std nc : {self.xstdnc}")
+        print(f"std c : {self.xstdc}")
 
         self.z_dim = g.params["z_dim"]
         self.x_dim = g.params["x_dim"]
+
+        print(f"zdim : {self.z_dim}")
+        print(f"xdim : {self.x_dim}")
 
     def get_z_rand(self,params):
         if "z_rand_type" in params:
@@ -71,19 +77,21 @@ class CGANSOURCE:
         pass
 
     def generate_samples(self, cond):
-        cond = (cond - self.xmeanc) / self.xstdc
-        z = self.z_rand(self.batchsize,self.z_dim).to(device = self.device)
-        condx = torch.from_numpy(cond).to(device = self.device).view(self.batchsize,self.ncond)
-        z = torch.cat((z.float(), condx.float()), dim=1)
+        condx = torch.from_numpy(cond).to(device=self.device)
+        condx = (condx - self.xmeanc) / self.xstdc
+        z = self.z_rand(condx.shape[0],self.z_dim).to(device = self.device)
+        # condx = torch.from_numpy(cond).to(device = self.device).view(self.batchsize,self.ncond)
 
+        z = torch.cat((z.float(), condx.float()), dim=1)
         fake = self.gan_info.G(z)
-        fake = fake.cpu().data.numpy()
+        # fake = fake.cpu().data.numpy()
+
         fake = (fake * self.xstdnc) + self.xmeannc
         return fake
 
 
-    def generate(self):
-        n = int(float(self.batchsize))
+    def generate(self, n):
+
         condition_t0 = time.time()
         cond = self.generate_condition(n)
         condition_t1 = time.time()
@@ -94,18 +102,7 @@ class CGANSOURCE:
         generation_t1 = time.time()
         self.gan_time+=(generation_t1-generation_t0)
 
-        # fake = gaga.generate_samples2(
-        #     g.params,
-        #     g.G,
-        #     g.D,
-        #     n=n,
-        #     batch_size=n,
-        #     normalize=False,
-        #     to_numpy=True,
-        #     cond=cond,
-        #     silence=True,
-        # )
-        return fake
+        return fake.float()
 
 
 class GARF:
@@ -132,6 +129,14 @@ class GARF:
         # size and spacing (2D)
         self.model_data = self.nn["model_data"]
 
+        self.x_mean = torch.tensor(self.model_data['x_mean'], device = self.device)
+        self.x_std = torch.tensor(self.model_data['x_std'], device=self.device)
+        if ('rr' in self.model_data):
+            self.rr = self.model_data['rr']
+        else:
+            self.rr = self.model_data['RR']
+
+
         # output image: nb of energy windows times nb of runs (for rotation)
         self.nb_ene = self.model_data["n_ene_win"]
         # size and spacing in 3D
@@ -150,17 +155,18 @@ class GARF:
 
 
     def apply(self,batch):
-        x = np.copy(batch)
-        x[:,2] = np.arccos(batch[:,3]) / self.degree
-        x[:,3] = np.arccos(batch[:,2]) / self.degree
+        x = batch.clone()
+        x[:,2] = torch.arccos(batch[:,3]) / self.degree
+        x[:,3] = torch.arccos(batch[:,2]) / self.degree
 
         ax = x[:, 2:5]  # two angles and energy
         w = self.nn_predict(self.model, self.nn["model_data"], ax)
 
         # positions
-        angles = x[:, 2:4]
+        x_np = x.cpu().numpy()
+        angles = x_np[:, 2:4]
         t = garf.compute_angle_offset(angles, self.distance_to_crystal)
-        cx = x[:, 0:2]
+        cx = x_np[:, 0:2]
         cx = cx + t
         coord = (cx + self.hsize - self.offset) / self.image_spacing[0:2]
         coord = np.around(coord).astype(int)
@@ -184,32 +190,29 @@ class GARF:
         Apply the NN to predict y from x
         '''
 
-        x_mean = model_data['x_mean']
-        x_std = model_data['x_std']
-        if ('rr' in model_data):
-            rr = model_data['rr']
-        else:
-            rr = model_data['RR']
-
         # apply input model normalisation
-        x = (x - x_mean) / x_std
+        x = (x - self.x_mean) / self.x_std
 
         # torch encapsulation
-        x = x.astype('float32')
+        # x = x.astype('float32')
         # vx = Variable(torch.from_numpy(x)).type(dtypef)
-        vx = torch.from_numpy(x).to(device=self.device)
+        # vx = torch.from_numpy(x).to(device=self.device)
+
+        vx = x.float()
 
         # predict values
         vy_pred = model(vx)
 
         # convert to numpy and normalize probabilities
 
-        y_pred = vy_pred.data.cpu().numpy()
-        y_pred = y_pred.astype(np.float64)
+        # y_pred = vy_pred.data.cpu().numpy()
+        # y_pred = y_pred.astype(np.float64)
+        y_pred = vy_pred
         y_pred = self.normalize_logproba(y_pred)
-        y_pred = self.normalize_proba_with_russian_roulette(y_pred, 0, rr)
+        y_pred = self.normalize_proba_with_russian_roulette(y_pred, 0, self.rr)
 
-        # return
+        y_pred = y_pred.data.cpu().numpy()
+
         return y_pred
 
     def normalize_logproba(self,x):
@@ -218,16 +221,16 @@ class GARF:
         Not clear how to deal with exp overflow ?
         (https://timvieira.github.io/blog/post/2014/02/11/exp-normalize-trick/)
         '''
-        exb = np.exp(x)
-        exb_sum = np.sum(exb, axis=1)
+        exb = torch.exp(x)
+        exb_sum = torch.sum(exb, dim=1)
         # divide if not equal at zero
-        p = np.divide(exb.T, exb_sum,
-                      out=np.zeros_like(exb.T),
-                      where=exb_sum != 0).T
+        p = torch.divide(exb.T, exb_sum,
+                      out=torch.zeros_like(exb.T)).T
         # check (should be equal to 1.0)
         # check = np.sum(p, axis=1)
         # print(check)
         return p
+
 
     # -----------------------------------------------------------------------------
     def normalize_proba_with_russian_roulette(self,w_pred, channel, rr):
@@ -237,7 +240,7 @@ class GARF:
         # multiply column 'channel' by rr
         w_pred[:, channel] *= rr
         # normalize
-        p_sum = np.sum(w_pred, axis=1, keepdims=True)
+        p_sum = torch.sum(w_pred, dim=1, keepdim=True)
         w_pred = w_pred / p_sum
         # check
         # p_sum = np.sum(w_pred, axis=1)
@@ -273,30 +276,115 @@ class GARF:
 
 
 class DetectorPlane:
-    def __init__(self,sid, size):
+    def __init__(self,sid, size, device):
+        self.device = device
         self.sid = sid
-        self.normal = np.array([0,0,-1])
+        self.normal = torch.tensor([0,0,-1], device=self.device).float()
         self.center = np.array([0,0,sid])
         self.size = size
+
 
     def get_intersection(self,batch):
         pos0 = batch[:,1:4]
         dir0 = batch[:,4:7]
-        t= (self.sid - np.dot(pos0,self.normal))/(np.dot(dir0,self.normal))
-        pos_xyz = dir0*(t[:,None])
-        pos_xyz += pos0
+        dir_produit_scalaire = torch.tensordot(dir0,self.normal,dims=1)
+        t= (self.sid - torch.tensordot(pos0,self.normal, dims=1))/dir_produit_scalaire
+        pos_xyz = dir0*t[:,None] + pos0
 
-        indexes_to_keep = ((pos_xyz[:,0] > -self.size/2) &
-                          (pos_xyz[:,0] < self.size/2) &
-                          (pos_xyz[:,1] > -self.size/2) &
-                          (pos_xyz[:,1] < self.size/2))
+        indexes_to_keep = (
+                # (batch[:,0]>0.01) &
+                            (pos_xyz[:,0] > -self.size/2) &
+                            (pos_xyz[:,0] < self.size/2) &
+                            (pos_xyz[:,1] > -self.size/2) &
+                            (pos_xyz[:,1] < self.size/2))
+
         pos_xyz = pos_xyz[indexes_to_keep]
         batch_to_keep = batch[indexes_to_keep]
-        batch_arf = np.hstack((pos_xyz[:, 0:2],
+        batch_arf = torch.concat((pos_xyz[:, 0:2],
                                batch_to_keep[:, 4:6],
-                               batch_to_keep[:, 0:1]))
+                               batch_to_keep[:, 0:1]),dim=1)
 
         return batch_arf
+
+
+def project_on_plane_torch(x, plane, image_plane_size_mm):
+    """
+    Project the x points (Ekine X Y Z dX dY dZ)
+    on the image plane defined by plane_U, plane_V, plane_center, plane_normal
+    """
+    # n is the normal plane, duplicated n times
+
+
+    n = plane["plane_normal"]
+
+    # c0 is the center of the plane, duplicated n times
+    c0 = plane["plane_center"]
+
+    # r is the rotation matrix of the plane, according to the current rotation angle (around Y)
+
+    # p is the set of points position generated by the GAN
+    p = x[:, 1:4]
+
+    # u is the set of points direction generated by the GAN
+    u = x[:, 4:7]
+
+    # w is the set of vectors from all points to the plane center
+    w = p - c0
+
+    # dot product between normal plane (n) and direction (u)
+    ndotu = (n * u).sum(-1)
+
+    # dot product between normal plane and vector from plane to point (w)
+    si = (-(n * w).sum(-1) / ndotu)
+
+    # only positive (direction to the plane)
+    mask = si > 0
+    mu = u[mask]
+    mx = x[mask]
+    mp = p[mask]
+    msi = si[mask]
+
+    # si is a (nb) size vector, expand it to (nb x 3)
+    msi = msi.expand((3,len(msi))).T
+    # intersection between point-direction and plane
+    psip = mp + msi * mu + c0
+
+    # apply the inverse of the rotation
+    # psip = torch.from_numpy(r.apply(psi))
+
+    # remove out of plane (needed ??)
+    sizex = image_plane_size_mm[0] / 2.0
+    sizey = image_plane_size_mm[1] / 2.0
+    mask1 = psip[:, 0] < sizex
+    mask2 = psip[:, 0] > -sizex
+    mask3 = psip[:, 1] < sizey
+    mask4 = psip[:, 1] > -sizey
+    m = mask1 & mask2 & mask3 & mask4
+    psip = psip[m]
+    mu = mu[m]
+    mx = mx[m]
+    nb = len(psip)
+
+    # reshape results
+    pu = psip[:, 0].reshape((nb, 1))  # u
+    pv = psip[:, 1].reshape((nb, 1))  # v
+    # y = np.concatenate((pu, pv), axis=1)
+
+    # rotate direction according to the plane
+    # mup = torch.from_numpy(r.apply(mu))
+    norm = torch.norm(mu, dim=1, keepdim=True)
+    mup = mu / norm
+    dx = mup[:, 0]
+    dy = mup[:, 1]
+
+    # concat the E
+    E = mx[:, 0].reshape((nb, 1))
+    dx = dx.reshape((nb, 1))
+    dy = dy.reshape((nb, 1))
+    data = torch.cat((pu,pv,dx,dy,E),dim=1)
+
+    return data
+
 
 def recons_ideal(output_fn, particles):
     c = scipy.constants.speed_of_light * 1000  # in mm
@@ -333,11 +421,14 @@ def recons_ideal(output_fn, particles):
 
 
 def main():
+
+    t0 = time.time()
     print(args)
     paths = Box()
     paths.current = pathlib.Path(__file__).parent.resolve()
 
-    t0 = time.time()
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    # device = torch.device('cpu')
 
     # activity parameters
     total_activity = int(float(args.activity))
@@ -364,7 +455,9 @@ def main():
     gan_info = {}
     gan_info['pth_filename'] = os.path.join(paths.current, "pths/test001_GP_0GP_10_50000.pth")
     gan_info['batchsize'] = args.batchsize
-    gan_info['device'] = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    gan_info['device'] = device
+    print(device)
+    cpu = torch.device('cpu')
 
     cgan_source = CGANSOURCE(gan_info)
     cgan_source.generate_condition = generate_condition
@@ -382,91 +475,103 @@ def main():
     keys_list = cgan_source.gan_info.params['keys_list']
     print(keys_list)
 
-    detectorPlane = DetectorPlane(sid = 380,size = 565.51168)
-
+    detectorPlane = DetectorPlane(sid = 380,size = 565.51168, device=device)
 
     garf_ui = {}
     garf_ui['pth_filename'] = os.path.join(paths.current, "pths/arf_5x10_9.pth")
     garf_ui['batchsize'] = args.batchsize
     garf_ui['output_fn'] = os.path.join(args.output,"proj.mhd")
-    garf_ui['device'] = gan_info['device']
+    garf_ui['device'] = device
     garf_detector = GARF(user_info=garf_ui)
-
-    # debug
-    # fake = cgan_source.generate()
-    # print(f"{fake.shape[0]} generated photons")
-    # fake = fake[fake[:, 0] > 0.01] # keep exiting particles only
-    # recons_ideal(output_fn=os.path.join(args.output, "recons_ideal.mhd"),particles=fake)
-
-    #
-    # if args.v:
-    #     fig,ax = plt.subplots(3,3)
-    #     axes = ax.ravel()
-    #     for k in range(8):
-    #         axes[k].hist(fake[:,k], bins = 100)
-    #         axes[k].set_title(keys_list[k])
-    #     plt.show()
-
-    # print(f"{fake.shape[0]} exiting the phspace")
-
 
     intsction_time = 0
     generation_time = 0
+    selection_time = 0
     detection_time = 0
+    selec_time,mask_time = 0,0
 
     generated_particles = 0
-    while generated_particles < total_activity:
-        ready_to_garf = None
-        batch_count = 0
-        while (batch_count==0) or (ready_to_garf.shape[0]<args.batchsize):
-            generation_t0 = time.time()
-            fake = cgan_source.generate()
-            generation_t1 = time.time()
-            generation_time+=(generation_t1-generation_t0)
-            # print(f"{fake.shape[0]} generated photons")
-            fake = fake[fake[:, 0] > 0.01] # keep exiting particles only
-            intsction_t0 = time.time()
-            batch_arf = detectorPlane.get_intersection(batch=fake)
-            intsction_t1 = time.time()
-            intsction_time+=(intsction_t1-intsction_t0)
-            arf_key_list= ['pos_x', 'pos_y', 'dir_x', 'dir_y', 'energy']
-            if batch_count==0:
-                ready_to_garf = batch_arf
-                if args.v:
-                    fig, ax = plt.subplots(3, 2)
-                    axes = ax.ravel()
-                    for k in range(5):
-                        axes[k].hist(batch_arf[:, k], bins=100)
-                        axes[k].set_title(arf_key_list[k])
-                    plt.show()
-            else:
-                ready_to_garf = np.vstack((ready_to_garf,batch_arf))
-            batch_count+=1
-
-        # print(f"{batch_arf.shape[0]} intersecting the detector")
-
-        detection_t0 = time.time()
-        garf_detector.apply(batch_arf)
-        detection_t1 = time.time()
-        detection_time +=(detection_t1-detection_t0)
-
-        generated_particles+=cgan_source.batchsize * batch_count
-        print(f'{generated_particles/total_activity * 100} % ...')
+    init_time = time.time() - t0
+    with torch.no_grad():
+        while generated_particles < total_activity:
+            ready_to_garf = None
+            batch_count = 0
+            while (batch_count==0) or (ready_to_garf.shape[0]<args.batchsize):
+                generation_t0 = time.time()
+                fake = cgan_source.generate(n=cgan_source.batchsize)
+                generated_particles += cgan_source.batchsize
+                generation_t1 = time.time()
 
 
+                generation_time+=(generation_t1-generation_t0)
+                selection_t0 = time.time()
+
+                fake = fake[fake[:,0]>0.01]
+
+                # fig,ax = plt.subplots(2,4)
+                # axes = ax.ravel()
+                # zeros = fake.cpu().numpy()
+                # l = ['KineticEnergy',
+                #      'PrePosition_X', 'PrePosition_Y', 'PrePosition_Z',
+                #      'PreDirection_X', 'PreDirection_Y', 'PreDirection_Z',
+                #      'TimeFromBeginOfEvent']
+                # for p in range(8):
+                #     axes[p].hist(zeros[:,p],bins = 100)
+                #     axes[p].set_title(l[p])
+                # plt.show()
+
+                selection_time +=(time.time() - selection_t0)
+
+                intsction_t0 = time.time()
+                batch_arf = detectorPlane.get_intersection(batch=fake)
+
+                intsction_t1 = time.time()
+                intsction_time+=(intsction_t1-intsction_t0)
+                arf_key_list= ['pos_x', 'pos_y', 'dir_x', 'dir_y', 'energy']
+                if batch_count==0:
+                    ready_to_garf = batch_arf
+                    if args.v:
+                        fig, ax = plt.subplots(3, 2)
+                        axes = ax.ravel()
+                        for k in range(5):
+                            axes[k].hist(batch_arf[:, k], bins=100)
+                            axes[k].set_title(arf_key_list[k])
+                        plt.show()
+                else:
+                    # ready_to_garf = np.vstack((ready_to_garf,batch_arf))
+                    ready_to_garf = torch.vstack((ready_to_garf,batch_arf))
+                batch_count+=1
+
+            detection_t0 = time.time()
+            garf_detector.apply(batch_arf)
+            detection_t1 = time.time()
+            detection_time +=(detection_t1-detection_t0)
+
+
+            print(f'{generated_particles/total_activity * 100} % ...')
+
+
+    save_t0= time.time()
     garf_detector.save_projection()
+    save_time = time.time() - save_t0
 
     t1 = time.time()
 
 
     print(f"TOTAL TIME ELASPED : {t1-t0} s")
     print('Including : ')
+    print(f'     *  {init_time} s for initialization')
     print(f'     *  {generation_time} s for particle generation')
     print(f'        Including : ')
     print(f'                °{cgan_source.condition_time} s for conditions')
     print(f'                °{cgan_source.gan_time} s for gan')
+    print(f'     *  {selection_time} s for non-null energy particle selection')
+    print(f'        Including : ')
+    print(f'                °{mask_time} s for mask')
+    print(f'                °{selec_time} s for selection')
     print(f'     *  {intsction_time} s for ray tracing and intersecting particle selection')
     print(f'     *  {detection_time} s for detection')
+    print(f'     * {save_time} s for proj saving')
 
 
 
