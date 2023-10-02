@@ -220,6 +220,7 @@ def generate(opt):
     sigma0_psf, alpha_psf = get_psf_params(opt.spect_system)
     dataset_infos['sigma0_psf'] = sigma0_psf
     dataset_infos['alpha_psf'] = alpha_psf
+    list_sigma0,list_alpha = np.linspace(0,sigma0_psf,10)[1:],np.linspace(0,alpha_psf,10)[1:]
 
     # get output image parameters
     if opt.like is not None:
@@ -285,39 +286,39 @@ def generate(opt):
         forward_projector.SetInput(2, attenuation_image)
         forward_projector.SetInput(2, attenuation_image)
 
-    if opt.rec_fp:
-        vSpacing_recpfp = np.array([4.6875, 4.6875, 4.6875])
-        vSize_recfp = np.array([128,128,128])
-        vOffset_recfp = [(-sp * size + sp) / 2 for (sp, size) in zip(vSpacing_recpfp, vSize_recfp)]
-
-        # vSpacing_recpfp = vSpacing
-        # vSize_recfp = vSize
-        # vOffset_recfp = vOffset
-
-        constant_image = rtk.ConstantImageSource[imageType].New()
-        constant_image.SetSpacing(vSpacing_recpfp)
-        constant_image.SetOrigin(vOffset_recfp)
-        constant_image.SetSize([int(s) for s in vSize_recfp])
-        constant_image.SetConstant(1)
-        output_rec = constant_image.GetOutput()
-
-        OSEMType = rtk.OSEMConeBeamReconstructionFilter[imageType, imageType]
-        osem = OSEMType.New()
-        osem.SetInput(0, output_rec)
-        osem.SetGeometry(geometry)
-        osem.SetNumberOfIterations(1)
-        osem.SetNumberOfProjectionsPerSubset(15)
-        osem.SetBetaRegularization(0)
-
-        if opt.attenuationmap is not None:
-            osem.SetInput(2, attenuation_image)
-
-        FP = osem.ForwardProjectionType_FP_ZENG
-        BP = osem.BackProjectionType_BP_ZENG
-        osem.SetSigmaZero(sigma0_psf)
-        osem.SetAlpha(alpha_psf)
-        osem.SetForwardProjectionFilter(FP)
-        osem.SetBackProjectionFilter(BP)
+    # if opt.rec_fp:
+    #     vSpacing_recpfp = np.array([4.6875, 4.6875, 4.6875])
+    #     vSize_recfp = np.array([128,128,128])
+    #     vOffset_recfp = [(-sp * size + sp) / 2 for (sp, size) in zip(vSpacing_recpfp, vSize_recfp)]
+    #
+    #     # vSpacing_recpfp = vSpacing
+    #     # vSize_recfp = vSize
+    #     # vOffset_recfp = vOffset
+    #
+    #     constant_image = rtk.ConstantImageSource[imageType].New()
+    #     constant_image.SetSpacing(vSpacing_recpfp)
+    #     constant_image.SetOrigin(vOffset_recfp)
+    #     constant_image.SetSize([int(s) for s in vSize_recfp])
+    #     constant_image.SetConstant(1)
+    #     output_rec = constant_image.GetOutput()
+    #
+    #     OSEMType = rtk.OSEMConeBeamReconstructionFilter[imageType, imageType]
+    #     osem = OSEMType.New()
+    #     osem.SetInput(0, output_rec)
+    #     osem.SetGeometry(geometry)
+    #     osem.SetNumberOfIterations(1)
+    #     osem.SetNumberOfProjectionsPerSubset(15)
+    #     osem.SetBetaRegularization(0)
+    #
+    #     if opt.attenuationmap is not None:
+    #         osem.SetInput(2, attenuation_image)
+    #
+    #     FP = osem.ForwardProjectionType_FP_ZENG
+    #     BP = osem.BackProjectionType_BP_ZENG
+    #     osem.SetSigmaZero(sigma0_psf)
+    #     osem.SetAlpha(alpha_psf)
+    #     osem.SetForwardProjectionFilter(FP)
+    #     osem.SetBackProjectionFilter(BP)
 
     min_ratio, Max_ratio = opt.min_ratio, opt.max_ratio
     if opt.background:
@@ -423,12 +424,16 @@ def generate(opt):
         #proj PVE
         forward_projector.SetInput(1, src_img_normedToTotalCounts)
 
-        forward_projector.SetSigmaZero(sigma0_psf)
-        forward_projector.SetAlpha(alpha_psf)
-        forward_projector.Update()
-        output_forward_PVE = forward_projector.GetOutput()
-        output_forward_PVE.DisconnectPipeline()
-        output_forward_PVE_array = itk.array_from_image(output_forward_PVE).astype(dtype=dtype)
+        list_PVE = []
+        for sig,alp in zip(list_sigma0,list_alpha):
+            print(sig)
+            forward_projector.SetSigmaZero(sig)
+            forward_projector.SetAlpha(alp)
+            forward_projector.Update()
+            output_forward_PVE = forward_projector.GetOutput()
+            output_forward_PVE.DisconnectPipeline()
+            output_forward_PVE_array = itk.array_from_image(output_forward_PVE).astype(dtype=dtype)
+            list_PVE.append(output_forward_PVE_array)
 
         #proj PVfree
         forward_projector.SetSigmaZero(0)
@@ -439,51 +444,32 @@ def generate(opt):
         output_forward_PVfree_array = itk.array_from_image(output_forward_PVfree).astype(dtype=dtype)
 
         if opt.noise:
-            noisy_projection_array = np.random.poisson(lam=output_forward_PVE_array, size=output_forward_PVE_array.shape).astype(dtype=dtype)
+            list_PVE_noisy = []
+            for proj_PVE_array in list_PVE:
+                list_PVE_noisy.append(np.random.poisson(lam=proj_PVE_array, size=proj_PVE_array.shape).astype(dtype=dtype))
 
-            if opt.rec_fp:
-                output_forward_PVE_noisy = itk.image_from_array(noisy_projection_array.astype(dtype=np.float32))
-                output_forward_PVE_noisy.CopyInformation(output_forward_PVE)
-                osem.SetInput(1, output_forward_PVE_noisy)
-                osem.Update()
-                forward_projector.SetSigmaZero(0)
-                forward_projector.SetAlpha(0)
-                forward_projector.SetInput(1, osem.GetOutput())
-                forward_projector.Update()
-                output_rec_fp = forward_projector.GetOutput()
-                output_rec_fp_array = itk.array_from_image(output_rec_fp)
+            # if opt.rec_fp:
+            #     output_forward_PVE_noisy = itk.image_from_array(noisy_projection_array.astype(dtype=np.float32))
+            #     output_forward_PVE_noisy.CopyInformation(output_forward_PVE)
+            #     osem.SetInput(1, output_forward_PVE_noisy)
+            #     osem.Update()
+            #     forward_projector.SetSigmaZero(0)
+            #     forward_projector.SetAlpha(0)
+            #     forward_projector.SetInput(1, osem.GetOutput())
+            #     forward_projector.Update()
+            #     output_rec_fp = forward_projector.GetOutput()
+            #     output_rec_fp_array = itk.array_from_image(output_rec_fp)
 
         # Write projections :
-        if opt.merge:
-            if opt.noise:
-                if opt.rec_fp:
-                    output_filename_merged = os.path.join(opt.output_folder,f'{source_ref}_noisy_PVE_PVfree_rec_fp.{opt.type}')
-                    output_forward_merged_array = np.concatenate((noisy_projection_array,output_forward_PVE_array, output_forward_PVfree_array,output_rec_fp_array), axis=0)
-                else:
-                    output_filename_merged = os.path.join(opt.output_folder,f'{source_ref}_noisy_PVE_PVfree.{opt.type}')
-                    output_forward_merged_array = np.concatenate((noisy_projection_array,output_forward_PVE_array, output_forward_PVfree_array), axis=0)
-            else:
-                output_filename_merged = os.path.join(opt.output_folder, f'{source_ref}_PVE_PVfree.{opt.type}')
-                output_forward_merged_array = np.concatenate((output_forward_PVE_array,output_forward_PVfree_array), axis=0)
-            if opt.type!='npy':
-                output_forward_merged = itk.image_from_array(output_forward_merged_array)
-                output_forward_merged.SetSpacing(output_forward_PVE.GetSpacing())
-                output_forward_merged.SetOrigin(output_forward_PVE.GetOrigin())
-                itk.imwrite(output_forward_merged,output_filename_merged)
-            else:
-                np.save(output_filename_merged,output_forward_merged_array)
-        else:
-            output_filename_PVfree = os.path.join(opt.output_folder, f'{source_ref}_PVfree.{opt.type}')
-            output_filename_PVE = os.path.join(opt.output_folder, f'{source_ref}_PVE.{opt.type}')
 
-            save_one_file(array=output_forward_PVfree_array,filename=output_filename_PVfree,ftype=opt.type,img_like=output_forward_PVE)
-            save_one_file(array=output_forward_PVE_array,filename=output_filename_PVE,ftype=opt.type,img_like=output_forward_PVE)
-            if opt.noise:
-                output_filename_PVE_noisy = os.path.join(opt.output_folder, f'{source_ref}_PVE_noisy.{opt.type}')
-                save_one_file(array=noisy_projection_array, filename=output_filename_PVE_noisy, ftype=opt.type,img_like=output_forward_PVE)
-                if opt.rec_fp:
-                    output_filename_rec_fp = os.path.join(opt.output_folder, f'{source_ref}_rec_fp.mhd')
-                    save_one_file(array=output_rec_fp_array, filename=output_filename_rec_fp, ftype=opt.type,img_like=output_forward_PVE)
+        output_filename_PVfree = os.path.join(opt.output_folder, f'{source_ref}_PVfree.{opt.type}')
+        save_one_file(array=output_forward_PVfree_array,filename=output_filename_PVfree,ftype=opt.type,img_like=output_forward_PVfree)
+
+        for k in range(len(list_PVE_noisy)):
+            output_filename_PVE = os.path.join(opt.output_folder, f'{source_ref}_PVE_{k}.{opt.type}')
+            save_one_file(array=list_PVE[k],filename=output_filename_PVE,ftype=opt.type, img_like=output_forward_PVfree)
+            output_filename_PVE_noisy = os.path.join(opt.output_folder, f'{source_ref}_PVE_noisy_{k}.{opt.type}')
+            save_one_file(array=list_PVE_noisy[k],filename=output_filename_PVE_noisy,ftype=opt.type, img_like=output_forward_PVfree)
 
     tf = time.time()
     elapsed_time = round(tf - t0)
