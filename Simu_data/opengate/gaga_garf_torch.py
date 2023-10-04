@@ -6,10 +6,8 @@ import os
 from box import Box
 import torch
 import time
-from torch.utils.data import DataLoader
 from gaga_garf.cgan_source import CGANSOURCE,ConditionsDataset
 from gaga_garf.garf_detector import GARF,DetectorPlane
-
 
 def main():
     t0 = time.time()
@@ -55,22 +53,26 @@ def main():
     garf_ui['nprojs'] = len(l_detectorsPlanes)
     garf_detector = GARF(user_info=garf_ui)
 
-    dataset = ConditionsDataset(activity=args.activity,cgan_src=cgan_source)
+    dataset = ConditionsDataset(activity=args.activity,cgan_src=cgan_source,source_fn=args.source)
+    batch_size = int(float(args.batchsize))
+    n_batchs = int(float(args.activity)) // batch_size
 
-    dataloader = DataLoader(dataset, batch_size=int(float(args.batchsize)), shuffle=True,num_workers=8)
-
+    t_condition_generation = 0
     t_intersection = 0
     t_apply = 0
     t_selection = 0
     t_save = 0
 
     with torch.no_grad():
-        for z,cond in dataloader:
-            gan_input = torch.cat((z, cond), dim=1).float()
-            gan_input = gan_input.to(device)
-            fake = cgan_source.generate(gan_input)
+        for _ in range(n_batchs):
+            t_condition_generation_0 = time.time()
+            gan_input_z_cond = dataset.get_batch(batch_size)
+            t_condition_generation+=(time.time() - t_condition_generation_0)
+
+            gan_input_z_cond = gan_input_z_cond.to(device)
+            fake = cgan_source.generate(gan_input_z_cond)
             t_selection_0 = time.time()
-            fake = fake[fake[:,0]>0.01]
+            # fake = fake[fake[:,0]>0.01]
             t_selection += (time.time() - t_selection_0)
 
             for proj_i, plane_i in enumerate(l_detectorsPlanes):
@@ -82,17 +84,22 @@ def main():
                 t_apply += (time.time() - t_apply_0)
 
 
-
+    # dataset.save_conditions(fn = os.path.join(args.output, f"conditions.mhd"))
+    t_save_0 = time.time()
     garf_detector.save_projection()
+    t_save+=(time.time() -t_save_0)
 
     print(f"TOTAL TIME : {time.time() - t0}")
+    print(f"GENERATION TIME: {t_condition_generation}")
     print(f"SELECTION TIME : {t_selection}")
     print(f"INTERSECTION TIME : {t_intersection}")
     print(f"APPLY TIME : {t_apply}")
+    print(f"SAVING TIME : {t_save}")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-a","--activity", type = float, default = 100)
+    parser.add_argument("-s", "--source", type=str)
     parser.add_argument("-b","--batchsize", type = float, default = 100000)
     parser.add_argument("-o", "--output", type = str)
     parser.add_argument("-n","--nprojs", type = int, default= 1)

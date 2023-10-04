@@ -6,9 +6,11 @@ import torch
 import time
 from torch.utils.data import Dataset
 import opengate as gate
-
+import itk
+import numpy as np
 import opengate.contrib.phantom_nema_iec_body as gate_iec
 import gaga_phsp as gaga
+from opengate.source.VoxelizedSourcePDFSampler import VoxelizedSourcePDFSampler
 
 
 class CGANSOURCE:
@@ -76,7 +78,86 @@ class CGANSOURCE:
         return fake.float()
 
 
-class ConditionsDataset(Dataset):
+
+class ConditionsDataset:
+    def __init__(self, activity, cgan_src, source_fn):
+        self.total_activity = int(float(activity))
+        source = itk.imread(source_fn)
+        self.source_size = np.array(itk.size(source)).astype(int)
+        self.source_spacing = np.array(source.GetSpacing())
+        self.source_origin = np.array(source.GetOrigin())
+
+        # self.condition_img = np.zeros(self.source_size)
+
+        self.sampler = VoxelizedSourcePDFSampler(source)
+
+        self.xmeanc = cgan_src.xmeanc.cpu()
+        self.xstdc = cgan_src.xstdc.cpu()
+        self.z_dim = cgan_src.z_dim
+        self.z_rand = cgan_src.z_rand
+
+        # self.all_conditions = self.generate_condition(n=self.total_activity)
+
+    def save_conditions(self, fn):
+        condition_img_itk = itk.image_from_array(self.condition_img)
+        condition_img_itk.SetSpacing(self.source_spacing)
+        condition_img_itk.SetOrigin(self.source_origin)
+        itk.imwrite(condition_img_itk, fn)
+
+    def generate_isotropic_directions(self,n):
+        min_theta = 0
+        max_theta = np.pi
+        min_phi = 0
+        max_phi = 2 * np.pi
+
+        u = np.random.uniform(0, 1, size=n)
+        costheta = np.cos(min_theta) - u * (np.cos(min_theta) - np.cos(max_theta))
+        sintheta = np.sqrt(1 - costheta ** 2)
+
+        v = np.random.uniform(0, 1, size=n)
+        phi = min_phi + (max_phi - min_phi) * v
+        sinphi = np.sin(phi)
+        cosphi = np.cos(phi)
+
+        px = -sintheta * cosphi
+        py = -sintheta * sinphi
+        pz = -costheta
+
+        return np.column_stack((px,py,pz))
+
+    def generate_condition(self,n):
+        i,j,k = self.sampler.sample_indices(n=n)
+
+        # for ii,jj,kk in zip(i,j,k):
+        #     self.condition_img[ii,jj,kk]+=1
+
+        # half pixel size
+        hs = self.source_spacing / 2.0
+        # sample within the voxel
+        rx = np.random.uniform(-hs[0], hs[0], size=n)
+        ry = np.random.uniform(-hs[1], hs[1], size=n)
+        rz = np.random.uniform(-hs[2], hs[2], size=n)
+        # warning order np is z,y,x while itk is x,y,z
+        x = self.source_spacing[2] * k + rz
+        y = self.source_spacing[1] * j + ry
+        z = self.source_spacing[0] * i + rx
+
+        p =  np.column_stack((x,y,z)) - hs * self.source_size + hs
+        dir = self.generate_isotropic_directions(n)
+        cond = np.column_stack((p,dir))
+        return cond
+
+    def get_batch(self, n):
+        condx = torch.from_numpy(self.generate_condition(n=n))
+        condx = (condx - self.xmeanc) / self.xstdc
+        z = self.z_rand((n,self.z_dim))
+        gan_input_z_cond = torch.cat((z, condx), dim=1).float()
+        return gan_input_z_cond
+
+
+
+
+class ConditionsDataset_analtical_iec(Dataset):
     def __init__(self, activity, cgan_src):
         self.total_activity = int(float(activity))
         spheres_diam = [10, 13, 17, 22, 28, 37]
