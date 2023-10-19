@@ -75,7 +75,7 @@ def create_source(size, spacing, like,n_source, value,type, center, radius, back
 
 
     for s in range(n_source):
-        center_s = [center[s][0], center[s][1], center[s][2]]
+        center_s = [center[s][2], center[s][1], center[s][0]]
         radius_s = radius[s]
         if type == 'sphere':
             src_array += value[s]*(( ( ((X - center_s[0]) / radius_s) ** 2

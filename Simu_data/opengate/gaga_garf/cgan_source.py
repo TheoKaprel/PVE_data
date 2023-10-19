@@ -80,14 +80,17 @@ class CGANSOURCE:
 
 
 class ConditionsDataset:
-    def __init__(self, activity, cgan_src, source_fn):
+    def __init__(self, activity, cgan_src, source_fn,save_cond=False):
         self.total_activity = int(float(activity))
         source = itk.imread(source_fn)
-        self.source_size = np.array(itk.size(source)).astype(int)
+        source_array=itk.array_from_image(source)
+        self.source_size = source_array.shape
         self.source_spacing = np.array(source.GetSpacing())
         self.source_origin = np.array(source.GetOrigin())
+        self.save_cond = save_cond
 
-        # self.condition_img = np.zeros(self.source_size)
+        if save_cond:
+            self.condition_img = np.zeros(self.source_size)
 
         self.sampler = VoxelizedSourcePDFSampler(source)
 
@@ -96,7 +99,6 @@ class ConditionsDataset:
         self.z_dim = cgan_src.z_dim
         self.z_rand = cgan_src.z_rand
 
-        # self.all_conditions = self.generate_condition(n=self.total_activity)
 
     def save_conditions(self, fn):
         condition_img_itk = itk.image_from_array(self.condition_img)
@@ -128,8 +130,8 @@ class ConditionsDataset:
     def generate_condition(self,n):
         i,j,k = self.sampler.sample_indices(n=n)
 
-        # for ii,jj,kk in zip(i,j,k):
-        #     self.condition_img[ii,jj,kk]+=1
+        for ii,jj,kk in zip(i,j,k):
+            self.condition_img[ii,jj,kk]+=1
 
         # half pixel size
         hs = self.source_spacing / 2.0

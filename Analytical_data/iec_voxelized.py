@@ -3,7 +3,6 @@
 
 import opengate as gate
 import opengate.contrib.phantom_nema_iec_body as gate_iec
-import opengate_core as g4
 import itk
 import json
 import click
@@ -48,7 +47,8 @@ def create_iec(spacing, output):
 
     # voxelized a volume
     print("Starting voxelization ...")
-    labels, image = gate.voxelize_volume(sim, iec.name, image)
+    se = gate.SimulationEngine(sim)
+    labels, image = gate.voxelize_volume(se, iec.name, image)
     print(f"Output labels: {labels}")
 
 

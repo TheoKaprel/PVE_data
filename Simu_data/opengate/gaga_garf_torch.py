@@ -53,7 +53,7 @@ def main():
     garf_ui['nprojs'] = len(l_detectorsPlanes)
     garf_detector = GARF(user_info=garf_ui)
 
-    dataset = ConditionsDataset(activity=args.activity,cgan_src=cgan_source,source_fn=args.source)
+    dataset = ConditionsDataset(activity=args.activity,cgan_src=cgan_source,source_fn=args.source,save_cond=args.save_cond)
     batch_size = int(float(args.batchsize))
     n_batchs = int(float(args.activity)) // batch_size
 
@@ -83,8 +83,9 @@ def main():
                 garf_detector.apply(batch_arf_i,proj_i)
                 t_apply += (time.time() - t_apply_0)
 
+    if args.save_cond:
+        dataset.save_conditions(fn = os.path.join(args.output, f"conditions.mhd"))
 
-    # dataset.save_conditions(fn = os.path.join(args.output, f"conditions.mhd"))
     t_save_0 = time.time()
     garf_detector.save_projection()
     t_save+=(time.time() -t_save_0)
@@ -104,6 +105,7 @@ if __name__ == '__main__':
     parser.add_argument("-o", "--output", type = str)
     parser.add_argument("-n","--nprojs", type = int, default= 1)
     parser.add_argument('--debug', action="store_true")
+    parser.add_argument('--save_cond', action="store_true")
 
     args = parser.parse_args()
 
