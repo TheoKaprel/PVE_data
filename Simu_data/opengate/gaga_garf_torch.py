@@ -3,6 +3,8 @@
 import argparse
 import pathlib
 import os
+import numpy as np
+import matplotlib.pyplot as plt
 from box import Box
 import torch
 import time
@@ -18,7 +20,7 @@ def main():
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
     gan_info = {}
-    gan_info['pth_filename'] = os.path.join(paths.current, "pths/test001_GP_0GP_10_50000.pth")
+    gan_info['pth_filename'] = args.pth
     gan_info['batchsize'] = args.batchsize
     gan_info['device'] = device
     print(device)
@@ -26,7 +28,6 @@ def main():
     cgan_source = CGANSOURCE(gan_info)
 
     print('PARAMS KEYS : ')
-    # print(cgan_source.gan_info.params.keys())
     print(cgan_source.gan_info.params)
     print()
 
@@ -71,6 +72,17 @@ def main():
 
             gan_input_z_cond = gan_input_z_cond.to(device)
             fake = cgan_source.generate(gan_input_z_cond)
+
+            if args.debug:
+                fig,ax=plt.subplots(2,4)
+                axs=ax.ravel()
+                fake_np=fake.cpu().numpy()
+                for k in range(fake_np.shape[1]-1):
+                    axs[k].hist(fake_np[:,k],bins=100)
+                dist=np.sqrt(fake_np[:,1]**2+fake_np[:,2]**2+fake_np[:,3]**2)
+                axs[-1].hist(dist,bins=100)
+                plt.show()
+
             t_selection_0 = time.time()
             # fake = fake[fake[:,0]>0.01]
             t_selection += (time.time() - t_selection_0)
@@ -78,6 +90,8 @@ def main():
             for proj_i, plane_i in enumerate(l_detectorsPlanes):
                 t_intersection_0 = time.time()
                 batch_arf_i = plane_i.get_intersection(batch=fake)
+                if (args.debug and proj_i==0):
+                    print(fake.shape[0], batch_arf_i.shape[0])
                 t_intersection+=(time.time() - t_intersection_0)
                 t_apply_0 = time.time()
                 garf_detector.apply(batch_arf_i,proj_i)
@@ -101,6 +115,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-a","--activity", type = float, default = 100)
     parser.add_argument("-s", "--source", type=str)
+    parser.add_argument("--pth", type=str)
     parser.add_argument("-b","--batchsize", type = float, default = 100000)
     parser.add_argument("-o", "--output", type = str)
     parser.add_argument("-n","--nprojs", type = int, default= 1)
