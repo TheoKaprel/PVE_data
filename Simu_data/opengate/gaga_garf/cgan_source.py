@@ -84,9 +84,11 @@ class ConditionsDataset:
         self.total_activity = int(float(activity))
         source = itk.imread(source_fn)
         source_array=itk.array_from_image(source)
-        self.source_size = source_array.shape
+        self.source_size = np.array(source_array.shape)
         self.source_spacing = np.array(source.GetSpacing())
         self.source_origin = np.array(source.GetOrigin())
+        self.offset = (self.source_size-1)*self.source_spacing/2
+
         self.save_cond = save_cond
 
         if save_cond:
@@ -130,8 +132,9 @@ class ConditionsDataset:
     def generate_condition(self,n):
         i,j,k = self.sampler.sample_indices(n=n)
 
-        for ii,jj,kk in zip(i,j,k):
-            self.condition_img[ii,jj,kk]+=1
+        if self.save_cond:
+            for ii,jj,kk in zip(i,j,k):
+                self.condition_img[ii,jj,kk]+=1
 
         # half pixel size
         hs = self.source_spacing / 2.0
@@ -140,11 +143,11 @@ class ConditionsDataset:
         ry = np.random.uniform(-hs[1], hs[1], size=n)
         rz = np.random.uniform(-hs[2], hs[2], size=n)
         # warning order np is z,y,x while itk is x,y,z
-        x = self.source_spacing[2] * k + rz
+        x = self.source_spacing[0] * i + rz
         y = self.source_spacing[1] * j + ry
-        z = self.source_spacing[0] * i + rx
+        z = self.source_spacing[2] * k + rx
 
-        p =  np.column_stack((x,y,z)) - hs * self.source_size + hs
+        p =  np.column_stack((z,y,x)) - self.offset[::-1]
         dir = self.generate_isotropic_directions(n)
         cond = np.column_stack((p,dir))
         return cond
