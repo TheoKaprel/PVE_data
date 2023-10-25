@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import time
 
 from garf_helpers import *
 import garf
@@ -19,9 +20,15 @@ class GARF:
         self.image_size = [self.nprojs, 128, 128]
         self.image_spacing = [self.spacing, self.spacing, 1]
 
+        self.zeros = torch.zeros((self.image_size[1], self.image_size[2])).to(self.device)
+
         self.distance_to_crystal = 75
         self.degree = np.pi / 180
         self.init_garf()
+
+        self.t_image_from_coord,self.time_nn_predict = 0,0
+        self.t_preprocess_arf,self.t_postprocess_arf = 0,0
+        self.t_remove,self.t_jsp = 0,0
 
     def init_garf(self):
         # load the pth file
@@ -47,7 +54,8 @@ class GARF:
         # size and spacing in 3D
 
         # create output image as np array
-        self.output_image = np.zeros(self.image_size, dtype=np.float64)
+        # self.output_image = np.zeros(self.image_size, dtype=np.float64)
+        self.output_image = torch.zeros(tuple(self.image_size)).to(self.device)
         # compute offset
         self.psize = [self.size * self.spacing, self.size * self.spacing]
 
@@ -63,34 +71,51 @@ class GARF:
         print(f'psize : {self.psize}')
 
     def apply(self,batch, proj_i):
+
+        t_preprocess_arf_0 = time.time()
         x = batch.clone()
+
+
 
         x[:,2] = torch.arccos(batch[:,3]) / self.degree
         x[:,3] = torch.arccos(batch[:,2]) / self.degree
-        # x[:,2] = (batch[:,3])
-        # x[:,3] = (batch[:,2])
-
         ax = x[:, 2:5]  # two angles and energy
+
+        self.t_preprocess_arf+=(time.time() - t_preprocess_arf_0)
+
+        time_nn_predict_0 = time.time()
         w = self.nn_predict(self.model, self.nn["model_data"], ax)
+        self.time_nn_predict += (time.time() - time_nn_predict_0)
+
         # positions
-        x_np = x.cpu().numpy()
-        angles = x_np[:, 2:4]
-        t = garf.compute_angle_offset(angles, self.distance_to_crystal)
+        # x_np = x.cpu().numpy()
+        t_postprocess_arf_0 = time.time()
+        x_np = x
+        # angles = x_np[:, 2:4]
+        # t = self.compute_angle_offset(angles, self.distance_to_crystal)
 
         cx = x_np[:, 0:2]
-        cx = cx + t
+        # cx = cx + t
         coord = (cx + (self.size-1)*self.spacing/2) / self.spacing
-        coord = np.around(coord).astype(int)
-        v = coord[:, 0]
-        u = coord[:, 1]
-        u, v, w_pred = garf.remove_out_of_image_boundaries(u, v, w, self.image_size)
+        vu = torch.round(coord).to(int)
 
+        self.t_jsp+=(time.time() - t_postprocess_arf_0)
+
+        t_remove_0 = time.time()
+        # vu, w_pred = self.remove_out_of_image_boundaries(vu, w, self.image_size)
+        self.t_remove+=(time.time() - t_remove_0)
+
+        self.t_postprocess_arf+=(time.time() - t_postprocess_arf_0)
+
+
+        t0=time.time()
         # do nothing if there is no hit in the image
-        if u.shape[0] != 0:
-            temp = np.zeros([self.image_size[1], self.image_size[2]], dtype=np.float64)
-            temp = self.image_from_coordinates_2(temp, u,v,w_pred[:,2])
+        if vu.shape[0] != 0:
+            # temp = np.zeros([self.image_size[1], self.image_size[2]], dtype=np.float64)
+            temp = self.zeros.fill_(0)
+            temp = self.image_from_coordinates_2(temp, vu,w[:,2])
             self.output_image[proj_i,:,:]= self.output_image[proj_i,:,:] + temp
-
+        self.t_image_from_coord+=(time.time() - t0)
 
     def nn_predict(self,model, model_data, x):
         '''
@@ -118,7 +143,7 @@ class GARF:
         y_pred = self.normalize_logproba(y_pred)
         y_pred = self.normalize_proba_with_russian_roulette(y_pred, 0, self.rr)
 
-        y_pred = y_pred.data.cpu().numpy()
+        # y_pred = y_pred.data.cpu().numpy()
 
         return y_pred
 
@@ -137,6 +162,23 @@ class GARF:
         # check = np.sum(p, axis=1)
         # print(check)
         return p
+
+    def compute_angle_offset(self,angles, length):
+        '''
+        compute the x,y offset according to the angle
+        '''
+
+        angles_rad = (angles)*np.pi/180
+        cos_theta = torch.cos(angles_rad[:, 0])
+        cos_phi = torch.cos(angles_rad[:, 1])
+
+        tx = length * cos_phi    ## yes see in Gate_NN_ARF_Actor, line "phi = acos(dir.x())/degree;"
+        ty = length * cos_theta  ## yes see in Gate_NN_ARF_Actor, line "theta = acos(dir.y())/degree;"
+        t = torch.column_stack((tx, ty))
+
+        return t
+
+
 
     def image_from_coordinates(self,img, u, v, w_pred):
         '''
@@ -185,12 +227,35 @@ class GARF:
         # end
         return img
 
-    def image_from_coordinates_2(self, img, u,v,w):
-
-        for uu,vv,ww in zip(u,v,w):
-            img[uu,vv]+=ww
-
+    def image_from_coordinates_2(self, img, vu,w):
+        # for uu,vv,ww in zip(u,v,w):
+        #     img[uu,vv]+=ww
+        img_r = img.ravel()
+        ind_r = vu[:,1]*img.shape[0]+vu[:,0]
+        img_r.put_(index=ind_r,source=w,accumulate=True)
+        img=img_r.reshape_as(img)
         return img
+
+    def remove_out_of_image_boundaries(self,vu, w_pred, size):
+        '''
+        Remove values out of the images (<0 or > size)
+        '''
+        len_0 = vu.shape[0]
+        # index = torch.where((vu[:,0]>=0)
+        #                     & (vu[:,1]>=0)
+        #                     & (vu[:,0]< size[2])
+        #                     & (vu[:,1]<size[1]))[0]
+        # vu = vu[index]
+        # w_pred = w_pred[index]
+
+        vu_ = vu[(vu[:,0]>=0) & (vu[:,1]>=0) & (vu[:,0]< size[2]) & (vu[:,1]<size[1])]
+        w_pred_ = w_pred[(vu[:,0]>=0) & (vu[:,1]>=0) & (vu[:,0]< size[2]) & (vu[:,1]<size[1])]
+
+        if (len_0 - vu.shape[0]>0):
+            print('Remove points out of the image: {} values removed sur {}'.format(len_0 - vu.shape[0], len_0))
+
+        return vu_, w_pred_
+
 
 
     # -----------------------------------------------------------------------------
@@ -209,8 +274,15 @@ class GARF:
         return w_pred
 
     def save_projection(self):
+        print(f'TIME FOR PREPROC: {self.t_preprocess_arf}')
+        print(f'TIME FOR POSTROC: {self.t_postprocess_arf}')
+        print(f'dont {self.t_remove} pour remove et {self.t_jsp} pour avant remove')
+        print(f'TIME FOR NN PREDICT: {self.time_nn_predict}')
+        print(f'TIME FOR IND TO COORD : {self.t_image_from_coord}')
+
         # convert to itk image
-        self.output_image = itk.image_from_array(self.output_image)
+        output_image_array = self.output_image.cpu().numpy()
+        self.output_image_itk = itk.image_from_array(output_image_array)
 
         # set spacing and origin like DigitizerProjectionActor
         spacing = self.image_spacing
@@ -220,19 +292,19 @@ class GARF:
         size[2] = self.image_size[0]
         origin = -size / 2.0 * spacing + spacing / 2.0
         origin[2] = 0
-        self.output_image.SetSpacing(spacing)
-        self.output_image.SetOrigin(origin)
+        self.output_image_itk.SetSpacing(spacing)
+        self.output_image_itk.SetOrigin(origin)
 
         # convert double to float
-        InputImageType = itk.Image[itk.D, 3]
-        OutputImageType = itk.Image[itk.F, 3]
-        castImageFilter = itk.CastImageFilter[InputImageType, OutputImageType].New()
-        castImageFilter.SetInput(self.output_image)
-        castImageFilter.Update()
-        self.output_image = castImageFilter.GetOutput()
+        # InputImageType = itk.Image[itk.D, 3]
+        # OutputImageType = itk.Image[itk.F, 3]
+        # castImageFilter = itk.CastImageFilter[InputImageType, OutputImageType].New()
+        # castImageFilter.SetInput(self.output_image_itk)
+        # castImageFilter.Update()
+        # self.output_image_itk = castImageFilter.GetOutput()
 
 
-        itk.imwrite(self.output_image, self.output_fn)
+        itk.imwrite(self.output_image_itk, self.output_fn)
         print(f'Output projection saved in : {self.output_fn}')
 
 
@@ -260,39 +332,55 @@ class DetectorPlane:
         dir0 = batch[:,4:7]
 
         dir_produit_scalaire = torch.tensordot(dir0,self.normal,dims=1)
-        keep = (dir_produit_scalaire<0)
+        # keep = (dir_produit_scalaire<0)
         t= (self.dd - torch.tensordot(pos0,self.normal, dims=1))/dir_produit_scalaire
-        keep = keep & (t>0)
+        # keep = keep & (t>0)
         pos_xyz = dir0*t[:,None] + pos0
 
-        pos_xyz_rot = torch.matmul(self.Mt, pos_xyz.t()).t()
-        dir_rot = torch.matmul(self.Mt, dir0.t()).t()
+        pos_xy_rot = torch.matmul(self.Mt, pos_xyz.t()).t()[:,0:2]
+        dir_xy_rot = torch.matmul(self.Mt, dir0.t()).t()[:,0:2]
 
-        indexes_to_keep = ((keep) &
-                           (torch.abs(pos_xyz_rot[:,0])<self.size/2) &
-                           (torch.abs(pos_xyz_rot[:, 1]) < self.size / 2)
-                           )
+        pos_xy_rot_crystal = pos_xy_rot + 75 * dir_xy_rot
 
-        # indexes_to_keep = ((keep) &
-        #                    (torch.abs(pos_xyz_rot[:,2])<self.size/2) &
-        #                    (torch.abs(pos_xyz_rot[:, 1]) < self.size / 2)
-        #                    )
+        indexes_to_keep = torch.where((dir_produit_scalaire<0) &
+                                      (t>0) &
+                                      (pos_xy_rot.abs().max(dim=1)[0] < self.size / 2) &
+                                      (pos_xy_rot_crystal.abs().max(dim=1)[0] < self.size/2)
+                                      )[0]
 
-
-        pos_xy_rot_keep = pos_xyz_rot[indexes_to_keep,0:2]
-        # pos_xy_rot_keep = torch.hstack((pos_xyz_rot[indexes_to_keep,2:3],pos_xyz[indexes_to_keep,1:2]))
-
-        dir_to_keep = dir_rot[indexes_to_keep,0:2]
-        # dir_to_keep = torch.hstack((dir_rot[indexes_to_keep,2:3],dir_rot[indexes_to_keep,1:2]))
-        energ_to_keep = energ0[indexes_to_keep,:]
-
-        batch_arf = torch.concat((pos_xy_rot_keep,
-                               dir_to_keep,
-                               energ_to_keep),dim=1) # pos, dir, energy
+        batch_arf = torch.index_select(torch.concat((pos_xy_rot_crystal,
+                               dir_xy_rot,
+                               energ0),dim=1),dim=0,index=indexes_to_keep)
 
         return batch_arf
 
+    def get_intersection__(self,batch):
+        energ0 = batch[:, 0:1]
+        pos0 = batch[:,1:4]
+        dir0 = batch[:,4:7]
 
+        dir_produit_scalaire = torch.tensordot(dir0,self.normal,dims=1)
+
+        keep = (dir_produit_scalaire<0)
+        pos0,dir0,energ0 = pos0[keep],dir0[keep],energ0[keep]
+
+        t= (self.dd - torch.tensordot(pos0,self.normal, dims=1))/dir_produit_scalaire[keep]
+
+        keep = (t>0)
+        pos0, dir0, energ0,t = pos0[keep], dir0[keep], energ0[keep],t[keep]
+
+        pos_xyz = dir0*t[:,None] + pos0
+
+        pos_xy_rot = torch.matmul(self.Mt, pos_xyz.t()).t()[:,0:2]
+        dir_xy_rot = torch.matmul(self.Mt, dir0.t()).t()[:,0:2]
+
+        pos_xy_rot_crystal = pos_xy_rot + 75 * dir_xy_rot
+
+        keep=((pos_xy_rot.abs().max(dim=1)[0] < self.size / 2)
+                & (pos_xy_rot_crystal.abs().max(dim=1)[0] < self.size/2))
+
+        pos0, dir0, energ0 = pos0[keep,0:2], dir0[keep,0:2], energ0[keep]
+        return torch.cat((pos0, dir0, energ0),dim=1)
 
 
 

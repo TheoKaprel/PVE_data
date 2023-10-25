@@ -80,69 +80,73 @@ def main():
     nprojs = args.nprojs
     l_angles = torch.linspace(0, 2*torch.pi, nprojs+1)[:-1]
     l_detectorsPlanes = []
-    l_planes=[]
     for angle in l_angles:
         det_plane = DetectorPlane(size=565.511, device=device, center0=[0, 0, args.sid], rot_angle=angle)
         l_detectorsPlanes.append(det_plane)
-        # plane={}
-        # plane["plane_normal"] =det_plane.normal.cpu().numpy()
-        # plane["plane_center"] = det_plane.center.cpu().numpy()
-        # plane["rotation"]  = det_plane.M.cpu().numpy()
-        # l_planes.append(plane)
 
-    R1=516
-    R2=300
+    # R1=516
+    R1=434
+    R2=260
 
     garf_ui = {}
     garf_ui['pth_filename'] = os.path.join(paths.current, "pths/arf_5x10_9.pth")
     garf_ui['batchsize'] = args.batchsize
     garf_ui['device'] = device
-    garf_ui['output_fn'] = os.path.join(args.output, f"projs.mhd")
+    garf_ui['output_fn'] = os.path.join(args.folder, f"projs.mhd") if args.output is None else args.output
     garf_ui['nprojs'] = len(l_detectorsPlanes)
     garf_detector = GARF(user_info=garf_ui)
 
     dataset = ConditionsDataset(activity=args.activity,cgan_src=cgan_source,source_fn=args.source,save_cond=args.save)
     batch_size = int(float(args.batchsize))
     n_batchs = int(float(args.activity)) // batch_size
+    N_primaries = int(float(args.activity))
+    N=0
 
     t_condition_generation = 0
+    t_gan_generation = 0
     t_intersection = 0
+    t_backprojction =0
     t_apply = 0
     t_selection = 0
     t_save = 0
 
-    src=itk.imread(args.source)
-    src_array=itk.array_from_image(src)
-    recons_generated=np.zeros_like(src_array)
-    size = np.array(recons_generated.shape)
-    spacing = np.array(src.GetSpacing())
-    offset = -size * spacing / 2.0 + spacing / 2.0
+    if args.save:
+        src=itk.imread(args.source)
+        src_array=itk.array_from_image(src)
+        recons_generated=np.zeros_like(src_array)
+        size = np.array(recons_generated.shape)
+        spacing = np.array(src.GetSpacing())
+        offset = -size * spacing / 2.0 + spacing / 2.0
+
+
+    N,M = 0,0
 
     with torch.no_grad():
         for _ in range(n_batchs):
             t_condition_generation_0 = time.time()
             gan_input_z_cond = dataset.get_batch(batch_size)
+            N+=batch_size
             t_condition_generation+=(time.time() - t_condition_generation_0)
 
+            t_gan_generation_0 = time.time()
             gan_input_z_cond = gan_input_z_cond.to(device)
             fake = cgan_source.generate(gan_input_z_cond)
+            t_gan_generation+=(time.time() - t_gan_generation_0)
+
+
+            t_selection_0 = time.time()
             fake=fake[fake[:, 0] > 0.01]
+            t_selection += (time.time() - t_selection_0)
 
             if args.save:
                 recons_generated = update_ideal_recons(batch=fake,recons=recons_generated,offset=offset,spacing=spacing,size=size,e_min=0.01)
 
-
-            # norm_pos=torch.sqrt((fake[:,1:4]**2).sum(dim=1))
-            # fake[:,1:4]=fake[:,1:4]/norm_pos[:,None]
-
-            # norm_dir=torch.sqrt((fake[:,4:7]**2).sum(dim=1))
-            # fake[:,4:7]=fake[:,4:7]/norm_dir[:,None]
-
-
             # backproject a little bit: p2= p1 - alpha * d1
-            # beta=(fake[:,1:4] * fake[:,4:7]).sum(dim=1)
-            # alpha= beta - torch.sqrt(beta**2 + R2**2-R1**2)
-            # fake[:,1:4] = fake[:,1:4] - alpha[:,None]*fake[:,4:7]
+            t_backprojction_0 = time.time()
+            beta=(fake[:,1:4] * fake[:,4:7]).sum(dim=1)
+            alpha= beta - torch.sqrt(beta**2 + R2**2-R1**2)
+            fake[:,1:4] = fake[:,1:4] - alpha[:,None]*fake[:,4:7]
+            t_backprojction+=(time.time() - t_backprojction_0)
 
             if args.debug:
                 fig,ax=plt.subplots(3,4)
@@ -174,17 +178,14 @@ def main():
                 ax_scatter.set_zlabel('z')
                 # plt.show()
 
-            t_selection_0 = time.time()
-            t_selection += (time.time() - t_selection_0)
+
 
             l_nc = []
 
             for proj_i, plane_i in enumerate(l_detectorsPlanes):
                 t_intersection_0 = time.time()
                 batch_arf_i = plane_i.get_intersection(batch=fake)
-
-                # batch_arf_i_np=project_on_plane(x=fake.cpu().numpy(),plane=l_planes[proj_i],image_plane_size_mm=[128*4.41806, 128*4.41806])
-                # batch_arf_i = torch.from_numpy(batch_arf_i_np).to(device)
+                t_intersection += (time.time() - t_intersection_0)
 
                 if (args.debug and proj_i==0):
                     print(fake.shape[0], batch_arf_i.shape[0])
@@ -195,7 +196,7 @@ def main():
 
                 if args.debug:
                     l_nc.append(batch_arf_i.shape[0])
-                t_intersection+=(time.time() - t_intersection_0)
+
                 t_apply_0 = time.time()
                 garf_detector.apply(batch_arf_i,proj_i)
                 t_apply += (time.time() - t_apply_0)
@@ -205,11 +206,21 @@ def main():
                 ax.plot(l_nc)
                 plt.show()
 
+
+            # if N>=1e7:
+            #     N=0
+            #     M+=1
+            #     output_fn = garf_detector.output_fn
+            #     garf_detector.output_fn = output_fn.replace('.mhd', f'_{M}e7.mhd')
+            #     garf_detector.save_projection()
+            #     garf_detector.output_fn = output_fn
+
+
     if args.save:
-        dataset.save_conditions(fn = os.path.join(args.output, f"conditions.mhd"))
+        dataset.save_conditions(fn = os.path.join(args.folder, f"conditions.mhd"))
         recons_generated_itk=itk.image_from_array(recons_generated)
         recons_generated_itk.CopyInformation(src)
-        itk.imwrite(recons_generated_itk, os.path.join(args.output, f"fake.mhd"))
+        itk.imwrite(recons_generated_itk, os.path.join(args.folder, f"fake.mhd"))
 
     t_save_0 = time.time()
     garf_detector.save_projection()
@@ -217,8 +228,10 @@ def main():
 
 
     print(f"TOTAL TIME : {time.time() - t0}")
-    print(f"GENERATION TIME: {t_condition_generation}")
+    print(f"Cond GENERATION TIME: {t_condition_generation}")
+    print(f"GENERATION TIME: {t_gan_generation}")
     print(f"SELECTION TIME : {t_selection}")
+    print(f"BACKPROJECTION TIME: {t_backprojction}")
     print(f"INTERSECTION TIME : {t_intersection}")
     print(f"APPLY TIME : {t_apply}")
     print(f"SAVING TIME : {t_save}")
@@ -229,6 +242,7 @@ if __name__ == '__main__':
     parser.add_argument("-s", "--source", type=str)
     parser.add_argument("--pth", type=str)
     parser.add_argument("-b","--batchsize", type = float, default = 100000)
+    parser.add_argument("-f", "--folder", type = str)
     parser.add_argument("-o", "--output", type = str)
     parser.add_argument("-n","--nprojs", type = int)
     parser.add_argument("--sid", type=float)
