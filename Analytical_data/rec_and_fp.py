@@ -59,7 +59,7 @@ def main():
     osem.SetGeometry(geometry)
 
     osem.SetNumberOfIterations(args.niterations)
-    osem.SetNumberOfProjectionsPerSubset(10)
+    osem.SetNumberOfProjectionsPerSubset(args.nprojpersubset)
     osem.SetBetaRegularization(0)
     FP = osem.ForwardProjectionType_FP_ZENG
     BP = osem.BackProjectionType_BP_ZENG
@@ -156,6 +156,7 @@ if __name__ == '__main__':
     parser.add_argument('--size', type = int)
     parser.add_argument('--spacing', type = float)
     parser.add_argument("--niterations",default = 1, type = int, help = "number of iterations")
+    parser.add_argument("--nprojpersubset",default = 10, type = int, help = "number of projs per subset")
     args = parser.parse_args()
 
     main()
