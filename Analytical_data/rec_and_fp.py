@@ -23,7 +23,9 @@ def main():
     if args.like is not None:
         like_image = itk.imread(args.like, pixelType)
         constant_image = rtk.ConstantImageSource[imageType].New()
-        constant_image.CopyInformation(like_image)
+        constant_image.SetSpacing(like_image.GetSpacing())
+        constant_image.SetOrigin(like_image.GetOrigin())
+        constant_image.SetSize(itk.size(like_image))
         constant_image.SetConstant(1)
         output_image = constant_image.GetOutput()
     elif (args.size and args.spacing):
@@ -56,6 +58,7 @@ def main():
     osem.SetInput(0, output_image)
 
 
+
     osem.SetGeometry(geometry)
 
     osem.SetNumberOfIterations(args.niterations)
@@ -81,6 +84,12 @@ def main():
     forward_projector.SetGeometry(geometry)
     forward_projector.SetSigmaZero(0)
     forward_projector.SetAlpha(0)
+
+    if args.attenuationmap:
+        attmap=itk.imread(args.attenuationmap, pixelType)
+        osem.SetInput(2, attmap)
+        forward_projector.SetInput(2, attmap)
+
 
     if args.input is not None:
         list_to_rec_fp = [args.input]
@@ -149,6 +158,7 @@ if __name__ == '__main__':
     parser.add_argument("--input")
     parser.add_argument("--output")
     parser.add_argument("--geom")
+    parser.add_argument("--attenuationmap")
     parser.add_argument("--nproj", type=int)
     parser.add_argument("--sid", type=float)
     parser.add_argument('--spect_system', default="ge-discovery", choices=['ge-discovery', 'siemens-intevo'],help='SPECT system simulated for PVE projections')
