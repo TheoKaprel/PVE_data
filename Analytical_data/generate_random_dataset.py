@@ -244,6 +244,8 @@ def generate(opt):
     if (opt.spacing_proj is None) and (opt.size_proj is None) and (opt.spect_system is not None):
         size_proj,spacing_proj = get_detector_params(machine=opt.spect_system)
         print(f'size / spacing derived from spect_system ({opt.spect_system}) : size={size_proj}    spacing={spacing_proj}')
+        dataset_infos['size_proj']=size_proj
+        dataset_infos['spacing_proj']=spacing_proj
     else:
         size_proj,spacing_proj=opt.size_proj,opt.spacing_proj
 
