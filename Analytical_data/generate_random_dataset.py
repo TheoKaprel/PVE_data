@@ -209,6 +209,7 @@ parser.add_argument('--save_src',action ="store_true", help = "if you want to al
 parser.add_argument('--noise',action ="store_true", help = "Add Poisson noise ONLY to ProjPVE")
 parser.add_argument('--merge',action="store_true", help = "If --merge, the 3 (or 2) projections are stored in the same file ABCDE(_noisy)_PVE_PVfree.mha. In this order : noisy, PVE, PVfree")
 parser.add_argument('--rec_fp',action="store_true", help = "noisy projections are reconstructed with 1 osem-rm iter and forward-projected w/o rm to obtain ABCDE_rec_fp.mha")
+parser.add_argument("-v", "--verbose", action="store_true")
 def generate(opt):
     print(opt)
     current_date = time.strftime("%d_%m_%Y_%Hh_%Mm_%Ss", time.localtime())
@@ -319,6 +320,12 @@ def generate(opt):
         osem.SetForwardProjectionFilter(FP)
         osem.SetBackProjectionFilter(BP)
 
+        forward_projector_rec_fp = rtk.ZengForwardProjectionImageFilter.New()
+        forward_projector_rec_fp.SetInput(0, output_image.GetOutput())
+        forward_projector_rec_fp.SetGeometry(geometry)
+        forward_projector_rec_fp.SetSigmaZero(0)
+        forward_projector_rec_fp.SetAlpha(0)
+
     min_ratio, Max_ratio = opt.min_ratio, opt.max_ratio
     if opt.background:
         background_radius_x_mean, background_radius_z_mean,background_radius_y_mean = 200, 120,lengths[1]/2
@@ -341,6 +348,15 @@ def generate(opt):
     print(json.dumps(dataset_infos, indent = 3))
 
     for n in range(opt.nb_data):
+        # Random output filename
+        source_ref = chooseRandomRef(Nletters=5)
+        while os.path.exists(os.path.join(opt.output_folder, f'{source_ref}_PVE.{opt.type}')):
+            source_ref = chooseRandomRef(Nletters=5)
+
+        if opt.verbose:
+            print(source_ref)
+
+
         src_array = np.zeros_like(X)
 
         if opt.background:
@@ -396,6 +412,9 @@ def generate(opt):
 
             src_array += lesion
 
+        if opt.verbose:
+            print('fp...')
+
         total_counts_in_proj = np.random.randint(total_counts_in_proj_min,total_counts_in_proj_max)
         src_array_normedToTotalCounts = src_array / np.sum(src_array) * total_counts_in_proj * opt.spacing_proj**2 / (vSpacing[0]*vSpacing[1]*vSpacing[2])
 
@@ -403,10 +422,7 @@ def generate(opt):
         src_img_normedToTotalCounts.SetSpacing(vSpacing[::-1])
         src_img_normedToTotalCounts.SetOrigin(vOffset)
 
-        # Random output filename
-        source_ref = chooseRandomRef(Nletters=5)
-        while os.path.exists(os.path.join(opt.output_folder, f'{source_ref}_PVE.{opt.type}')):
-            source_ref = chooseRandomRef(Nletters=5)
+
 
         # saving of source 3D image
         if opt.save_src:
@@ -418,8 +434,6 @@ def generate(opt):
 
 
         #compute fowardprojections :
-        print(source_ref)
-
         #proj PVE
         forward_projector.SetInput(1, src_img_normedToTotalCounts)
 
@@ -442,15 +456,16 @@ def generate(opt):
             noisy_projection_array = np.random.poisson(lam=output_forward_PVE_array, size=output_forward_PVE_array.shape).astype(dtype=dtype)
 
             if opt.rec_fp:
+                print('rec_fp...')
                 output_forward_PVE_noisy = itk.image_from_array(noisy_projection_array.astype(dtype=np.float32))
                 output_forward_PVE_noisy.CopyInformation(output_forward_PVE)
                 osem.SetInput(1, output_forward_PVE_noisy)
                 osem.Update()
-                forward_projector.SetSigmaZero(0)
-                forward_projector.SetAlpha(0)
-                forward_projector.SetInput(1, osem.GetOutput())
-                forward_projector.Update()
-                output_rec_fp = forward_projector.GetOutput()
+                rec_fp_volume = osem.GetOutput()
+                rec_fp_volume.DisconnectPipeline()
+                forward_projector_rec_fp.SetInput(1, rec_fp_volume)
+                forward_projector_rec_fp.Update()
+                output_rec_fp = forward_projector_rec_fp.GetOutput()
                 output_rec_fp_array = itk.array_from_image(output_rec_fp)
 
         # Write projections :
