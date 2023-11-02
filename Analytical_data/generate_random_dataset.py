@@ -13,7 +13,7 @@ from skimage.morphology import convex_hull_image
 
 
 
-from parameters import get_psf_params
+from parameters import get_psf_params,get_detector_params
 
 def get_dtype(opt_dtype):
     if opt_dtype=='float64':
@@ -180,8 +180,8 @@ parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFo
 parser.add_argument('--nb_data','-n', type = int, required = True, help = 'number of desired data = (src,projPVE,projPVfree)')
 parser.add_argument('--size_volume', type = str, default = "150", help = 'Size of the desired image i.e. number of voxels per dim')
 parser.add_argument('--spacing_volume', type = str, default = "4", help = 'Spacing of the desired image i.e phyisical length of a voxels (mm)')
-parser.add_argument('--size_proj', type = int, default = 128, help = 'Size of the desired projections')
-parser.add_argument('--spacing_proj', type = float, default = 4.41806, help = 'Spacing of the desired projection. Ex intevo : 2.3976')
+parser.add_argument('--size_proj', type = int, default = None, help = 'Size of the desired projections')
+parser.add_argument('--spacing_proj', type = float, default = None, help = 'Spacing of the desired projection. Ex intevo : 2.3976')
 parser.add_argument('--type', default = 'mha', help = "Create mha, mhd,npy image")
 parser.add_argument('--dtype', default = 'float64', help = "if npy, image dtype")
 parser.add_argument('--like', default = None, help = "Instead of specifying spacing/size, you can specify an image as a metadata model")
@@ -241,7 +241,13 @@ def generate(opt):
 
     X,Y,Z = np.meshgrid(lspaceX,lspaceY,lspaceZ, indexing='ij')
 
-    offset = (-opt.spacing_proj * opt.size_proj + opt.spacing_proj) / 2 #proj offset
+    if (opt.spacing_proj is None) and (opt.size_proj is None) and (opt.spect_system is not None):
+        size_proj,spacing_proj = get_detector_params(machine=opt.spect_system)
+        print(f'size / spacing derived from spect_system ({opt.spect_system}) : size={size_proj}    spacing={spacing_proj}')
+    else:
+        size_proj,spacing_proj=opt.size_proj,opt.spacing_proj
+
+    offset = (-spacing_proj * size_proj + spacing_proj) / 2 #proj offset
 
     # Geometry
     if ((opt.geom is not None) and (opt.nproj is None) and (opt.sid is None)):
@@ -266,13 +272,13 @@ def generate(opt):
     dtype = get_dtype(opt.dtype)
     pixelType = itk.F
     imageType = itk.Image[pixelType, 3]
-    output_spacing = [opt.spacing_proj,opt.spacing_proj, 1]
-    offset = (-opt.spacing_proj * opt.size_proj + opt.spacing_proj) / 2
+    output_spacing = [spacing_proj,spacing_proj, 1]
+    offset = (-spacing_proj * size_proj + spacing_proj) / 2
     output_offset = [offset, offset, (-nproj+1)/2]
     output_image = rtk.ConstantImageSource[imageType].New()
     output_image.SetSpacing(output_spacing)
     output_image.SetOrigin(output_offset)
-    output_image.SetSize([opt.size_proj, opt.size_proj, nproj])
+    output_image.SetSize([size_proj, size_proj, nproj])
     output_image.SetConstant(0.)
 
 
@@ -416,7 +422,7 @@ def generate(opt):
             print('fp...')
 
         total_counts_in_proj = np.random.randint(total_counts_in_proj_min,total_counts_in_proj_max)
-        src_array_normedToTotalCounts = src_array / np.sum(src_array) * total_counts_in_proj * opt.spacing_proj**2 / (vSpacing[0]*vSpacing[1]*vSpacing[2])
+        src_array_normedToTotalCounts = src_array / np.sum(src_array) * total_counts_in_proj * spacing_proj**2 / (vSpacing[0]*vSpacing[1]*vSpacing[2])
 
         src_img_normedToTotalCounts = itk.image_from_array(src_array_normedToTotalCounts.astype(np.float32))
         src_img_normedToTotalCounts.SetSpacing(vSpacing[::-1])
