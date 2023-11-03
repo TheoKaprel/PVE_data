@@ -1,12 +1,15 @@
 import os
 import h5py
 import glob
+
+import itk
 import numpy as np
 import argparse
 
 
 def convert():
-    list_noisy_PVE_PVfree = glob.glob(os.path.join(args.folder, "?????_noisy_PVE_PVfree.npy"))
+    # list_noisy_PVE_PVfree = glob.glob(os.path.join(args.folder, "?????_noisy_PVE_PVfree.npy"))
+    list_noisy_PVE_PVfree = glob.glob(os.path.join(args.folder, "?????_noisy_PVE_PVfree_rec_fp.mhd"))
 
     f = h5py.File(os.path.join(args.folder, args.output), 'w')
     keys = list(f.keys())
@@ -14,25 +17,33 @@ def convert():
     for i,fn_noisy_PVE_PVfree in enumerate(list_noisy_PVE_PVfree):
         if fn_noisy_PVE_PVfree not in keys:
             print(fn_noisy_PVE_PVfree)
-            fn_rec_fp = fn_noisy_PVE_PVfree.replace("_noisy_PVE_PVfree", "_rec_fp")
-            try:
-                array_noisy_PVE_PVfree = np.load(fn_noisy_PVE_PVfree)
-                array_rec_fp = np.load(fn_rec_fp)
-                grp = f.create_group(fn_noisy_PVE_PVfree.split("_noisy_PVE_PVfree.npy")[0][-5:])
-                dset_PVE_noisy = grp.create_dataset("PVE_noisy", (120, 256, 256), dtype='float16')
-                dset_PVE = grp.create_dataset("PVE", (120, 256, 256), dtype='float16')
-                dset_PVfree = grp.create_dataset("PVfree", (120, 256, 256), dtype='float16')
-                dset_rec_fp = grp.create_dataset("rec_fp", (120, 256, 256), dtype='float16')
-                dset_PVE_noisy[:, :, :] = array_noisy_PVE_PVfree[:120, :, :]
-                dset_PVE[:, :, :] = array_noisy_PVE_PVfree[120:240, :, :]
-                dset_PVfree[:, :, :] = array_noisy_PVE_PVfree[240:, :, :]
-                dset_rec_fp[:, :, :] = array_rec_fp
-            except:
-                print(f"ERROR with {fn_noisy_PVE_PVfree}")
+            # fn_rec_fp = fn_noisy_PVE_PVfree.replace("_noisy_PVE_PVfree", "_rec_fp")
+            array_noisy_PVE_PVfree = read_to_npy(fn_noisy_PVE_PVfree)
+            # array_rec_fp = np.load(fn_rec_fp)
+
+            # grp = f.create_group(fn_noisy_PVE_PVfree.split("_noisy_PVE_PVfree.npy")[0][-5:])
+            grp = f.create_group(fn_noisy_PVE_PVfree.split("_noisy_PVE_PVfree_rec_fp.mhd")[0][-5:])
+
+            dset_PVE_noisy = grp.create_dataset("PVE_noisy", (120, 256, 256), dtype='float16')
+            dset_PVE = grp.create_dataset("PVE", (120, 256, 256), dtype='float16')
+            dset_PVfree = grp.create_dataset("PVfree", (120, 256, 256), dtype='float16')
+            dset_rec_fp = grp.create_dataset("rec_fp", (120, 256, 256), dtype='float16')
 
 
+            dset_PVE_noisy[:, :, :] = array_noisy_PVE_PVfree[:120, :, :]
+            dset_PVE[:, :, :] = array_noisy_PVE_PVfree[120:240, :, :]
+            dset_PVfree[:, :, :] = array_noisy_PVE_PVfree[240:360, :, :]
+            # dset_rec_fp[:, :, :] = array_rec_fp
+            dset_rec_fp[:,:,:] = array_noisy_PVE_PVfree[360:,:,:]
 
     print('done!')
+
+
+def read_to_npy(fn):
+    if fn[-3:]=="npy":
+        return np.load(fn)
+    else:
+        return itk.array_from_image(itk.imread(fn))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
