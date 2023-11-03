@@ -99,19 +99,23 @@ def main():
         assert(args.folder is not None)
         assert(args.filetype is not None)
         assert(args.n is not None)
+        if args.outputref is None:
+            output_ref = "_rec_fp"
+        else:
+            output_ref = args.outputref
         if args.merged:
             list_files = glob.glob(f'{args.folder}/?????_noisy_PVE_PVfree.{args.filetype}')
             base = "_noisy_PVE_PVfree"
         else:
             list_files = glob.glob(f'{args.folder}/?????_PVE_noisy.{args.filetype}')
             base = "_PVE_noisy"
-        list_ready_to_rec_fp = [l for l in list_files if not os.path.exists(l.replace(base, '_rec_fp'))]
+        list_ready_to_rec_fp = [l for l in list_files if not os.path.exists(l.replace(base, output_ref))]
         list_to_rec_fp = random.sample(list_ready_to_rec_fp, args.n)
         choose_random = True
 
     for proj_filename in list_to_rec_fp:
         if choose_random:
-            while (os.path.exists(proj_filename.replace(base, '_rec_fp'))):
+            while (os.path.exists(proj_filename.replace(base, output_ref))):
                 proj_filename = random.choice(list_ready_to_rec_fp)
 
         print(proj_filename)
@@ -135,7 +139,7 @@ def main():
         osem.Update()
         forward_projector.SetInput(1, osem.GetOutput())
         forward_projector.Update()
-        output_proj_rec_fp_filename = proj_filename.replace(f'{base}.{args.filetype}', f'_rec_fp.{args.filetype}')
+        output_proj_rec_fp_filename = proj_filename.replace(f'{base}.{args.filetype}', f'{output_ref}.{args.filetype}')
         if args.output is not None:
             output_proj_rec_fp_filename = args.output
 
@@ -153,6 +157,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-n", type = int, default = -1, help = "number of data to rec&fp")
     parser.add_argument("--folder")
+    parser.add_argument("--outputref")
     parser.add_argument("--filetype",default = "mhd", choices = ['mhd', 'mha', 'npy'])
     parser.add_argument("--merged",action ="store_true")
     parser.add_argument("--input")
