@@ -265,8 +265,25 @@ def generate(opt):
     output_proj.SetOrigin(output_offset)
     output_proj.SetSize([size_proj, size_proj, nproj])
     output_proj.SetConstant(0.)
+    output_proj.Update()
 
-    
+    if opt.fov is not None:
+        fov_is_set = True
+        fov = np.array((opt.fov).split(',')).astype(np.float64)
+        fovmask_np = np.zeros((nproj,size_proj,size_proj),dtype=np.float32)
+        pm = (fov/spacing_proj).astype(int)
+        i1, i2=(size_proj - pm[0])//2 , (size_proj - pm[1])//2
+        fovmask_np[:,i2:i2+pm[1],i1:i1+pm[0]]=1
+        fovmask = itk.image_from_array(fovmask_np)
+
+        fovmask.CopyInformation(output_proj.GetOutput())
+        print(fovmask.GetSpacing())
+        itk.imwrite(fovmask,os.path.join(opt.output_folder, 'fov.mhd'))
+
+        fov_maskmult=itk.MultiplyImageFilter[imageType,imageType,imageType].New()
+        fov_maskmult.SetInput1(fovmask)
+    else:
+        fov_is_set=False
 
     min_ratio, Max_ratio = opt.min_ratio, opt.max_ratio
     if opt.background:
@@ -443,6 +460,9 @@ def generate(opt):
         output_forward_PVfree = forward_projector.GetOutput()
         output_forward_PVfree.DisconnectPipeline()
         output_filename_PVfree = os.path.join(opt.output_folder, f'{source_ref}_PVfree.{opt.type}')
+        if fov_is_set:
+            fov_maskmult.SetInput2(output_forward_PVfree)
+            output_forward_PVfree = fov_maskmult.GetOutput()
         itk.imwrite(output_forward_PVfree, output_filename_PVfree)
 
 
@@ -456,6 +476,9 @@ def generate(opt):
             output_forward_PVE = forward_projector_with_att.GetOutput()
             output_forward_PVE.DisconnectPipeline()
             output_filename_PVE = os.path.join(opt.output_folder, f'{source_ref}_PVE_att.{opt.type}')
+            if fov_is_set:
+                fov_maskmult.SetInput2(output_forward_PVE)
+                output_forward_PVE = fov_maskmult.GetOutput()
             itk.imwrite(output_forward_PVE, output_filename_PVE)
 
             # proj noise(att+PVE)
@@ -472,6 +495,9 @@ def generate(opt):
             output_forward_PVfree_att = forward_projector_with_att.GetOutput()
             output_forward_PVfree_att.DisconnectPipeline()
             output_filename_PVfree_att = os.path.join(opt.output_folder, f'{source_ref}_PVfree_att.{opt.type}')
+            if fov_is_set:
+                fov_maskmult.SetInput2(output_forward_PVfree_att)
+                output_forward_PVfree_att = fov_maskmult.GetOutput()
             itk.imwrite(output_forward_PVfree_att, output_filename_PVfree_att)
 
 
@@ -483,6 +509,9 @@ def generate(opt):
             output_forward_PVE = forward_projector.GetOutput()
             output_forward_PVE.DisconnectPipeline()
             output_filename_PVE = os.path.join(opt.output_folder, f'{source_ref}_PVE.{opt.type}')
+            if fov_is_set:
+                fov_maskmult.SetInput2(output_forward_PVE)
+                output_forward_PVE = fov_maskmult.GetOutput()
             itk.imwrite(output_forward_PVE, output_filename_PVE)
 
 
@@ -557,12 +586,18 @@ def generate(opt):
             forward_projector_rec_fp.Update()
             output_rec_fp = forward_projector_rec_fp.GetOutput()
             output_filename_rec_fp = os.path.join(opt.output_folder, f'{source_ref}_rec_fp.mhd')
+            if fov_is_set:
+                fov_maskmult.SetInput2(output_rec_fp)
+                output_rec_fp = fov_maskmult.GetOutput()
             itk.imwrite(output_rec_fp,output_filename_rec_fp)
 
             forward_projector_rec_fp.SetInput(2, attmap_rec_fp)
             forward_projector_rec_fp.Update()
             output_rec_fp_att = forward_projector_rec_fp.GetOutput()
             output_filename_rec_fp_att = os.path.join(opt.output_folder, f'{source_ref}_rec_fp_att.mhd')
+            if fov_is_set:
+                fov_maskmult.SetInput2(output_rec_fp_att)
+                output_rec_fp_att = fov_maskmult.GetOutput()
             itk.imwrite(output_rec_fp_att, output_filename_rec_fp_att)
 
         if with_attmaps:
