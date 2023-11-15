@@ -12,7 +12,7 @@ import json
 from scipy.spatial.transform import Rotation as Rot
 from scipy.interpolate import RegularGridInterpolator
 from skimage.morphology import convex_hull_image
-
+import h5py
 
 
 from parameters import get_psf_params,get_detector_params
@@ -317,15 +317,28 @@ def generate(opt):
     else:
         with_attmaps=False
 
+    if (opt.type=='h5'):
+        to_hdf=True
+        hdf_file_filename = os.path.join(opt.output_folder, f'{os.path.basename(os.path.abspath(opt.output_folder))}.h5')
+        print(hdf_file_filename)
+        hdf_file = h5py.File(hdf_file_filename, 'w')
+        str_dtype = h5py.special_dtype(vlen=str)
+    else:
+        to_hdf=False
+
     for n in range(opt.nb_data):
         # Random output filename
         source_ref = chooseRandomRef(Nletters=5)
-        while os.path.exists(os.path.join(opt.output_folder, f'{source_ref}_PVE.{opt.type}')):
-            source_ref = chooseRandomRef(Nletters=5)
+
+        if to_hdf:
+            grp=hdf_file.create_group(source_ref)
 
         if with_attmaps:
             attmap_ref = random.choice(attmap_refs_list)
-
+            if to_hdf:
+                juste_ref = os.path.basename(os.path.abspath(attmap_ref))
+                dset_attmap_ref = grp.create_dataset("attmap",(len(juste_ref)+5), dtype=str_dtype)
+                dset_attmap_ref[0] = juste_ref
 
         if opt.verbose:
             if with_attmaps:
@@ -375,7 +388,7 @@ def generate(opt):
             # background = cylinder with revolution axis = Y
             background_array = np.zeros_like(X)
 
-            if with_attmaps:
+            if ((with_attmaps) and (attmap_np.max()>0)):
                 background_array[attmap_np>0.01]=1
             else:
                 while (background_array.max()==0): # to avoid empty background
@@ -446,8 +459,12 @@ def generate(opt):
             src_img = itk.image_from_array(src_array.astype(np.float32))
             src_img.SetSpacing(vSpacing[::-1])
             src_img.SetOrigin(vOffset[::-1])
-            source_path = os.path.join(opt.output_folder,f'{source_ref}.mhd')
-            itk.imwrite(src_img,source_path)
+            if to_hdf:
+                dset_src = grp.create_dataset("src", src_array.shape, dtype=dtype)
+                dset_src[:,:,:]=src_array
+            else:
+                source_path = os.path.join(opt.output_folder,f'{source_ref}.{type}')
+                itk.imwrite(src_img,source_path)
 
 
         # fowardprojections :
@@ -459,11 +476,17 @@ def generate(opt):
         forward_projector.Update()
         output_forward_PVfree = forward_projector.GetOutput()
         output_forward_PVfree.DisconnectPipeline()
-        output_filename_PVfree = os.path.join(opt.output_folder, f'{source_ref}_PVfree.{opt.type}')
         if fov_is_set:
             fov_maskmult.SetInput2(output_forward_PVfree)
             output_forward_PVfree = fov_maskmult.GetOutput()
-        itk.imwrite(output_forward_PVfree, output_filename_PVfree)
+
+        if to_hdf:
+            output_forward_PVfree_array=itk.array_from_image(output_forward_PVfree)
+            dset_PVfree = grp.create_dataset("PVfree", output_forward_PVfree_array.shape, dtype=dtype)
+            dset_PVfree[:,:,:]=output_forward_PVfree_array
+        else:
+            output_filename_PVfree = os.path.join(opt.output_folder, f'{source_ref}_PVfree.{opt.type}')
+            itk.imwrite(output_forward_PVfree, output_filename_PVfree)
 
 
         if with_attmaps:
@@ -475,17 +498,27 @@ def generate(opt):
             forward_projector_with_att.Update()
             output_forward_PVE = forward_projector_with_att.GetOutput()
             output_forward_PVE.DisconnectPipeline()
-            output_filename_PVE = os.path.join(opt.output_folder, f'{source_ref}_PVE_att.{opt.type}')
             if fov_is_set:
                 fov_maskmult.SetInput2(output_forward_PVE)
                 output_forward_PVE = fov_maskmult.GetOutput()
-            itk.imwrite(output_forward_PVE, output_filename_PVE)
+
+            if to_hdf:
+                output_forward_PVE_array = itk.array_from_image(output_forward_PVE)
+                dset_PVE_att = grp.create_dataset("PVE_att", output_forward_PVE_array.shape,dtype=dtype)
+                dset_PVE_att[:,:,:]=output_forward_PVE_array
+            else:
+                output_filename_PVE = os.path.join(opt.output_folder, f'{source_ref}_PVE_att.{opt.type}')
+                itk.imwrite(output_forward_PVE, output_filename_PVE)
 
             # proj noise(att+PVE)
             output_forward_PVE_array = itk.array_from_image(output_forward_PVE).astype(dtype=dtype)
             noisy_projection_array = np.random.poisson(lam=output_forward_PVE_array, size=output_forward_PVE_array.shape).astype(dtype=dtype)
-            output_filename_PVE_noisy = os.path.join(opt.output_folder, f'{source_ref}_PVE_att_noisy.{opt.type}')
-            save_one_file(array=noisy_projection_array, filename=output_filename_PVE_noisy, ftype=opt.type,img_like=output_forward_PVE)
+            if to_hdf:
+                dset_PVE_att_noisy=grp.create_dataset("PVE_att_noisy", noisy_projection_array.shape,dtype=dtype)
+                dset_PVE_att_noisy[:,:,:]=noisy_projection_array
+            else:
+                output_filename_PVE_noisy = os.path.join(opt.output_folder, f'{source_ref}_PVE_att_noisy.{opt.type}')
+                save_one_file(array=noisy_projection_array, filename=output_filename_PVE_noisy, ftype=opt.type,img_like=output_forward_PVE)
 
 
             # proj att+PVfree
@@ -494,11 +527,17 @@ def generate(opt):
             forward_projector_with_att.Update()
             output_forward_PVfree_att = forward_projector_with_att.GetOutput()
             output_forward_PVfree_att.DisconnectPipeline()
-            output_filename_PVfree_att = os.path.join(opt.output_folder, f'{source_ref}_PVfree_att.{opt.type}')
             if fov_is_set:
                 fov_maskmult.SetInput2(output_forward_PVfree_att)
                 output_forward_PVfree_att = fov_maskmult.GetOutput()
-            itk.imwrite(output_forward_PVfree_att, output_filename_PVfree_att)
+
+            if to_hdf:
+                output_forward_PVfree_att_array=itk.array_from_image(output_forward_PVfree_att)
+                dset_PVfree_att = grp.create_dataset("PVfree_att", output_forward_PVfree_att_array.shape, dtype=dtype)
+                dset_PVfree_att[:,:,:]=output_forward_PVfree_att_array
+            else:
+                output_filename_PVfree_att = os.path.join(opt.output_folder, f'{source_ref}_PVfree_att.{opt.type}')
+                itk.imwrite(output_forward_PVfree_att, output_filename_PVfree_att)
 
 
         else:
@@ -508,18 +547,28 @@ def generate(opt):
             forward_projector.Update()
             output_forward_PVE = forward_projector.GetOutput()
             output_forward_PVE.DisconnectPipeline()
-            output_filename_PVE = os.path.join(opt.output_folder, f'{source_ref}_PVE.{opt.type}')
             if fov_is_set:
                 fov_maskmult.SetInput2(output_forward_PVE)
                 output_forward_PVE = fov_maskmult.GetOutput()
-            itk.imwrite(output_forward_PVE, output_filename_PVE)
+
+            if to_hdf:
+                output_forward_PVE_array=itk.array_from_image(output_forward_PVE)
+                dset_PVE = grp.create_dataset("PVE", output_forward_PVE_array.shape, dtype=dtype)
+                dset_PVE[:,:,:]=output_forward_PVE_array
+            else:
+                output_filename_PVE = os.path.join(opt.output_folder, f'{source_ref}_PVE.{opt.type}')
+                itk.imwrite(output_forward_PVE, output_filename_PVE)
 
 
             # proj noise(PVE)
             output_forward_PVE_array = itk.array_from_image(output_forward_PVE).astype(dtype=dtype)
             noisy_projection_array = np.random.poisson(lam=output_forward_PVE_array, size=output_forward_PVE_array.shape).astype(dtype=dtype)
-            output_filename_PVE_noisy = os.path.join(opt.output_folder, f'{source_ref}_PVE_noisy.{opt.type}')
-            save_one_file(array=noisy_projection_array, filename=output_filename_PVE_noisy, ftype=opt.type,img_like=output_forward_PVE)
+            if to_hdf:
+                dset_PVE_noisy = grp.create_dataset("PVE_noisy", noisy_projection_array.shape, dtype=dtype)
+                dset_PVE_noisy[:,:,:]=noisy_projection_array
+            else:
+                output_filename_PVE_noisy = os.path.join(opt.output_folder, f'{source_ref}_PVE_noisy.{opt.type}')
+                save_one_file(array=noisy_projection_array, filename=output_filename_PVE_noisy, ftype=opt.type,img_like=output_forward_PVE)
 
 
 
@@ -578,27 +627,43 @@ def generate(opt):
             rec_volume.DisconnectPipeline()
 
             # save rec_fp
-            output_filename_rec_volume = os.path.join(opt.output_folder, f'{source_ref}_rec.mhd')
-            itk.imwrite(rec_volume,output_filename_rec_volume)
+            if to_hdf:
+                rec_volume_array=itk.array_from_image(rec_volume)
+                dset_rec = grp.create_dataset("rec", rec_volume_array.shape, dtype=dtype)
+                dset_rec[:,:,:] = rec_volume_array
+            else:
+                output_filename_rec_volume = os.path.join(opt.output_folder, f'{source_ref}_rec.{type}')
+                itk.imwrite(rec_volume,output_filename_rec_volume)
 
             # forward_projs
             forward_projector_rec_fp.SetInput(1, rec_volume)
             forward_projector_rec_fp.Update()
             output_rec_fp = forward_projector_rec_fp.GetOutput()
-            output_filename_rec_fp = os.path.join(opt.output_folder, f'{source_ref}_rec_fp.mhd')
             if fov_is_set:
                 fov_maskmult.SetInput2(output_rec_fp)
                 output_rec_fp = fov_maskmult.GetOutput()
-            itk.imwrite(output_rec_fp,output_filename_rec_fp)
+            if to_hdf:
+                output_rec_fp_array=itk.array_from_image(output_rec_fp)
+                dset_rec_fp = grp.create_dataset("rec_fp", output_rec_fp_array.shape, dtype=dtype)
+                dset_rec_fp[:,:,:] = output_rec_fp_array
+            else:
+                output_filename_rec_fp = os.path.join(opt.output_folder, f'{source_ref}_rec_fp.{type}')
+                itk.imwrite(output_rec_fp,output_filename_rec_fp)
 
             forward_projector_rec_fp.SetInput(2, attmap_rec_fp)
             forward_projector_rec_fp.Update()
             output_rec_fp_att = forward_projector_rec_fp.GetOutput()
-            output_filename_rec_fp_att = os.path.join(opt.output_folder, f'{source_ref}_rec_fp_att.mhd')
             if fov_is_set:
                 fov_maskmult.SetInput2(output_rec_fp_att)
                 output_rec_fp_att = fov_maskmult.GetOutput()
-            itk.imwrite(output_rec_fp_att, output_filename_rec_fp_att)
+
+            if to_hdf:
+                output_rec_fp_att_array=itk.array_from_image(output_rec_fp_att)
+                dset_rec_fp_att = grp.create_dataset("rec_fp_att", output_rec_fp_att_array.shape, dtype=dtype)
+                dset_rec_fp_att[:,:,:] = output_rec_fp_att_array
+            else:
+                output_filename_rec_fp_att = os.path.join(opt.output_folder, f'{source_ref}_rec_fp_att.{type}')
+                itk.imwrite(output_rec_fp_att, output_filename_rec_fp_att)
 
         if with_attmaps:
             dataset_infos['src_refs'].append([source_ref,attmap_ref])
