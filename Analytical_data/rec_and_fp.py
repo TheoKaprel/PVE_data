@@ -69,7 +69,7 @@ def main():
     osem.SetForwardProjectionFilter(FP)
     osem.SetBackProjectionFilter(BP)
 
-    sigma0_psf, alpha_psf = get_psf_params(machine=args.spect_system)
+    sigma0_psf, alpha_psf,_ = get_psf_params(machine=args.spect_system)
     osem.SetSigmaZero(sigma0_psf)
     osem.SetAlpha(alpha_psf)
 
@@ -90,6 +90,10 @@ def main():
         osem.SetInput(2, attmap)
         forward_projector.SetInput(2, attmap)
 
+    if args.outputref is None:
+        output_ref = "_rec_fp"
+    else:
+        output_ref = args.outputref
 
     if args.input is not None:
         list_to_rec_fp = [args.input]
@@ -99,10 +103,7 @@ def main():
         assert(args.folder is not None)
         assert(args.filetype is not None)
         assert(args.n is not None)
-        if args.outputref is None:
-            output_ref = "_rec_fp"
-        else:
-            output_ref = args.outputref
+
         if args.merged:
             list_files = glob.glob(f'{args.folder}/?????_noisy_PVE_PVfree.{args.filetype}')
             base = "_noisy_PVE_PVfree"
@@ -154,7 +155,7 @@ def main():
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("-n", type = int, default = -1, help = "number of data to rec&fp")
     parser.add_argument("--folder")
     parser.add_argument("--outputref")
@@ -169,7 +170,7 @@ if __name__ == '__main__':
     parser.add_argument('--spect_system', default="ge-discovery", choices=['ge-discovery', 'siemens-intevo'],help='SPECT system simulated for PVE projections')
     parser.add_argument('--like', type = str)
     parser.add_argument('--size', type = int)
-    parser.add_argument('--spacing', type = float)
+    parser.add_argument('--spacing', type = float, help='ex : 4.6875')
     parser.add_argument("--niterations",default = 1, type = int, help = "number of iterations")
     parser.add_argument("--nprojpersubset",default = 10, type = int, help = "number of projs per subset")
     args = parser.parse_args()

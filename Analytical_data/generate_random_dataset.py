@@ -1,3 +1,5 @@
+import glob
+
 import itk
 import numpy as np
 import argparse
@@ -190,8 +192,8 @@ parser.add_argument('--max_radius', default = 32,type = float, help = 'max radiu
 parser.add_argument('--prop_radius', default = "uniform", choices=['uniform', 'squared_inv'], help = 'proportion of radius between min/max')
 parser.add_argument('--min_ratio', default = 1/1000,type = float, help = 'min bg:src ratio. If no background, it is the min activity')
 parser.add_argument('--max_ratio', default = 1/8,type = float, help = 'max bg:src ratio. If no background, it is the max activity')
-parser.add_argument('--min_counts', default = 2e4, type = float, help = "minimum number of counts per proj (noise level)")
-parser.add_argument('--max_counts', default = 1e5, type = float, help = "maximum number of counts per proj (noise level)")
+parser.add_argument('--min_activity', default = 10, type = float, help = "minimum activity in MBq. Then, N_min = A_min * 1e6 * 20s * efficiency ")
+parser.add_argument('--max_activity', default = 100, type = float, help = "maximal activity in MBq. Then, N_min = A_max * 1e6 * 20s * efficiency")
 parser.add_argument('--nspheres', default = 1,type = int, help = 'max number of spheres to generate on each source')
 parser.add_argument('--background', action= 'store_true', help = 'If you want background add --background')
 parser.add_argument('--sphere',type = float, default = 0, help = "if --sphere p, activity sources are spheres with proba p")
@@ -202,12 +204,11 @@ parser.add_argument('--grad_act',action ="store_true", help = "if --grad_act, ho
 parser.add_argument('--geom', '-g', default = None, help = 'geometry file to forward project')
 parser.add_argument('--nproj',type = int, default = None, help = 'if no geom, precise nb of proj angles')
 parser.add_argument('--sid',type = float, default = None, help = 'if no geom, precise detector-to-isocenter distance (mm)')
-parser.add_argument('--attenuationmap', '-a',default = None, help = 'path to the attenuation map file')
+parser.add_argument('--fov', type=str,help="FOV (mm,mm) of the detector. Should be in the format --fov 532,388 ")
+parser.add_argument('--attenuationmapfolder',default = None, help = 'path to the attenuationmaps folder (random choice in the folder)')
 parser.add_argument('--output_folder','-o', default = './dataset', help = " Absolute or relative path to the output folder")
 parser.add_argument('--spect_system', default = "ge-discovery", choices=['ge-discovery', 'siemens-intevo'], help = 'SPECT system simulated for PVE projections')
 parser.add_argument('--save_src',action ="store_true", help = "if you want to also save the source that will be forward projected")
-parser.add_argument('--noise',action ="store_true", help = "Add Poisson noise ONLY to ProjPVE")
-parser.add_argument('--merge',action="store_true", help = "If --merge, the 3 (or 2) projections are stored in the same file ABCDE(_noisy)_PVE_PVfree.mha. In this order : noisy, PVE, PVfree")
 parser.add_argument('--rec_fp',action="store_true", help = "noisy projections are reconstructed with 1 osem-rm iter and forward-projected w/o rm to obtain ABCDE_rec_fp.mha")
 parser.add_argument("-v", "--verbose", action="store_true")
 def generate(opt):
@@ -218,28 +219,10 @@ def generate(opt):
 
     t0 = time.time()
 
-    sigma0_psf, alpha_psf = get_psf_params(opt.spect_system)
+    sigma0_psf, alpha_psf,efficiency = get_psf_params(opt.spect_system)
     dataset_infos['sigma0_psf'] = sigma0_psf
     dataset_infos['alpha_psf'] = alpha_psf
 
-    # get output image parameters
-    if opt.like is not None:
-        im_like = itk.imread(opt.like)
-        vSpacing = np.array(im_like.GetSpacing())
-        vSize = np.array(itk.size(im_like))
-        vOffset = np.array(im_like.GetOrigin())
-    else:
-        vSize = strParamToArray(opt.size_volume).astype(int)
-        vSpacing = strParamToArray(opt.spacing_volume)
-        vOffset = [(-sp*size + sp)/2 for (sp,size) in zip(vSpacing,vSize)]
-
-    # matrix settings
-    lengths = vSize*vSpacing
-    lspaceX = np.linspace(-vSize[0] * vSpacing[0] / 2, vSize[0] * vSpacing[0] / 2, vSize[0])
-    lspaceY = np.linspace(-vSize[1] * vSpacing[1] / 2, vSize[1] * vSpacing[1] / 2, vSize[1])
-    lspaceZ = np.linspace(-vSize[2] * vSpacing[2] / 2, vSize[2] * vSpacing[2] / 2, vSize[2])
-
-    X,Y,Z = np.meshgrid(lspaceX,lspaceY,lspaceZ, indexing='ij')
 
     if (opt.spacing_proj is None) and (opt.size_proj is None) and (opt.spect_system is not None):
         size_proj,spacing_proj = get_detector_params(machine=opt.spect_system)
@@ -277,66 +260,17 @@ def generate(opt):
     output_spacing = [spacing_proj,spacing_proj, 1]
     offset = (-spacing_proj * size_proj + spacing_proj) / 2
     output_offset = [offset, offset, (-nproj+1)/2]
-    output_image = rtk.ConstantImageSource[imageType].New()
-    output_image.SetSpacing(output_spacing)
-    output_image.SetOrigin(output_offset)
-    output_image.SetSize([size_proj, size_proj, nproj])
-    output_image.SetConstant(0.)
+    output_proj = rtk.ConstantImageSource[imageType].New()
+    output_proj.SetSpacing(output_spacing)
+    output_proj.SetOrigin(output_offset)
+    output_proj.SetSize([size_proj, size_proj, nproj])
+    output_proj.SetConstant(0.)
 
-
-    forward_projector = rtk.ZengForwardProjectionImageFilter.New()
-    forward_projector.SetInput(0, output_image.GetOutput())
-    forward_projector.SetGeometry(geometry)
-
-
-    if opt.attenuationmap is not None:
-        attenuation_image = itk.imread(opt.attenuationmap, itk.F)
-        forward_projector.SetInput(2, attenuation_image)
-        forward_projector.SetInput(2, attenuation_image)
-
-    if opt.rec_fp:
-        vSpacing_recpfp = np.array([4.6875, 4.6875, 4.6875])
-        vSize_recfp = np.array([128,128,128])
-        vOffset_recfp = [(-sp * size + sp) / 2 for (sp, size) in zip(vSpacing_recpfp, vSize_recfp)]
-
-        # vSpacing_recpfp = vSpacing
-        # vSize_recfp = vSize
-        # vOffset_recfp = vOffset
-
-        constant_image = rtk.ConstantImageSource[imageType].New()
-        constant_image.SetSpacing(vSpacing_recpfp)
-        constant_image.SetOrigin(vOffset_recfp)
-        constant_image.SetSize([int(s) for s in vSize_recfp])
-        constant_image.SetConstant(1)
-        output_rec = constant_image.GetOutput()
-
-        OSEMType = rtk.OSEMConeBeamReconstructionFilter[imageType, imageType]
-        osem = OSEMType.New()
-        osem.SetInput(0, output_rec)
-        osem.SetGeometry(geometry)
-        osem.SetNumberOfIterations(1)
-        osem.SetNumberOfProjectionsPerSubset(15)
-        osem.SetBetaRegularization(0)
-
-        if opt.attenuationmap is not None:
-            osem.SetInput(2, attenuation_image)
-
-        FP = osem.ForwardProjectionType_FP_ZENG
-        BP = osem.BackProjectionType_BP_ZENG
-        osem.SetSigmaZero(sigma0_psf)
-        osem.SetAlpha(alpha_psf)
-        osem.SetForwardProjectionFilter(FP)
-        osem.SetBackProjectionFilter(BP)
-
-        forward_projector_rec_fp = rtk.ZengForwardProjectionImageFilter.New()
-        forward_projector_rec_fp.SetInput(0, output_image.GetOutput())
-        forward_projector_rec_fp.SetGeometry(geometry)
-        forward_projector_rec_fp.SetSigmaZero(0)
-        forward_projector_rec_fp.SetAlpha(0)
+    
 
     min_ratio, Max_ratio = opt.min_ratio, opt.max_ratio
     if opt.background:
-        background_radius_x_mean, background_radius_z_mean,background_radius_y_mean = 200, 120,lengths[1]/2
+        background_radius_x_mean, background_radius_z_mean,background_radius_y_mean = 200, 120,300
         background_radius_x_std, background_radius_z_std,background_radius_y_std = 20, 10, 100
         dataset_infos['bg_shape_params'] = {'mean_xzy': f'({background_radius_x_mean},{background_radius_z_mean},{background_radius_y_mean})',
                                             'std_xzy': f'({background_radius_x_std},{background_radius_z_std},{background_radius_y_std})'}
@@ -350,10 +284,21 @@ def generate(opt):
     assert(p_sphere+p_ellipse+p_cylinder+p_convex==1)
 
 
-    total_counts_in_proj_min,total_counts_in_proj_max = opt.min_counts, opt.max_counts
-    print(f'Total counts in projections between {total_counts_in_proj_min} and {total_counts_in_proj_max}')
+    min_activity,max_activity = opt.min_activity, opt.max_activity
+    min_count= int(min_activity * 1e6 * 20 * efficiency)
+    max_count= int(max_activity * 1e6 * 20 * efficiency)
+
+    print(f'Activity between {min_activity} MBq and {max_activity} MBq --> nb of counts between {min_count} and {max_count}')
 
     print(json.dumps(dataset_infos, indent = 3))
+
+    dataset_infos['src_refs']=[]
+
+    if opt.attenuationmapfolder is not None:
+        attmap_refs_list = glob.glob(os.path.join(opt.attenuationmapfolder, '*_attmap.mhd'))
+        with_attmaps=True
+    else:
+        with_attmaps=False
 
     for n in range(opt.nb_data):
         # Random output filename
@@ -361,20 +306,66 @@ def generate(opt):
         while os.path.exists(os.path.join(opt.output_folder, f'{source_ref}_PVE.{opt.type}')):
             source_ref = chooseRandomRef(Nletters=5)
 
-        if opt.verbose:
-            print(source_ref)
+        if with_attmaps:
+            attmap_ref = random.choice(attmap_refs_list)
 
+
+        if opt.verbose:
+            if with_attmaps:
+                print(f'{attmap_ref} / {source_ref}')
+            else:
+                print(source_ref)
+
+        forward_projector = rtk.ZengForwardProjectionImageFilter.New()
+        forward_projector.SetInput(0, output_proj.GetOutput())
+        forward_projector.SetGeometry(geometry)
+
+
+        # get source image parameters
+        if with_attmaps:
+            attmap = itk.imread(attmap_ref,pixel_type=pixelType)
+            attmap_np = itk.array_from_image(attmap)
+            vSpacing = np.array(attmap.GetSpacing())[::-1]
+            vSize = np.array(attmap_np.shape)
+            vOffset = np.array(attmap.GetOrigin())[::-1]
+
+            forward_projector_with_att = rtk.ZengForwardProjectionImageFilter.New()
+            forward_projector_with_att.SetInput(0, output_proj.GetOutput())
+            forward_projector_with_att.SetGeometry(geometry)
+
+            forward_projector_with_att.SetInput(2, attmap)
+        elif opt.like is not None:
+            im_like = itk.imread(opt.like)
+            vSpacing = np.array(im_like.GetSpacing())[::-1]
+            vSize = np.array(itk.size(im_like))[::-1]
+            vOffset = np.array(im_like.GetOrigin())[::-1]
+        else:
+            vSize = strParamToArray(opt.size_volume).astype(int)
+            vSpacing = strParamToArray(opt.spacing_volume)
+            vOffset = [(-sp * size + sp) / 2 for (sp, size) in zip(vSpacing, vSize)]
+
+        # matrix settings
+        lengths = vSize * vSpacing
+        lspaceX = np.linspace(-vSize[0] * vSpacing[0] / 2, vSize[0] * vSpacing[0] / 2, vSize[0])
+        lspaceY = np.linspace(-vSize[1] * vSpacing[1] / 2, vSize[1] * vSpacing[1] / 2, vSize[1])
+        lspaceZ = np.linspace(-vSize[2] * vSpacing[2] / 2, vSize[2] * vSpacing[2] / 2, vSize[2])
+
+        X, Y, Z = np.meshgrid(lspaceX, lspaceY, lspaceZ, indexing='ij')
 
         src_array = np.zeros_like(X)
 
         if opt.background:
             # background = cylinder with revolution axis = Y
             background_array = np.zeros_like(X)
-            while (background_array.max()==0): # to avoid empty background
-                bg_center = np.random.randint(-50,50,3)
-                bg_radius_xzy = (background_radius_x_std, background_radius_z_std, background_radius_y_std) * np.random.randn(3) + (background_radius_x_mean, background_radius_z_mean, background_radius_y_mean)
-                bg_level = 1
-                background_array = generate_bg_cylinder(X,Y,Z,activity=bg_level,center=bg_center,radius_xzy=bg_radius_xzy)
+
+            if with_attmaps:
+                background_array[attmap_np>0.01]=1
+            else:
+                while (background_array.max()==0): # to avoid empty background
+                    bg_center = np.random.randint(-50,50,3)
+                    bg_radius_xzy = (background_radius_x_std, background_radius_z_std, background_radius_y_std) * np.random.randn(3) + (background_radius_x_mean, background_radius_z_mean, background_radius_y_mean)
+                    bg_level = 1
+                    background_array = generate_bg_cylinder(X,Y,Z,activity=bg_level,center=bg_center,radius_xzy=bg_radius_xzy)
 
 
             if opt.grad_act:
@@ -423,12 +414,13 @@ def generate(opt):
         if opt.verbose:
             print('fp...')
 
-        total_counts_in_proj = np.random.randint(total_counts_in_proj_min,total_counts_in_proj_max)
-        src_array_normedToTotalCounts = src_array / np.sum(src_array) * total_counts_in_proj * spacing_proj**2 / (vSpacing[0]*vSpacing[1]*vSpacing[2])
+        total_counts_per_proj = round(np.random.rand() * (max_count - min_count) + min_count)
+        print(total_counts_per_proj)
+        src_array_normedToTotalCounts = src_array / np.sum(src_array) * total_counts_per_proj * spacing_proj**2 / (vSpacing[0]*vSpacing[1]*vSpacing[2])
 
         src_img_normedToTotalCounts = itk.image_from_array(src_array_normedToTotalCounts.astype(np.float32))
         src_img_normedToTotalCounts.SetSpacing(vSpacing[::-1])
-        src_img_normedToTotalCounts.SetOrigin(vOffset)
+        src_img_normedToTotalCounts.SetOrigin(vOffset[::-1])
 
 
 
@@ -436,21 +428,13 @@ def generate(opt):
         if opt.save_src:
             src_img = itk.image_from_array(src_array.astype(np.float32))
             src_img.SetSpacing(vSpacing[::-1])
-            src_img.SetOrigin(vOffset)
+            src_img.SetOrigin(vOffset[::-1])
             source_path = os.path.join(opt.output_folder,f'{source_ref}.mhd')
             itk.imwrite(src_img,source_path)
 
 
-        #compute fowardprojections :
-        #proj PVE
+        # fowardprojections :
         forward_projector.SetInput(1, src_img_normedToTotalCounts)
-
-        forward_projector.SetSigmaZero(sigma0_psf)
-        forward_projector.SetAlpha(alpha_psf)
-        forward_projector.Update()
-        output_forward_PVE = forward_projector.GetOutput()
-        output_forward_PVE.DisconnectPipeline()
-        output_forward_PVE_array = itk.array_from_image(output_forward_PVE).astype(dtype=dtype)
 
         #proj PVfree
         forward_projector.SetSigmaZero(0)
@@ -458,55 +442,135 @@ def generate(opt):
         forward_projector.Update()
         output_forward_PVfree = forward_projector.GetOutput()
         output_forward_PVfree.DisconnectPipeline()
-        output_forward_PVfree_array = itk.array_from_image(output_forward_PVfree).astype(dtype=dtype)
+        output_filename_PVfree = os.path.join(opt.output_folder, f'{source_ref}_PVfree.{opt.type}')
+        itk.imwrite(output_forward_PVfree, output_filename_PVfree)
 
-        if opt.noise:
+
+        if with_attmaps:
+            forward_projector_with_att.SetInput(1, src_img_normedToTotalCounts)
+
+            # proj att+PVE
+            forward_projector_with_att.SetSigmaZero(sigma0_psf)
+            forward_projector_with_att.SetAlpha(alpha_psf)
+            forward_projector_with_att.Update()
+            output_forward_PVE = forward_projector_with_att.GetOutput()
+            output_forward_PVE.DisconnectPipeline()
+            output_filename_PVE = os.path.join(opt.output_folder, f'{source_ref}_PVE_att.{opt.type}')
+            itk.imwrite(output_forward_PVE, output_filename_PVE)
+
+            # proj noise(att+PVE)
+            output_forward_PVE_array = itk.array_from_image(output_forward_PVE).astype(dtype=dtype)
             noisy_projection_array = np.random.poisson(lam=output_forward_PVE_array, size=output_forward_PVE_array.shape).astype(dtype=dtype)
+            output_filename_PVE_noisy = os.path.join(opt.output_folder, f'{source_ref}_PVE_att_noisy.{opt.type}')
+            save_one_file(array=noisy_projection_array, filename=output_filename_PVE_noisy, ftype=opt.type,img_like=output_forward_PVE)
 
-            if opt.rec_fp:
-                print('rec_fp...')
-                output_forward_PVE_noisy = itk.image_from_array(noisy_projection_array.astype(dtype=np.float32))
-                output_forward_PVE_noisy.CopyInformation(output_forward_PVE)
-                osem.SetInput(1, output_forward_PVE_noisy)
-                osem.Update()
-                rec_fp_volume = osem.GetOutput()
-                rec_fp_volume.DisconnectPipeline()
-                forward_projector_rec_fp.SetInput(1, rec_fp_volume)
-                forward_projector_rec_fp.Update()
-                output_rec_fp = forward_projector_rec_fp.GetOutput()
-                output_rec_fp_array = itk.array_from_image(output_rec_fp)
 
-        # Write projections :
-        if opt.merge:
-            if opt.noise:
-                if opt.rec_fp:
-                    output_filename_merged = os.path.join(opt.output_folder,f'{source_ref}_noisy_PVE_PVfree_rec_fp.{opt.type}')
-                    output_forward_merged_array = np.concatenate((noisy_projection_array,output_forward_PVE_array, output_forward_PVfree_array,output_rec_fp_array), axis=0)
-                else:
-                    output_filename_merged = os.path.join(opt.output_folder,f'{source_ref}_noisy_PVE_PVfree.{opt.type}')
-                    output_forward_merged_array = np.concatenate((noisy_projection_array,output_forward_PVE_array, output_forward_PVfree_array), axis=0)
-            else:
-                output_filename_merged = os.path.join(opt.output_folder, f'{source_ref}_PVE_PVfree.{opt.type}')
-                output_forward_merged_array = np.concatenate((output_forward_PVE_array,output_forward_PVfree_array), axis=0)
-            if opt.type!='npy':
-                output_forward_merged = itk.image_from_array(output_forward_merged_array)
-                output_forward_merged.SetSpacing(output_forward_PVE.GetSpacing())
-                output_forward_merged.SetOrigin(output_forward_PVE.GetOrigin())
-                itk.imwrite(output_forward_merged,output_filename_merged)
-            else:
-                np.save(output_filename_merged,output_forward_merged_array)
+            # proj att+PVfree
+            forward_projector_with_att.SetSigmaZero(0)
+            forward_projector_with_att.SetAlpha(0)
+            forward_projector_with_att.Update()
+            output_forward_PVfree_att = forward_projector_with_att.GetOutput()
+            output_forward_PVfree_att.DisconnectPipeline()
+            output_filename_PVfree_att = os.path.join(opt.output_folder, f'{source_ref}_PVfree_att.{opt.type}')
+            itk.imwrite(output_forward_PVfree_att, output_filename_PVfree_att)
+
+
         else:
-            output_filename_PVfree = os.path.join(opt.output_folder, f'{source_ref}_PVfree.{opt.type}')
+            # proj PVE
+            forward_projector.SetSigmaZero(sigma0_psf)
+            forward_projector.SetAlpha(alpha_psf)
+            forward_projector.Update()
+            output_forward_PVE = forward_projector.GetOutput()
+            output_forward_PVE.DisconnectPipeline()
             output_filename_PVE = os.path.join(opt.output_folder, f'{source_ref}_PVE.{opt.type}')
+            itk.imwrite(output_forward_PVE, output_filename_PVE)
 
-            save_one_file(array=output_forward_PVfree_array,filename=output_filename_PVfree,ftype=opt.type,img_like=output_forward_PVE)
-            save_one_file(array=output_forward_PVE_array,filename=output_filename_PVE,ftype=opt.type,img_like=output_forward_PVE)
-            if opt.noise:
-                output_filename_PVE_noisy = os.path.join(opt.output_folder, f'{source_ref}_PVE_noisy.{opt.type}')
-                save_one_file(array=noisy_projection_array, filename=output_filename_PVE_noisy, ftype=opt.type,img_like=output_forward_PVE)
-                if opt.rec_fp:
-                    output_filename_rec_fp = os.path.join(opt.output_folder, f'{source_ref}_rec_fp.mhd')
-                    save_one_file(array=output_rec_fp_array, filename=output_filename_rec_fp, ftype=opt.type,img_like=output_forward_PVE)
+
+            # proj noise(PVE)
+            output_forward_PVE_array = itk.array_from_image(output_forward_PVE).astype(dtype=dtype)
+            noisy_projection_array = np.random.poisson(lam=output_forward_PVE_array, size=output_forward_PVE_array.shape).astype(dtype=dtype)
+            output_filename_PVE_noisy = os.path.join(opt.output_folder, f'{source_ref}_PVE_noisy.{opt.type}')
+            save_one_file(array=noisy_projection_array, filename=output_filename_PVE_noisy, ftype=opt.type,img_like=output_forward_PVE)
+
+
+
+
+        if opt.rec_fp:
+            print('rec_fp...')
+            if with_attmaps:
+                attmap_rec_fp = itk.imread(attmap_ref.replace('.mhd', '_rec_fp.mhd'), pixel_type=pixelType)
+                attmap_rec_fp_np = itk.array_from_image(attmap_rec_fp)
+                vSpacing_recpfp = np.array(attmap_rec_fp.GetSpacing())
+                vSize_recfp = np.array(attmap_rec_fp_np.shape)[::-1]
+                vOffset_recfp = np.array(attmap_rec_fp.GetOrigin())
+            else:
+                vSpacing_recpfp = np.array([4.6875, 4.6875, 4.6875])
+                vSize_recfp = np.array([128, 128, 128])
+                vOffset_recfp = [(-sp * size + sp) / 2 for (sp, size) in zip(vSpacing_recpfp, vSize_recfp)]
+
+            constant_image = rtk.ConstantImageSource[imageType].New()
+            constant_image.SetSpacing(vSpacing_recpfp)
+            constant_image.SetOrigin(vOffset_recfp)
+            constant_image.SetSize([int(s) for s in vSize_recfp])
+            constant_image.SetConstant(1)
+            output_rec = constant_image.GetOutput()
+
+            OSEMType = rtk.OSEMConeBeamReconstructionFilter[imageType, imageType]
+            osem = OSEMType.New()
+            osem.SetInput(0, output_rec)
+            osem.SetGeometry(geometry)
+            osem.SetNumberOfIterations(1)
+            osem.SetNumberOfProjectionsPerSubset(15)
+            osem.SetBetaRegularization(0)
+
+            FP = osem.ForwardProjectionType_FP_ZENG
+            BP = osem.BackProjectionType_BP_ZENG
+            osem.SetSigmaZero(sigma0_psf)
+            osem.SetAlpha(alpha_psf)
+            osem.SetForwardProjectionFilter(FP)
+            osem.SetBackProjectionFilter(BP)
+
+            if with_attmaps:
+                osem.SetInput(2, attmap_rec_fp)
+
+            forward_projector_rec_fp = rtk.ZengForwardProjectionImageFilter.New()
+            forward_projector_rec_fp.SetInput(0, output_proj.GetOutput())
+            forward_projector_rec_fp.SetGeometry(geometry)
+            forward_projector_rec_fp.SetSigmaZero(0)
+            forward_projector_rec_fp.SetAlpha(0)
+
+
+
+            output_forward_PVE_noisy = itk.image_from_array(noisy_projection_array.astype(dtype=np.float32))
+            output_forward_PVE_noisy.CopyInformation(output_forward_PVE)
+            osem.SetInput(1, output_forward_PVE_noisy)
+            osem.Update()
+            rec_volume = osem.GetOutput()
+            rec_volume.DisconnectPipeline()
+
+            # save rec_fp
+            output_filename_rec_volume = os.path.join(opt.output_folder, f'{source_ref}_rec.mhd')
+            itk.imwrite(rec_volume,output_filename_rec_volume)
+
+            # forward_projs
+            forward_projector_rec_fp.SetInput(1, rec_volume)
+            forward_projector_rec_fp.Update()
+            output_rec_fp = forward_projector_rec_fp.GetOutput()
+            output_filename_rec_fp = os.path.join(opt.output_folder, f'{source_ref}_rec_fp.mhd')
+            itk.imwrite(output_rec_fp,output_filename_rec_fp)
+
+            forward_projector_rec_fp.SetInput(2, attmap_rec_fp)
+            forward_projector_rec_fp.Update()
+            output_rec_fp_att = forward_projector_rec_fp.GetOutput()
+            output_filename_rec_fp_att = os.path.join(opt.output_folder, f'{source_ref}_rec_fp_att.mhd')
+            itk.imwrite(output_rec_fp_att, output_filename_rec_fp_att)
+
+        if with_attmaps:
+            dataset_infos['src_refs'].append([source_ref,attmap_ref])
+        else:
+            dataset_infos['src_refs'].append(source_ref)
+
+    print(dataset_infos['src_refs'])
 
     tf = time.time()
     elapsed_time = round(tf - t0)

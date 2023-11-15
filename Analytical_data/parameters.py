@@ -34,24 +34,22 @@ def get_psf_params(machine, verbose = True):
     sigma0_psf = d / (2*np.sqrt(2*np.log(2)))
     alpha_psf= d / (2*np.sqrt(2*np.log(2))) / leff
 
+    w = t * l / (2 * d + t)
+    septal_penetration = np.exp(-w * mu)
+
+    K = 0.26  # hexagonal holes
+    efficiency = (K * (d / leff) * d / (d + t)) ** 2
+    sensitivity = efficiency * 60 * 3.7 * 10 ** 4
+
     if verbose:
         print(f'FWHM(d)={d} + {d/leff} d')
         print(f'FWHM(10cm) = {d*((leff + 100) / leff)}')
         print(f'sigma0 = {sigma0_psf}')
         print(f'alpha = {alpha_psf}')
-
-        w = t*l / (2*d+t)
-        septal_penetration = np.exp(-w*mu)
         print(f'septal penetration : {round(septal_penetration*100,3)} %')
-
-        K = 0.26 # hexagonal holes
-
-        efficiency = (K*(d/leff)*d/(d+t))**2
-        sensitivity = efficiency * 60 * 3.7* 10**4
         print(f'efficiency : {round(efficiency*100, 8)} %  ({round(sensitivity, 1)} cpm/microCi)')
 
-
-    return sigma0_psf, alpha_psf
+    return sigma0_psf, alpha_psf,efficiency
 
 
 def get_detector_params(machine):
@@ -66,7 +64,7 @@ def get_detector_params(machine):
     return size,spacing
 
 def get_FWHM_b(machine, b):
-    sigma0_psf, alpha_psf = get_psf_params(machine=machine, verbose=False)
+    sigma0_psf, alpha_psf,_ = get_psf_params(machine=machine, verbose=False)
     FWHM_b = (2*np.sqrt(2*np.log(2))) * (sigma0_psf + b * alpha_psf)
     return FWHM_b
 
@@ -80,4 +78,4 @@ if __name__ == '__main__':
                         help='SPECT system simulated for PVE projections')
 
     args = parser.parse_args()
-    _,__ = get_psf_params(machine = args.spect_system)
+    _,__,___ = get_psf_params(machine = args.spect_system)

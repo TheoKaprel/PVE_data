@@ -120,7 +120,7 @@ def forwardprojectRTK(inputsrc, output_folder,geometry_filename,attmap, nproj, s
         itk.imwrite(output_forward_PVfree,output_filename_PVfree)
 
     if pve:
-        sigma0_psf, alpha_psf = get_psf_params(machine=spect_system)
+        sigma0_psf, alpha_psf,_ = get_psf_params(machine=spect_system)
         forward_projector.SetSigmaZero(sigma0_psf)
         forward_projector.SetAlpha(alpha_psf)
         forward_projector.Update()

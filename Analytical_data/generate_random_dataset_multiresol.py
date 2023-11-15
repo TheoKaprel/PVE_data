@@ -217,7 +217,7 @@ def generate(opt):
 
     t0 = time.time()
 
-    sigma0_psf, alpha_psf = get_psf_params(opt.spect_system)
+    sigma0_psf, alpha_psf,_ = get_psf_params(opt.spect_system)
     dataset_infos['sigma0_psf'] = sigma0_psf
     dataset_infos['alpha_psf'] = alpha_psf
     list_sigma0,list_alpha = np.linspace(0,sigma0_psf,10)[1:],np.linspace(0,alpha_psf,10)[1:]
