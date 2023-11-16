@@ -445,7 +445,7 @@ def generate(opt):
             print('fp...')
 
         total_counts_per_proj = round(np.random.rand() * (max_count - min_count) + min_count)
-        print(total_counts_per_proj)
+        print(f"{total_counts_per_proj} ({total_counts_per_proj/(1e6 * 20 * efficiency)} MBq)")
         src_array_normedToTotalCounts = src_array / np.sum(src_array) * total_counts_per_proj * spacing_proj**2 / (vSpacing[0]*vSpacing[1]*vSpacing[2])
 
         src_img_normedToTotalCounts = itk.image_from_array(src_array_normedToTotalCounts.astype(np.float32))
@@ -463,7 +463,7 @@ def generate(opt):
                 dset_src = grp.create_dataset("src", src_array.shape, dtype=dtype)
                 dset_src[:,:,:]=src_array
             else:
-                source_path = os.path.join(opt.output_folder,f'{source_ref}.{type}')
+                source_path = os.path.join(opt.output_folder,f'{source_ref}.{opt.type}')
                 itk.imwrite(src_img,source_path)
 
 
@@ -632,7 +632,7 @@ def generate(opt):
                 dset_rec = grp.create_dataset("rec", rec_volume_array.shape, dtype=dtype)
                 dset_rec[:,:,:] = rec_volume_array
             else:
-                output_filename_rec_volume = os.path.join(opt.output_folder, f'{source_ref}_rec.{type}')
+                output_filename_rec_volume = os.path.join(opt.output_folder, f'{source_ref}_rec.{opt.type}')
                 itk.imwrite(rec_volume,output_filename_rec_volume)
 
             # forward_projs
@@ -647,7 +647,7 @@ def generate(opt):
                 dset_rec_fp = grp.create_dataset("rec_fp", output_rec_fp_array.shape, dtype=dtype)
                 dset_rec_fp[:,:,:] = output_rec_fp_array
             else:
-                output_filename_rec_fp = os.path.join(opt.output_folder, f'{source_ref}_rec_fp.{type}')
+                output_filename_rec_fp = os.path.join(opt.output_folder, f'{source_ref}_rec_fp.{opt.type}')
                 itk.imwrite(output_rec_fp,output_filename_rec_fp)
 
             forward_projector_rec_fp.SetInput(2, attmap_rec_fp)
@@ -662,7 +662,7 @@ def generate(opt):
                 dset_rec_fp_att = grp.create_dataset("rec_fp_att", output_rec_fp_att_array.shape, dtype=dtype)
                 dset_rec_fp_att[:,:,:] = output_rec_fp_att_array
             else:
-                output_filename_rec_fp_att = os.path.join(opt.output_folder, f'{source_ref}_rec_fp_att.{type}')
+                output_filename_rec_fp_att = os.path.join(opt.output_folder, f'{source_ref}_rec_fp_att.{opt.type}')
                 itk.imwrite(output_rec_fp_att, output_filename_rec_fp_att)
 
         if with_attmaps:
