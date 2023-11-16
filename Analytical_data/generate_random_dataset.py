@@ -321,7 +321,7 @@ def generate(opt):
         to_hdf=True
         hdf_file_filename = os.path.join(opt.output_folder, f'{os.path.basename(os.path.abspath(opt.output_folder))}.h5')
         print(hdf_file_filename)
-        hdf_file = h5py.File(hdf_file_filename, 'w')
+        hdf_file = h5py.File(hdf_file_filename, 'a')
         str_dtype = h5py.special_dtype(vlen=str)
     else:
         to_hdf=False
