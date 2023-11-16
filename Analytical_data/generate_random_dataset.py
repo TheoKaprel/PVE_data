@@ -13,6 +13,7 @@ from scipy.spatial.transform import Rotation as Rot
 from scipy.interpolate import RegularGridInterpolator
 from skimage.morphology import convex_hull_image
 import h5py
+import gatetools
 
 
 from parameters import get_psf_params,get_detector_params
@@ -206,6 +207,7 @@ parser.add_argument('--nproj',type = int, default = None, help = 'if no geom, pr
 parser.add_argument('--sid',type = float, default = None, help = 'if no geom, precise detector-to-isocenter distance (mm)')
 parser.add_argument('--fov', type=str,help="FOV (mm,mm) of the detector. Should be in the format --fov 532,388 ")
 parser.add_argument('--attenuationmapfolder',default = None, help = 'path to the attenuationmaps folder (random choice in the folder)')
+parser.add_argument('--attmapaugmentation', action="store_true", help = "add this if data augmentation is needed for the attenuation map. Max rotation : (5,360,5) and max translation : (50,50,50) ")
 parser.add_argument('--output_folder','-o', default = './dataset', help = " Absolute or relative path to the output folder")
 parser.add_argument('--spect_system', default = "ge-discovery", choices=['ge-discovery', 'siemens-intevo'], help = 'SPECT system simulated for PVE projections')
 parser.add_argument('--save_src',action ="store_true", help = "if you want to also save the source that will be forward projected")
@@ -354,6 +356,15 @@ def generate(opt):
         # get source image parameters
         if with_attmaps:
             attmap = itk.imread(attmap_ref,pixel_type=pixelType)
+            if opt.attmapaugmentation:
+                rot=np.random.rand(3)*[5,360,5]
+                transl = np.random.rand(3)*100-50
+                attmap = gatetools.applyTransformation(input=attmap, like=None, spacinglike=None, matrix=None, newsize=None,
+                                              neworigin=None, newspacing=None, newdirection=None, force_resample=True,
+                                              keep_original_canvas=None, adaptive=None, rotation=rot, rotation_center=None,
+                                              translation=transl, pad=None, interpolation_mode=None, bspline_order=2)
+
+
             attmap_np = itk.array_from_image(attmap)
             vSpacing = np.array(attmap.GetSpacing())[::-1]
             vSize = np.array(attmap_np.shape)
@@ -577,6 +588,14 @@ def generate(opt):
             print('rec_fp...')
             if with_attmaps:
                 attmap_rec_fp = itk.imread(attmap_ref.replace('.mhd', '_rec_fp.mhd'), pixel_type=pixelType)
+                if opt.attmapaugmentation:
+                    # apply the same transformation that to attmap
+                    attmap_rec_fp = gatetools.applyTransformation(input=attmap_rec_fp, like=None, spacinglike=None, matrix=None, newsize=None,
+                                                  neworigin=None, newspacing=None, newdirection=None, force_resample=True,
+                                                  keep_original_canvas=None, adaptive=None, rotation=rot, rotation_center=None,
+                                                  translation=transl, pad=None, interpolation_mode=None, bspline_order=2)
+
+
                 attmap_rec_fp_np = itk.array_from_image(attmap_rec_fp)
                 vSpacing_recpfp = np.array(attmap_rec_fp.GetSpacing())
                 vSize_recfp = np.array(attmap_rec_fp_np.shape)[::-1]
