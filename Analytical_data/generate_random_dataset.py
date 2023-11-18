@@ -339,7 +339,7 @@ def generate(opt):
             attmap_ref = random.choice(attmap_refs_list)
             if to_hdf:
                 juste_ref = os.path.basename(os.path.abspath(attmap_ref))
-                dset_attmap_ref = grp.create_dataset("attmap",(len(juste_ref)+5), dtype=str_dtype)
+                dset_attmap_ref = grp.create_dataset("attmap_ref",(len(juste_ref)+5), dtype=str_dtype)
                 dset_attmap_ref[0] = juste_ref
 
         if opt.verbose:
@@ -364,6 +364,22 @@ def generate(opt):
                                               keep_original_canvas=None, adaptive=None, rotation=rot, rotation_center=None,
                                               translation=transl, pad=None, interpolation_mode=None, bspline_order=2)
 
+            if to_hdf:
+                attmap_array=itk.array_from_image(attmap)
+                dset_attmap = grp.create_dataset("attmap", attmap_array.shape, dtype=dtype)
+                dset_attmap[:,:,:]=attmap_array
+
+                forward_projector_attmap = rtk.ZengForwardProjectionImageFilter.New()
+                forward_projector_attmap.SetInput(0, output_proj.GetOutput())
+                forward_projector_attmap.SetGeometry(geometry)
+                forward_projector_attmap.SetInput(1, attmap)
+                forward_projector_attmap.SetSigmaZero(0)
+                forward_projector_attmap.SetAlpha(0)
+                forward_projector_attmap.Update()
+                attmap_fp = forward_projector_attmap.GetOutput()
+                attmap_fp_array= itk.array_from_image(attmap_fp)
+                dset_attmap_fp = grp.create_dataset("attmap_fp", attmap_fp_array.shape)
+                dset_attmap_fp[:,:,:] = attmap_fp_array
 
             attmap_np = itk.array_from_image(attmap)
             vSpacing = np.array(attmap.GetSpacing())[::-1]
