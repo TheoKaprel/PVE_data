@@ -169,15 +169,38 @@ def random_3d_function(a0, xx, yy, zz, M):
     interpolated_values = interp((xx, yy, zz))
     return interpolated_values
 
-def save_one_file(array, filename,ftype,img_like):
-    if ftype != 'npy':
-        output_img = itk.image_from_array(array)
-        output_img.SetSpacing(img_like.GetSpacing())
-        output_img.SetOrigin(img_like.GetOrigin())
-        itk.imwrite(output_img, filename)
-    else:
-        np.save(filename, array)
+def save_me(img=None,array=None,ftype=None,output_folder=None, src_ref=None, ref=None, grp=None, dtype=None, img_like=None):
+    if ftype=="h5":
+        if ((array is None) and (img is not None)):
+            array=itk.array_from_image(img)
+        dset_ref = grp.create_dataset(ref, array.shape, dtype=dtype)
+        dset_ref[:, :, :] = array
+    elif ftype in ["mhd", "mha"]:
+        filename = os.path.join(output_folder, f'{src_ref}_{ref}.{ftype}')
+        if ((array is not None) and (img is None)):
+            output_img = itk.image_from_array(array)
+            output_img.SetSpacing(img_like.GetSpacing())
+            output_img.SetOrigin(img_like.GetOrigin())
+            itk.imwrite(output_img, filename)
+        elif ((array is None) and (img is not None)):
+            itk.imwrite(img, filename)
+        else:
+            print("ERROR : give at leat array or img (not both)")
+            exit(0)
+    elif ftype=="npy":
+        filename = os.path.join(output_folder, f'{src_ref}_{ref}.{ftype}')
 
+        if ((array is not None) and (img is None)):
+            np.save(filename, array)
+        elif ((array is None) and (img is not None)):
+            array=itk.array_from_image(img)
+            np.save(filename, array)
+        else:
+            print("ERROR : give at leat array or img (not both)")
+            exit(0)
+    else:
+        print("ERROR : wrong output type")
+        exit(0)
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--nb_data','-n', type = int, required = True, help = 'number of desired data = (src,projPVE,projPVfree)')
@@ -334,6 +357,8 @@ def generate(opt):
 
         if to_hdf:
             grp=hdf_file.create_group(source_ref)
+        else:
+            grp=None
 
         if with_attmaps:
             attmap_ref = random.choice(attmap_refs_list)
@@ -364,22 +389,20 @@ def generate(opt):
                                               keep_original_canvas=None, adaptive=None, rotation=rot, rotation_center=None,
                                               translation=transl, pad=None, interpolation_mode=None, bspline_order=2)
 
-            if to_hdf:
-                attmap_array=itk.array_from_image(attmap)
-                dset_attmap = grp.create_dataset("attmap", attmap_array.shape, dtype=dtype)
-                dset_attmap[:,:,:]=attmap_array
 
-                forward_projector_attmap = rtk.ZengForwardProjectionImageFilter.New()
-                forward_projector_attmap.SetInput(0, output_proj.GetOutput())
-                forward_projector_attmap.SetGeometry(geometry)
-                forward_projector_attmap.SetInput(1, attmap)
-                forward_projector_attmap.SetSigmaZero(0)
-                forward_projector_attmap.SetAlpha(0)
-                forward_projector_attmap.Update()
-                attmap_fp = forward_projector_attmap.GetOutput()
-                attmap_fp_array= itk.array_from_image(attmap_fp)
-                dset_attmap_fp = grp.create_dataset("attmap_fp", attmap_fp_array.shape)
-                dset_attmap_fp[:,:,:] = attmap_fp_array
+            save_me(img=attmap,ftype=opt.type,output_folder=opt.output_folder, src_ref=source_ref,
+                    ref="attmap", grp=grp,dtype=dtype)
+
+            forward_projector_attmap = rtk.ZengForwardProjectionImageFilter.New()
+            forward_projector_attmap.SetInput(0, output_proj.GetOutput())
+            forward_projector_attmap.SetGeometry(geometry)
+            forward_projector_attmap.SetInput(1, attmap)
+            forward_projector_attmap.SetSigmaZero(0)
+            forward_projector_attmap.SetAlpha(0)
+            forward_projector_attmap.Update()
+            attmap_fp = forward_projector_attmap.GetOutput()
+            save_me(img=attmap_fp,ftype=opt.type,output_folder=opt.output_folder, src_ref=source_ref,
+                    ref="attmap_fp", grp=grp,dtype=dtype)
 
             attmap_np = itk.array_from_image(attmap)
             vSpacing = np.array(attmap.GetSpacing())[::-1]
@@ -486,12 +509,8 @@ def generate(opt):
             src_img = itk.image_from_array(src_array.astype(np.float32))
             src_img.SetSpacing(vSpacing[::-1])
             src_img.SetOrigin(vOffset[::-1])
-            if to_hdf:
-                dset_src = grp.create_dataset("src", src_array.shape, dtype=dtype)
-                dset_src[:,:,:]=src_array
-            else:
-                source_path = os.path.join(opt.output_folder,f'{source_ref}.{opt.type}')
-                itk.imwrite(src_img,source_path)
+            save_me(img=src_img, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
+                    ref="src", grp=grp, dtype=dtype)
 
 
         # fowardprojections :
@@ -507,14 +526,8 @@ def generate(opt):
             fov_maskmult.SetInput2(output_forward_PVfree)
             output_forward_PVfree = fov_maskmult.GetOutput()
 
-        if to_hdf:
-            output_forward_PVfree_array=itk.array_from_image(output_forward_PVfree)
-            dset_PVfree = grp.create_dataset("PVfree", output_forward_PVfree_array.shape, dtype=dtype)
-            dset_PVfree[:,:,:]=output_forward_PVfree_array
-        else:
-            output_filename_PVfree = os.path.join(opt.output_folder, f'{source_ref}_PVfree.{opt.type}')
-            itk.imwrite(output_forward_PVfree, output_filename_PVfree)
-
+        save_me(img=output_forward_PVfree, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
+                ref="PVfree", grp=grp, dtype=dtype)
 
         if with_attmaps:
             forward_projector_with_att.SetInput(1, src_img_normedToTotalCounts)
@@ -529,23 +542,15 @@ def generate(opt):
                 fov_maskmult.SetInput2(output_forward_PVE)
                 output_forward_PVE = fov_maskmult.GetOutput()
 
-            if to_hdf:
-                output_forward_PVE_array = itk.array_from_image(output_forward_PVE)
-                dset_PVE_att = grp.create_dataset("PVE_att", output_forward_PVE_array.shape,dtype=dtype)
-                dset_PVE_att[:,:,:]=output_forward_PVE_array
-            else:
-                output_filename_PVE = os.path.join(opt.output_folder, f'{source_ref}_PVE_att.{opt.type}')
-                itk.imwrite(output_forward_PVE, output_filename_PVE)
+
+            save_me(img=output_forward_PVE, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
+                    ref="PVE_att", grp=grp, dtype=dtype)
 
             # proj noise(att+PVE)
             output_forward_PVE_array = itk.array_from_image(output_forward_PVE).astype(dtype=dtype)
-            noisy_projection_array = np.random.poisson(lam=output_forward_PVE_array, size=output_forward_PVE_array.shape).astype(dtype=dtype)
-            if to_hdf:
-                dset_PVE_att_noisy=grp.create_dataset("PVE_att_noisy", noisy_projection_array.shape,dtype=dtype)
-                dset_PVE_att_noisy[:,:,:]=noisy_projection_array
-            else:
-                output_filename_PVE_noisy = os.path.join(opt.output_folder, f'{source_ref}_PVE_att_noisy.{opt.type}')
-                save_one_file(array=noisy_projection_array, filename=output_filename_PVE_noisy, ftype=opt.type,img_like=output_forward_PVE)
+            noisy_projection_array = np.random.poisson(lam=output_forward_PVE_array, size=output_forward_PVE_array.shape).astype(dtype=np.float64)
+            save_me(array=noisy_projection_array, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
+                    ref="PVE_att_noisy", grp=grp, dtype=dtype, img_like=output_forward_PVE)
 
 
             # proj att+PVfree
@@ -558,13 +563,9 @@ def generate(opt):
                 fov_maskmult.SetInput2(output_forward_PVfree_att)
                 output_forward_PVfree_att = fov_maskmult.GetOutput()
 
-            if to_hdf:
-                output_forward_PVfree_att_array=itk.array_from_image(output_forward_PVfree_att)
-                dset_PVfree_att = grp.create_dataset("PVfree_att", output_forward_PVfree_att_array.shape, dtype=dtype)
-                dset_PVfree_att[:,:,:]=output_forward_PVfree_att_array
-            else:
-                output_filename_PVfree_att = os.path.join(opt.output_folder, f'{source_ref}_PVfree_att.{opt.type}')
-                itk.imwrite(output_forward_PVfree_att, output_filename_PVfree_att)
+            save_me(img=output_forward_PVfree_att, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
+                    ref="PVfree_att", grp=grp, dtype=dtype)
+
 
 
         else:
@@ -578,24 +579,16 @@ def generate(opt):
                 fov_maskmult.SetInput2(output_forward_PVE)
                 output_forward_PVE = fov_maskmult.GetOutput()
 
-            if to_hdf:
-                output_forward_PVE_array=itk.array_from_image(output_forward_PVE)
-                dset_PVE = grp.create_dataset("PVE", output_forward_PVE_array.shape, dtype=dtype)
-                dset_PVE[:,:,:]=output_forward_PVE_array
-            else:
-                output_filename_PVE = os.path.join(opt.output_folder, f'{source_ref}_PVE.{opt.type}')
-                itk.imwrite(output_forward_PVE, output_filename_PVE)
+            save_me(img=output_forward_PVE, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
+                    ref="PVE", grp=grp, dtype=dtype)
 
 
             # proj noise(PVE)
             output_forward_PVE_array = itk.array_from_image(output_forward_PVE).astype(dtype=dtype)
-            noisy_projection_array = np.random.poisson(lam=output_forward_PVE_array, size=output_forward_PVE_array.shape).astype(dtype=dtype)
-            if to_hdf:
-                dset_PVE_noisy = grp.create_dataset("PVE_noisy", noisy_projection_array.shape, dtype=dtype)
-                dset_PVE_noisy[:,:,:]=noisy_projection_array
-            else:
-                output_filename_PVE_noisy = os.path.join(opt.output_folder, f'{source_ref}_PVE_noisy.{opt.type}')
-                save_one_file(array=noisy_projection_array, filename=output_filename_PVE_noisy, ftype=opt.type,img_like=output_forward_PVE)
+            noisy_projection_array = np.random.poisson(lam=output_forward_PVE_array, size=output_forward_PVE_array.shape).astype(dtype=np.float64)
+
+            save_me(array=noisy_projection_array, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
+                    ref="PVE_noisy", grp=grp, dtype=dtype, img_like=output_forward_PVE)
 
 
 
@@ -610,7 +603,8 @@ def generate(opt):
                                                   neworigin=None, newspacing=None, newdirection=None, force_resample=True,
                                                   keep_original_canvas=None, adaptive=None, rotation=rot, rotation_center=None,
                                                   translation=transl, pad=None, interpolation_mode=None, bspline_order=2)
-
+                save_me(img=attmap_rec_fp, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
+                        ref="attmap_rec_fp", grp=grp, dtype=dtype)
 
                 attmap_rec_fp_np = itk.array_from_image(attmap_rec_fp)
                 vSpacing_recpfp = np.array(attmap_rec_fp.GetSpacing())
@@ -662,13 +656,8 @@ def generate(opt):
             rec_volume.DisconnectPipeline()
 
             # save rec_fp
-            if to_hdf:
-                rec_volume_array=itk.array_from_image(rec_volume)
-                dset_rec = grp.create_dataset("rec", rec_volume_array.shape, dtype=dtype)
-                dset_rec[:,:,:] = rec_volume_array
-            else:
-                output_filename_rec_volume = os.path.join(opt.output_folder, f'{source_ref}_rec.{opt.type}')
-                itk.imwrite(rec_volume,output_filename_rec_volume)
+            save_me(img=rec_volume, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
+                    ref="rec", grp=grp, dtype=dtype)
 
             # forward_projs
             forward_projector_rec_fp.SetInput(1, rec_volume)
@@ -677,13 +666,10 @@ def generate(opt):
             if fov_is_set:
                 fov_maskmult.SetInput2(output_rec_fp)
                 output_rec_fp = fov_maskmult.GetOutput()
-            if to_hdf:
-                output_rec_fp_array=itk.array_from_image(output_rec_fp)
-                dset_rec_fp = grp.create_dataset("rec_fp", output_rec_fp_array.shape, dtype=dtype)
-                dset_rec_fp[:,:,:] = output_rec_fp_array
-            else:
-                output_filename_rec_fp = os.path.join(opt.output_folder, f'{source_ref}_rec_fp.{opt.type}')
-                itk.imwrite(output_rec_fp,output_filename_rec_fp)
+
+            save_me(img=output_rec_fp, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
+                    ref="rec_fp", grp=grp, dtype=dtype)
+
 
             forward_projector_rec_fp.SetInput(2, attmap_rec_fp)
             forward_projector_rec_fp.Update()
@@ -692,13 +678,9 @@ def generate(opt):
                 fov_maskmult.SetInput2(output_rec_fp_att)
                 output_rec_fp_att = fov_maskmult.GetOutput()
 
-            if to_hdf:
-                output_rec_fp_att_array=itk.array_from_image(output_rec_fp_att)
-                dset_rec_fp_att = grp.create_dataset("rec_fp_att", output_rec_fp_att_array.shape, dtype=dtype)
-                dset_rec_fp_att[:,:,:] = output_rec_fp_att_array
-            else:
-                output_filename_rec_fp_att = os.path.join(opt.output_folder, f'{source_ref}_rec_fp_att.{opt.type}')
-                itk.imwrite(output_rec_fp_att, output_filename_rec_fp_att)
+            save_me(img=output_rec_fp_att, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
+                    ref="rec_fp_att", grp=grp, dtype=dtype)
+
 
         if with_attmaps:
             dataset_infos['src_refs'].append([source_ref,attmap_ref])
@@ -706,6 +688,11 @@ def generate(opt):
             dataset_infos['src_refs'].append(source_ref)
 
     print(dataset_infos['src_refs'])
+
+    dataset_params_fn = os.path.join(opt.output_folder, 'dataset_infos.txt')
+    dataset_infos_file = open(dataset_params_fn,'a')
+    dataset_infos_file.writelines([str(u)+'\n' for u in dataset_infos['src_refs'] ])
+    dataset_infos_file.close()
 
     tf = time.time()
     elapsed_time = round(tf - t0)
@@ -718,6 +705,8 @@ def generate(opt):
     jsonfile = open(output_info_json, "w")
     jsonfile.write(formatted_dataset_infos)
     jsonfile.close()
+
+
 
 if __name__ == '__main__':
     opt = parser.parse_args()
