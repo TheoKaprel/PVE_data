@@ -122,6 +122,11 @@ def generate_convex(X,Y,Z,center,min_radius,max_radius, prop_radius):
     id_center_x = np.searchsorted(X[:,0,0], vertices_x)
     id_center_y = np.searchsorted(Y[0,:,0], vertices_y)
     id_center_z = np.searchsorted(Z[0,0,:], vertices_z)
+
+    id_center_x[id_center_x==len(X[:,0,0])]= id_center_x[id_center_x==len(X[:,0,0])] - 1
+    id_center_y[id_center_y==len(Y[0,:,0])]= id_center_y[id_center_y==len(Y[0,:,0])] - 1
+    id_center_z[id_center_z==len(Z[0,0,:])]= id_center_z[id_center_z==len(Z[0,0,:])] - 1
+
     lesion[id_center_x, id_center_y, id_center_z] = True
     lesion = convex_hull_image(lesion).astype(float)
     return lesion
