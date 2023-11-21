@@ -2,55 +2,50 @@ import os
 import h5py
 import glob
 
-import itk
 import numpy as np
 import argparse
 
 
 def convert():
-    # list_noisy_PVE_PVfree = glob.glob(os.path.join(args.folder, "?????_noisy_PVE_PVfree.npy"))
-    list_noisy_PVE_PVfree = glob.glob(os.path.join(args.folder, "?????_noisy_PVE_PVfree_rec_fp.mhd"))
+    list_src = glob.glob(os.path.join(args.folder, "?????_src.npy"))
 
     f = h5py.File(os.path.join(args.folder, args.output), 'w')
-    keys = list(f.keys())
+    f_keys = list(f.keys())
 
-    for i,fn_noisy_PVE_PVfree in enumerate(list_noisy_PVE_PVfree):
-        if fn_noisy_PVE_PVfree not in keys:
-            print(fn_noisy_PVE_PVfree)
-            # fn_rec_fp = fn_noisy_PVE_PVfree.replace("_noisy_PVE_PVfree", "_rec_fp")
-            array_noisy_PVE_PVfree = read_to_npy(fn_noisy_PVE_PVfree)
-            # array_rec_fp = np.load(fn_rec_fp)
-
-            # grp = f.create_group(fn_noisy_PVE_PVfree.split("_noisy_PVE_PVfree.npy")[0][-5:])
-            grp = f.create_group(fn_noisy_PVE_PVfree.split("_noisy_PVE_PVfree_rec_fp.mhd")[0][-5:])
-
-            dset_PVE_noisy = grp.create_dataset("PVE_noisy", (120, 256, 256), dtype='float16')
-            dset_PVE = grp.create_dataset("PVE", (120, 256, 256), dtype='float16')
-            dset_PVfree = grp.create_dataset("PVfree", (120, 256, 256), dtype='float16')
-            dset_rec_fp = grp.create_dataset("rec_fp", (120, 256, 256), dtype='float16')
+    for i,fn_src in enumerate(list_src):
+        ref = fn_src.split('_src.npy')[0][-5:]
+        if ref not in f_keys:
+            print(ref)
 
 
-            dset_PVE_noisy[:, :, :] = array_noisy_PVE_PVfree[:120, :, :]
-            dset_PVE[:, :, :] = array_noisy_PVE_PVfree[120:240, :, :]
-            dset_PVfree[:, :, :] = array_noisy_PVE_PVfree[240:360, :, :]
-            # dset_rec_fp[:, :, :] = array_rec_fp
-            dset_rec_fp[:,:,:] = array_noisy_PVE_PVfree[360:,:,:]
+            keys=['src', 'attmap', 'attmap_fp', 'PVE_att', 'PVE_att_noisy', 'PVfree_att', 'PVfree']
+
+            save = True
+            for key in keys:
+                if not os.path.isfile(os.path.join(args.folder, f"{ref}_{key}.npy")):
+                    print(f"{ref}_{key}.npy not in {args.folder}")
+                    save=False
+            if save==False:
+                continue
+
+            grp = f.create_group(ref)
+
+            for key in keys:
+                save_key_in_grp(grp=grp,ref=ref,key=key,folder=args.folder)
 
     print('done!')
 
 
-def read_to_npy(fn):
-    if fn[-3:]=="npy":
-        return np.load(fn)
-    else:
-        return itk.array_from_image(itk.imread(fn))
+def save_key_in_grp(grp,ref,key,folder):
+    array_fn = os.path.join(folder, f"{ref}_{key}.npy")
+    array = np.load(array_fn)
+    dset_key = grp.create_dataset(key, array.shape, dtype='float16')
+    dset_key[:, :, :] = array
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--folder')
-    # parser.add_argument('--opt1',action ="store_true", help = "One .h5 file per data, containing a (4,120,256,256) array")
-    # parser.add_argument('--opt2',action ="store_true", help="One .h5 file per data, each one containing 4 datasets (PVE_noisy,PVE,PVfree,rec_fp)")
-    # parser.add_argument('--opt3',action ="store_true", help = "One global .h5 file, divided in N groups, each one conaining 4 datasets (PVE_noisy,PVE,PVfree,rec_fp)")
     parser.add_argument('--output')
     args = parser.parse_args()
     convert()
