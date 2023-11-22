@@ -8,28 +8,26 @@ import argparse
 
 def convert():
     list_src = glob.glob(os.path.join(args.folder, "?????_src.npy"))
-
-    f = h5py.File(os.path.join(args.folder, args.output), 'w')
-    f_keys = list(f.keys())
+    f = h5py.File(os.path.join(args.folder, args.output), 'a')
 
     for i,fn_src in enumerate(list_src):
         ref = fn_src.split('_src.npy')[0][-5:]
-        if ref not in f_keys:
-            print(ref)
+        # if ref not in f_keys:
+        print(ref)
+        # keys=['src', 'attmap', 'attmap_fp', 'PVE_att', 'PVE_att_noisy', 'PVfree_att', 'PVfree']
+        keys=['attmap_rec_fp', 'rec', 'rec_fp', 'rec_fp_att']
 
+        save = True
+        for key in keys:
+            if not os.path.isfile(os.path.join(args.folder, f"{ref}_{key}.npy")):
+                print(f"{ref}_{key}.npy not in {args.folder}")
+                save=False
 
-            keys=['src', 'attmap', 'attmap_fp', 'PVE_att', 'PVE_att_noisy', 'PVfree_att', 'PVfree']
-
-            save = True
-            for key in keys:
-                if not os.path.isfile(os.path.join(args.folder, f"{ref}_{key}.npy")):
-                    print(f"{ref}_{key}.npy not in {args.folder}")
-                    save=False
-            if save==False:
-                continue
-
-            grp = f.create_group(ref)
-
+        if save==False:
+            del f[ref]
+        else:
+            # grp = f.create_group(ref)
+            grp = f[ref]
             for key in keys:
                 save_key_in_grp(grp=grp,ref=ref,key=key,folder=args.folder)
 
