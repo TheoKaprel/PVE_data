@@ -10,12 +10,13 @@ def convert():
     list_src = glob.glob(os.path.join(args.folder, "?????_src.npy"))
     f = h5py.File(os.path.join(args.folder, args.output), 'a')
 
+    # keys=['src', 'attmap', 'attmap_fp', 'PVE_att', 'PVE_att_noisy', 'PVfree_att', 'PVfree']
+    keys = ['attmap_rec_fp', 'rec', 'rec_fp', 'rec_fp_att']
+
     for i,fn_src in enumerate(list_src):
         ref = fn_src.split('_src.npy')[0][-5:]
         # if ref not in f_keys:
         print(ref)
-        # keys=['src', 'attmap', 'attmap_fp', 'PVE_att', 'PVE_att_noisy', 'PVfree_att', 'PVfree']
-        keys=['attmap_rec_fp', 'rec', 'rec_fp', 'rec_fp_att']
 
         save = True
         for key in keys:
