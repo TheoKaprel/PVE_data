@@ -13,21 +13,12 @@ def main():
     h5file = h5py.File(args.hdf, 'r+')
     refs=list(h5file.keys())
 
-    with open(args.datasetinfos, 'r') as f:
-        lines = [line.rstrip() for line in f]
-
-    ref_attmap={}
-    for line in lines:
-        ref_attmap[line[2:7]]=lines[0].split('/')[-1][:-2]
-
-
     # Projections infos
     spacing_proj=2.3976
     nproj=120
     size_proj=256
     sid = 280
 
-    dtype = np.float16
     pixelType = itk.F
     imageType = itk.Image[pixelType, 3]
     output_spacing = [spacing_proj,spacing_proj, 1]
@@ -61,12 +52,14 @@ def main():
         grp=h5file[ref]
         src=np.array(grp['src'], dtype=np.float32)
 
-        attmapfn=ref_attmap[ref]
-        attmap=itk.imread(os.path.join(args.attmapfolder, attmapfn))
 
         lesion_mask=(src>2).astype(np.float32)
         lesion_mask_img=itk.image_from_array(lesion_mask)
-        lesion_mask_img.CopyInformation(attmap)
+        spacing=[2.3976,2.3976,2.3976]
+        size=list(lesion_mask_img.shape)
+        origin= [sp*(sz-1)/2 for (sp,sz) in zip(spacing,size)]
+        lesion_mask_img.SetSpacing(spacing)
+        lesion_mask_img.SetOrigin(origin[::-1])
 
         #forwardprojection of lesion mask
         forward_projector = rtk.ZengForwardProjectionImageFilter.New()
@@ -89,8 +82,6 @@ def main():
         output_fn = os.path.join(args.outputfolder, f'{ref}_lesion_mask_fp.npy')
         np.save(output_fn, lesion_mask_fp_array)
         print(output_fn)
-
-
 
 
 if __name__ == '__main__':
