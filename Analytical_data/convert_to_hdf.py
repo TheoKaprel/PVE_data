@@ -7,14 +7,15 @@ import argparse
 
 
 def convert():
-    list_src = glob.glob(os.path.join(args.folder, "?????_src.npy"))
+    print(args)
+    keys=args.keys.split(',')
+    print(keys)
+
+    list_frstkey = glob.glob(os.path.join(args.folder, f"?????_{keys[0]}.npy"))
     f = h5py.File(os.path.join(args.folder, args.output), 'a')
-
-    # keys=['src', 'attmap', 'attmap_fp', 'PVE_att', 'PVE_att_noisy', 'PVfree_att', 'PVfree']
-    keys = ['attmap_rec_fp', 'rec', 'rec_fp', 'rec_fp_att']
-
-    for i,fn_src in enumerate(list_src):
-        ref = fn_src.split('_src.npy')[0][-5:]
+    print(list_frstkey)
+    for i,fn_src in enumerate(list_frstkey):
+        ref = fn_src.split(f'_{keys[0]}.npy')[0][-5:]
         # if ref not in f_keys:
         print(ref)
 
@@ -45,6 +46,7 @@ def save_key_in_grp(grp,ref,key,folder):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--folder')
+    parser.add_argument('--keys', type=str)
     parser.add_argument('--output')
     args = parser.parse_args()
     convert()
