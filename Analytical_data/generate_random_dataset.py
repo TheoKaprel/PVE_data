@@ -239,6 +239,7 @@ parser.add_argument('--attmapaugmentation', action="store_true", help = "add thi
 parser.add_argument('--output_folder','-o', default = './dataset', help = " Absolute or relative path to the output folder")
 parser.add_argument('--spect_system', default = "ge-discovery", choices=['ge-discovery', 'siemens-intevo'], help = 'SPECT system simulated for PVE projections')
 parser.add_argument('--save_src',action ="store_true", help = "if you want to also save the source that will be forward projected")
+parser.add_argument('--lesion_mask',action ="store_true", help = "if you want to also save the source that will be forward projected")
 parser.add_argument('--rec_fp',action="store_true", help = "noisy projections are reconstructed with 1 osem-rm iter and forward-projected w/o rm to obtain ABCDE_rec_fp.mha")
 parser.add_argument("-v", "--verbose", action="store_true")
 def generate(opt):
@@ -442,6 +443,9 @@ def generate(opt):
 
         src_array = np.zeros_like(X)
 
+        if opt.lesion_mask:
+            lesion_array=np.zeros_like(X)
+
         if opt.background:
             # background = cylinder with revolution axis = Y
             background_array = np.zeros_like(X)
@@ -492,6 +496,9 @@ def generate(opt):
             else: # convex shape
                 lesion = generate_convex(X=X,Y=Y,Z=Z,center=center,min_radius=opt.min_radius, max_radius = opt.max_radius, prop_radius = opt.prop_radius)
 
+            if opt.lesion_mask:
+                lesion_array+=lesion
+
             if opt.grad_act:
                 lesion = lesion * (((1-random_activity)/np.min(rndm_grad_act)) * rndm_grad_act + random_activity)
             else:
@@ -520,6 +527,27 @@ def generate(opt):
             # src_img.SetOrigin(vOffset[::-1])
             save_me(img=src_img_normedToTotalCounts, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
                     ref="src", grp=grp, dtype=dtype)
+
+        if opt.lesion_mask:
+            lesion_mask = (lesion_array > 0).astype(np.float32)
+            lesion_mask_img = itk.image_from_array(lesion_mask)
+            lesion_mask_img.CopyInformation(src_img_normedToTotalCounts)
+            forward_projector.SetInput(1, lesion_mask_img)
+
+            forward_projector.SetSigmaZero(sigma0_psf)
+            forward_projector.SetAlpha(alpha_psf)
+            forward_projector.Update()
+            output_forward_lesion_mask = forward_projector.GetOutput()
+            output_forward_lesion_mask.DisconnectPipeline()
+            if fov_is_set:
+                fov_maskmult.SetInput2(output_forward_lesion_mask)
+                output_forward_lesion_mask = fov_maskmult.GetOutput()
+
+            lesion_mask_fp_array = itk.array_from_image(output_forward_lesion_mask)
+            lesion_mask_fp_array = (lesion_mask_fp_array > 0.1*lesion_mask_fp_array.max()).astype(np.float32)
+
+            save_me(array=lesion_mask_fp_array,ftype=opt.type, output_folder = opt.output_folder, src_ref = source_ref,
+                    ref = "lesion_mask_fp", grp = grp, dtype = dtype, img_like = output_forward_lesion_mask)
 
 
         # fowardprojections :
