@@ -69,9 +69,11 @@ def main():
     osem.SetForwardProjectionFilter(FP)
     osem.SetBackProjectionFilter(BP)
 
-    sigma0_psf, alpha_psf,_ = get_psf_params(machine=args.spect_system)
+    # sigma0_psf, alpha_psf,_ = get_psf_params(machine=args.spect_system)
+    # temp :
+    sigma0_psf, alpha_psf = 1.4725322877230935,0.018085567219824267
     osem.SetSigmaZero(sigma0_psf)
-    osem.SetAlpha(alpha_psf)
+    osem.SetAlphaPSF(alpha_psf)
 
     forward_projector = rtk.ZengForwardProjectionImageFilter.New()
     output_proj_spacing = np.array([spacing_proj,spacing_proj, 1])

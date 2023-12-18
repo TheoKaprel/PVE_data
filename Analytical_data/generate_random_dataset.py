@@ -252,6 +252,7 @@ def generate(opt):
     sigma0_psf, alpha_psf,efficiency = get_psf_params(opt.spect_system)
     dataset_infos['sigma0_psf'] = sigma0_psf
     dataset_infos['alpha_psf'] = alpha_psf
+    dataset_infos['efficiency'] = efficiency
 
 
     if (opt.spacing_proj is None) and (opt.size_proj is None) and (opt.spect_system is not None):
@@ -356,6 +357,8 @@ def generate(opt):
     else:
         to_hdf=False
 
+    time_src=0
+
     for n in range(opt.nb_data):
         # Random output filename
         source_ref = chooseRandomRef(Nletters=5)
@@ -381,7 +384,6 @@ def generate(opt):
         forward_projector = rtk.ZengForwardProjectionImageFilter.New()
         forward_projector.SetInput(0, output_proj.GetOutput())
         forward_projector.SetGeometry(geometry)
-
 
         # get source image parameters
         if with_attmaps:
@@ -429,6 +431,7 @@ def generate(opt):
             vSpacing = strParamToArray(opt.spacing_volume)
             vOffset = [(-sp * size + sp) / 2 for (sp, size) in zip(vSpacing, vSize)]
 
+        time_src_0=time.time()
         # matrix settings
         lengths = vSize * vSpacing
         lspaceX = np.linspace(-vSize[0] * vSpacing[0] / 2, vSize[0] * vSpacing[0] / 2, vSize[0])
@@ -496,6 +499,7 @@ def generate(opt):
 
             src_array += lesion
 
+        time_src+=(time.time() - time_src_0)
         if opt.verbose:
             print('fp...')
 
@@ -511,10 +515,10 @@ def generate(opt):
 
         # saving of source 3D image
         if opt.save_src:
-            src_img = itk.image_from_array(src_array.astype(np.float32))
-            src_img.SetSpacing(vSpacing[::-1])
-            src_img.SetOrigin(vOffset[::-1])
-            save_me(img=src_img, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
+            # src_img = itk.image_from_array(src_array.astype(np.float32))
+            # src_img.SetSpacing(vSpacing[::-1])
+            # src_img.SetOrigin(vOffset[::-1])
+            save_me(img=src_img_normedToTotalCounts, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
                     ref="src", grp=grp, dtype=dtype)
 
 
@@ -638,7 +642,7 @@ def generate(opt):
             FP = osem.ForwardProjectionType_FP_ZENG
             BP = osem.BackProjectionType_BP_ZENG
             osem.SetSigmaZero(sigma0_psf)
-            osem.SetAlpha(alpha_psf)
+            osem.SetAlphaPSF(alpha_psf)
             osem.SetForwardProjectionFilter(FP)
             osem.SetBackProjectionFilter(BP)
 
@@ -704,6 +708,7 @@ def generate(opt):
     elapsed_time_min = round(elapsed_time/60)
     dataset_infos['elapsed_time_s'] = elapsed_time
     print(f'Total time elapsed for data generation : {elapsed_time_min} min    (i.e. {elapsed_time} s)')
+    print(f'Including {time_src} s for src creation')
 
     formatted_dataset_infos = json.dumps(dataset_infos, indent=4)
     output_info_json = os.path.join(opt.output_folder, f'dataset_infos_{current_date}_{source_ref}.json')

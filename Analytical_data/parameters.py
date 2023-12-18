@@ -14,42 +14,88 @@ def get_psf_params(machine, verbose = True):
         # septal thickness
         t = 0.2
 
-    elif machine=="siemens-intevo":
+        # mass attenuation coefficient at 150 keV in Pb
+        mu = 1.91 * 11.35 / 10  # (mm)^-1
+
+        # Effective length
+        leff = l - 2 / mu
+
+        sigma0_psf = d / (2 * np.sqrt(2 * np.log(2)))
+        alpha_psf = d / (2 * np.sqrt(2 * np.log(2))) / leff
+
+        w = t * l / (2 * d + t)
+        septal_penetration = np.exp(-w * mu)
+
+        K = 0.26  # hexagonal holes
+        efficiency = (K * (d / leff) * d / (d + t)) ** 2
+        sensitivity = efficiency * 60 * 3.7 * 10 ** 4
+
+        if verbose:
+            print(f'FWHM(d)={d} + {d / leff} d')
+            print(f'FWHM(10cm) = {d * ((leff + 100) / leff)}')
+            print(f'sigma0 = {sigma0_psf}')
+            print(f'alpha = {alpha_psf}')
+            print(f'septal penetration : {round(septal_penetration * 100, 3)} %')
+            print(f'efficiency : {round(efficiency * 100, 8)} %  ({round(sensitivity, 1)} cpm/microCi)')
+
+        return sigma0_psf, alpha_psf, efficiency
+    elif machine=="siemens-intevo-analytic":
         d1 = 1.11 # diameters across the flats
-        d2 = 2/np.sqrt(3) * d1  # long diameters
-        d_mean = d1 * 3 *np.log(3)/np.pi # mean diameter
-
+        # d2 = 2/np.sqrt(3) * d1  # long diameters
+        # d_mean = d1 * 3 *np.log(3)/np.pi # mean diameter
         d = d1
-
         l = 24.05
         t = 0.16
 
+        # mass attenuation coefficient at 150 keV in Pb
+        mu = 1.91 * 11.35 / 10 # (mm)^-1
 
-    # mass attenuation coefficient at 150 keV in Pb
-    mu = 1.91 * 11.35 / 10 # (mm)^-1
+        # Effective length
+        leff = l - 2 / mu
 
-    # Effective length
-    leff = l - 2 / mu
+        sigma0_psf = d / (2*np.sqrt(2*np.log(2)))
+        alpha_psf= d / (2*np.sqrt(2*np.log(2))) / leff
 
-    sigma0_psf = d / (2*np.sqrt(2*np.log(2)))
-    alpha_psf= d / (2*np.sqrt(2*np.log(2))) / leff
+        w = t * l / (2 * d + t)
+        septal_penetration = np.exp(-w * mu)
 
-    w = t * l / (2 * d + t)
-    septal_penetration = np.exp(-w * mu)
+        K = 0.26  # hexagonal holes
+        efficiency = (K * (d / leff) * d / (d + t)) ** 2
+        sensitivity = efficiency * 60 * 3.7 * 10 ** 4
 
-    K = 0.26  # hexagonal holes
-    efficiency = (K * (d / leff) * d / (d + t)) ** 2
-    sensitivity = efficiency * 60 * 3.7 * 10 ** 4
+        if verbose:
+            print(f'FWHM(d)={d} + {d/leff} d')
+            print(f'FWHM(10cm) = {d*((leff + 100) / leff)}')
+            print(f'sigma0 = {sigma0_psf}')
+            print(f'alpha = {alpha_psf}')
+            print(f'septal penetration : {round(septal_penetration*100,3)} %')
+            print(f'efficiency : {round(efficiency*100, 8)} %  ({round(sensitivity, 1)} cpm/microCi)')
 
-    if verbose:
-        print(f'FWHM(d)={d} + {d/leff} d')
-        print(f'FWHM(10cm) = {d*((leff + 100) / leff)}')
-        print(f'sigma0 = {sigma0_psf}')
-        print(f'alpha = {alpha_psf}')
-        print(f'septal penetration : {round(septal_penetration*100,3)} %')
-        print(f'efficiency : {round(efficiency*100, 8)} %  ({round(sensitivity, 1)} cpm/microCi)')
+        return sigma0_psf, alpha_psf,efficiency
 
-    return sigma0_psf, alpha_psf,efficiency
+    elif machine=="siemens-intevo":
+        # experimental fit
+
+        # cf calc_exp_psf / rtk_psf
+        # sigma0_psf = 1.8888
+        sigma0_psf = 1.9111
+        alpha_psf = 0.01767
+
+
+        # cf abstract HOA MIC
+        efficiency = 0.0096/100
+
+        c = (2 * np.sqrt(2 * np.log(2)))
+        alpha_fwhm, sigma_fwhm = c * alpha_psf, c * sigma0_psf
+
+        if verbose:
+            print(f'FWHM(d)={sigma_fwhm} + {alpha_fwhm} d')
+            print(f'FWHM(10cm) = {sigma_fwhm + 100* alpha_fwhm}')
+            print(f'sigma0 = {sigma0_psf}')
+            print(f'alpha = {alpha_psf}')
+            print(f'efficiency : {round(efficiency*100, 8)} %')
+
+        return sigma0_psf, alpha_psf, efficiency
 
 
 def get_detector_params(machine):
