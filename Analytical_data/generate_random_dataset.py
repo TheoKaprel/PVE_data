@@ -471,7 +471,13 @@ def generate(opt):
         random_nb_of_sphers = np.random.randint(1,opt.nspheres)
         if opt.grad_act:
             M = 8
-            rndm_grad_act = random_3d_function(a0=0, xx=X, yy=Y, zz=Z, M=M)
+            rndm_grad_act = random_3d_function(a0=10, xx=X, yy=Y, zz=Z, M=M)/10
+
+            # rndm_grad_act scaled between 0.5 and 1.5.
+            rndm_grad_act_0_1 =  (rndm_grad_act - rndm_grad_act.min()) / (rndm_grad_act.max() - rndm_grad_act.min())
+            min_scale, max_scale = 0.5, 1.5
+            rndm_grad_act_scaled = rndm_grad_act_0_1 * (max_scale - min_scale) + min_scale
+
 
         for s in range(random_nb_of_sphers):
             random_activity = sample_activity(min_r=min_ratio,max_r=Max_ratio,lbda=lbda,with_bg=opt.background)
@@ -500,7 +506,8 @@ def generate(opt):
                 lesion_array+=lesion
 
             if opt.grad_act:
-                lesion = lesion * (((1-random_activity)/np.min(rndm_grad_act)) * rndm_grad_act + random_activity)
+                rndm_grad_act_scaled_scaled = rndm_grad_act_scaled / np.mean(rndm_grad_act_scaled[lesion>0])
+                lesion = lesion * (rndm_grad_act_scaled_scaled*random_activity)
             else:
                 lesion = random_activity * lesion
 
