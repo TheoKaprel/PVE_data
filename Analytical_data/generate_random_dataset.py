@@ -409,6 +409,11 @@ def generate(opt):
             forward_projector_attmap.SetAlpha(0)
             forward_projector_attmap.Update()
             attmap_fp = forward_projector_attmap.GetOutput()
+            attmap_fp.DisconnectPipeline()
+            if fov_is_set:
+                fov_maskmult.SetInput2(attmap_fp)
+                attmap_fp = fov_maskmult.GetOutput()
+
             save_me(img=attmap_fp,ftype=opt.type,output_folder=opt.output_folder, src_ref=source_ref,
                     ref="attmap_fp", grp=grp,dtype=dtype)
 
@@ -551,7 +556,7 @@ def generate(opt):
                 output_forward_lesion_mask = fov_maskmult.GetOutput()
 
             lesion_mask_fp_array = itk.array_from_image(output_forward_lesion_mask)
-            lesion_mask_fp_array = (lesion_mask_fp_array > 0.1*lesion_mask_fp_array.max()).astype(np.float32)
+            lesion_mask_fp_array = (lesion_mask_fp_array > 0.05*lesion_mask_fp_array.max()).astype(np.float32)
 
             save_me(array=lesion_mask_fp_array,ftype=opt.type, output_folder = opt.output_folder, src_ref = source_ref,
                     ref = "lesion_mask_fp", grp = grp, dtype = dtype, img_like = output_forward_lesion_mask)
