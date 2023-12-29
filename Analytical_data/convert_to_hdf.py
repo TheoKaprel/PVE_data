@@ -13,6 +13,7 @@ def convert():
 
     list_frstkey = glob.glob(os.path.join(args.folder, f"?????_{keys[0]}.npy"))
     f = h5py.File(os.path.join(args.folder, args.output), 'a')
+    list_keys=list(f.keys())
     print(list_frstkey)
     for i,fn_src in enumerate(list_frstkey):
         ref = fn_src.split(f'_{keys[0]}.npy')[0][-5:]
@@ -26,10 +27,14 @@ def convert():
                 save=False
 
         if save==False:
-            del f[ref]
+            if ref in list_keys:
+                del f[ref]
         else:
-            # grp = f.create_group(ref)
-            grp = f[ref]
+            if ref not in list_keys:
+                grp = f.create_group(ref)
+            else:
+                grp = f[ref]
+
             for key in keys:
                 save_key_in_grp(grp=grp,ref=ref,key=key,folder=args.folder)
 
