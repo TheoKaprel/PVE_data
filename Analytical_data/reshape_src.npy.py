@@ -18,7 +18,7 @@ def main():
             print(src_fn)
 
             src_array=np.load(src_fn)
-            rec_array=np.load()
+            rec_array=np.load(rec_fn)
             src_img=itk.image_from_array(src_array)
             input_size = np.array(itk.size(src_img))
             input_spacing = [1,1,1]
