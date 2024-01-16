@@ -1,0 +1,39 @@
+Loading pytorch-gpu/py3/1.10.1
+  Loading requirement: cuda/11.2 nccl/2.9.6-1-cuda cudnn/8.1.1.33-cuda gcc/8.5.0
+    openmpi/4.1.1-cuda intel-mkl/2020.4 magma/2.5.4-cuda sox/14.4.2
++ export PYTHONPATH=:/linkhome/rech/gencre01/uyo34ub/.local/lib/python3.9/site-packages/
++ PYTHONPATH=:/linkhome/rech/gencre01/uyo34ub/.local/lib/python3.9/site-packages/
++ python PVE_data/Simu_data/opengate/gaga_garf_torch.py -a 1e9 --source outputs/out_gaga_garf/iec_src_bg_1mm_c_rot_scaled.mhd -b 1e6 --output outputs/out_gaga_garf -n 120
+Namespace(activity=1000000000.0, source='outputs/out_gaga_garf/iec_src_bg_1mm_c_rot_scaled.mhd', batchsize=1000000.0, output='outputs/out_gaga_garf', nprojs=120, debug=False)
+cuda
+mean nc : tensor([ 0.0859, 27.2643, 38.1929, 35.6091,  0.0590,  0.0656,  0.0953,  0.7324],
+       device='cuda:0', dtype=torch.float64)
+mean c : tensor([3.1792e+01, 5.0892e+01, 3.7002e+01, 6.9683e-03, 7.1057e-03, 1.1063e-02],
+       device='cuda:0', dtype=torch.float64)
+std nc : tensor([4.6903e-02, 1.0442e+02, 1.0951e+02, 1.0547e+02, 5.1129e-01, 5.3568e-01,
+        5.3369e-01, 4.5235e-01], device='cuda:0', dtype=torch.float64)
+std c : tensor([36.7488, 27.6684,  7.1574,  0.5765,  0.5777,  0.5776], device='cuda:0',
+       dtype=torch.float64)
+zdim : 20
+xdim : 14
+PARAMS KEYS : 
+{'#': 'store mode every n epoch', 'model': 'v3', 'loss': 'wasserstein', 'd_layers': 4, 'g_layers': 4, 'd_dim': 600, 'g_dim': 600, 'activation': 'leaky_relu', 'z_dim': 20, 'z_rand_type': 'randn', 'penalty': 'GP_0GP', 'penalty_weight': 10, '#clamp_lower': -0.01, '#clamp_upper': 0.01, '#start_pth': '', 'optimiser': 'RMSprop', 'shuffle': False, '#d_weight_decay': 0.5, '#g_weight_decay': 0.5, '#beta_1': '0.9', '#beta_2': '0.999', '#RMSProp_d_centered': True, '#RMSProp_g_centered': True, 'd_learning_rate': 0.0004, 'g_learning_rate': 0.0004, 'r_instance_noise_sigma': -1, 'f_instance_noise_sigma': -1, 'schedule_learning_rate_step': 5000, 'schedule_learning_rate_gamma': 0.8, 'd_nb_update': 2, 'g_nb_update': 1, 'epoch': 50000, 'batch_size': 10000, '#label_smoothing': 0.2, '#keys': 'Cx Cy Cz Vx Vy Vz dAx dAy dAz dBx dBy dBz t1 E1 E2 eX eY eZ', 'keys': 'KineticEnergy PrePosition_X PrePosition_Y PrePosition_Z PreDirection_X PreDirection_Y PreDirection_Z TimeFromBeginOfEvent EventPosition_X EventPosition_Y EventPosition_Z TrackVertexMomentumDirection_X TrackVertexMomentumDirection_Y TrackVertexMomentumDirection_Z', 'cond_keys': ['EventPosition_X', 'EventPosition_Y', 'EventPosition_Z', 'TrackVertexMomentumDirection_X', 'TrackVertexMomentumDirection_Y', 'TrackVertexMomentumDirection_Z'], 'gpu_mode': 'auto', 'epoch_dump': 500, 'epoch_store_model_every': 50000, 'keys_list': ['KineticEnergy', 'PrePosition_X', 'PrePosition_Y', 'PrePosition_Z', 'PreDirection_X', 'PreDirection_Y', 'PreDirection_Z', 'TimeFromBeginOfEvent', 'EventPosition_X', 'EventPosition_Y', 'EventPosition_Z', 'TrackVertexMomentumDirection_X', 'TrackVertexMomentumDirection_Y', 'TrackVertexMomentumDirection_Z'], 'params_filename': 'test038_training/test001.json', 'training_size': 4795602, 'x_dim': 14, 'progress_bar': False, 'training_filename': 'test038_training_nobg/test038_train.root', 'start_date': '2022-06-06 15:54:01', 'hostname': 'r13i0n2', 'start_epoch': 0, 'RMSprop_d_momentum': 0, 'RMSprop_g_momentum': 0, 'RMSProp_d_alpha': 0.99, 'RMSProp_g_alpha': 0.99, 'RMSProp_d_weight_decay': 0, 'RMSProp_g_weight_decay': 0, 'RMSProp_d_centered': False, 'RMSProp_g_centered': False, 'd_nb_weights': 1452001, 'g_nb_weights': 1463408, 'x_mean': array([[8.58771073e-02, 2.72643029e+01, 3.81928817e+01, 3.56090965e+01,
+        5.90120535e-02, 6.56223097e-02, 9.53454976e-02, 7.32393373e-01,
+        3.17919492e+01, 5.08923189e+01, 3.70023865e+01, 6.96834273e-03,
+        7.10568635e-03, 1.10633518e-02]]), 'x_std': array([[4.69032586e-02, 1.04419735e+02, 1.09506352e+02, 1.05467735e+02,
+        5.11294574e-01, 5.35678182e-01, 5.33687160e-01, 4.52345331e-01,
+        3.67487505e+01, 2.76684462e+01, 7.15742809e+00, 5.76505307e-01,
+        5.77745783e-01, 5.77607128e-01]]), 'end_epoch': 50000, 'Duration': '1:24:55.205411', 'duration': '1:24:55.205411', 'end_date': '2022-06-06 17:19:04', 'output_filename': 'pth2/test001_GP_0GP_10_50000.pth', 'current_gpu': True}
+
+CONDITIONS : 
+['EventPosition_X', 'EventPosition_Y', 'EventPosition_Z', 'TrackVertexMomentumDirection_X', 'TrackVertexMomentumDirection_Y', 'TrackVertexMomentumDirection_Z']
+KEYS : 
+['KineticEnergy', 'PrePosition_X', 'PrePosition_Y', 'PrePosition_Z', 'PreDirection_X', 'PreDirection_Y', 'PreDirection_Z', 'TimeFromBeginOfEvent', 'EventPosition_X', 'EventPosition_Y', 'EventPosition_Z', 'TrackVertexMomentumDirection_X', 'TrackVertexMomentumDirection_Y', 'TrackVertexMomentumDirection_Z']
+Loading model /gpfsdswork/projects/rech/jxz/uyo34ub/PVE/PVE_data/Simu_data/opengate/pths/arf_5x10_9.pth with GPU
+Output projection saved in : outputs/out_gaga_garf/projs.mhd
+TOTAL TIME : 11744.768246173859
+GENERATION TIME: 1545.2183558940887
+SELECTION TIME : 0.0009708404541015625
+INTERSECTION TIME : 454.1003830432892
+APPLY TIME : 9712.169651269913
+SAVING TIME : 1.7539455890655518
