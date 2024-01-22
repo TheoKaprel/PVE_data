@@ -15,9 +15,13 @@ class GARF:
         self.device = user_info['device']
         self.nprojs = user_info['nprojs']
 
-        self.size = 128
-        self.spacing = 4.41806
-        self.image_size = [self.nprojs, 128, 128]
+        # self.size = 128
+        # self.spacing = 4.41806
+        # self.image_size = [self.nprojs, 128, 128]
+        # self.image_spacing = [self.spacing, self.spacing, 1]
+        self.size=256
+        self.spacing=2.3976
+        self.image_size=[self.nprojs, 256,256]
         self.image_spacing = [self.spacing, self.spacing, 1]
 
         self.zeros = torch.zeros((self.image_size[1], self.image_size[2])).to(self.device)
@@ -33,7 +37,7 @@ class GARF:
     def init_garf(self):
         # load the pth file
         self.nn, self.model = garf.load_nn(
-            self.pth_filename, gpu="auto", verbose=False
+            self.pth_filename, verbose=False
         )
         self.model = self.model.to(self.device)
 
@@ -71,11 +75,8 @@ class GARF:
         print(f'psize : {self.psize}')
 
     def apply(self,batch, proj_i):
-
         t_preprocess_arf_0 = time.time()
         x = batch.clone()
-
-
 
         x[:,2] = torch.arccos(batch[:,3]) / self.degree
         x[:,3] = torch.arccos(batch[:,2]) / self.degree
@@ -85,6 +86,8 @@ class GARF:
 
         time_nn_predict_0 = time.time()
         w = self.nn_predict(self.model, self.nn["model_data"], ax)
+        w = torch.bernoulli(w)
+
         self.time_nn_predict += (time.time() - time_nn_predict_0)
 
         # positions
@@ -314,6 +317,11 @@ def get_rot_matrix(theta):
                          [0, 1, 0],
                          [-torch.sin(theta), 0, torch.cos(theta)]])
 
+# def get_rot_matrix(theta):#FIXME
+#     theta = torch.tensor([theta])
+#     return torch.tensor([[torch.cos(theta), -torch.sin(theta), 0],
+#                          [torch.sin(theta), torch.cos(theta), 0],
+#                          [0, 0, 1]])
 
 class DetectorPlane:
     def __init__(self, size, device, center0, rot_angle):
@@ -337,8 +345,8 @@ class DetectorPlane:
         # keep = keep & (t>0)
         pos_xyz = dir0*t[:,None] + pos0
 
-        pos_xy_rot = torch.matmul(self.Mt, pos_xyz.t()).t()[:,0:2]
-        dir_xy_rot = torch.matmul(self.Mt, dir0.t()).t()[:,0:2]
+        pos_xy_rot = torch.matmul(self.Mt, pos_xyz.t()).t()[:,[0,1]] #FIXME
+        dir_xy_rot = torch.matmul(self.Mt, dir0.t()).t()[:,[0,1]] #FIXME
 
         pos_xy_rot_crystal = pos_xy_rot + 75 * dir_xy_rot
 

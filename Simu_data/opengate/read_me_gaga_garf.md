@@ -38,13 +38,28 @@ Pour lancer l'entrainement :
     gaga_train test203/gaga_training_dataset_ct_large.root data/cg1.json -o test203/gan_src.pth
 
 
-3) Train the arf
+3) Generate training data for GARF
 
 Use the script : test203_main0_generate_garf_training_data_tc99m_lehr.py
 
 /!\ In this file (lines 35-35-36) I modified the scatter/peak energy windows to [108.5, 129.5] / [129.5, 150.5] to correspond to our IEC experiments
 
+Activité : 5 GBq
+
+    python test203_main0_generate_garf_training_data_tc99m_lehr.py
+
+outputs the garf training file: garf_training_dataset_tc99m_lehr_rr50.root
 
 
+4) Train the GARF
 
 
+    garf_train data/garf_training_params.json test203/garf_training_dataset_tc99m_lehr_rr50.root test203/garf_tc99m_lehr_rr50.pth --progress-bar
+
+outputs : test203/garf_tc99m_lehr_rr50.pth
+
+
+5) Simu gaga-garf: 
+
+
+    python test

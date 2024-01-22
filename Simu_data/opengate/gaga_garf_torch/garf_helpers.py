@@ -1,10 +1,8 @@
 import opengate as gate
 
-nm = gate.g4_units('nm')
-mm = gate.g4_units('mm')
-cm = gate.g4_units('cm')
-
-
+nm = gate.g4_units.nm
+mm = gate.g4_units.mm
+cm = gate.g4_units.cm
 
 def sim_set_detector_plane(sim, spect_name):
     # detector input plane

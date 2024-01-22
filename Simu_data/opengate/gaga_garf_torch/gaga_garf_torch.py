@@ -59,7 +59,7 @@ def main():
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
     gan_info = {}
-    gan_info['pth_filename'] = args.pth
+    gan_info['pth_filename'] = args.pthgaga
     gan_info['batchsize'] = args.batchsize
     gan_info['device'] = device
     print(device)
@@ -81,15 +81,15 @@ def main():
     l_angles = torch.linspace(0, 2*torch.pi, nprojs+1)[:-1]
     l_detectorsPlanes = []
     for angle in l_angles:
-        det_plane = DetectorPlane(size=565.511, device=device, center0=[0, 0, args.sid], rot_angle=angle)
+        det_plane = DetectorPlane(size=565.511, device=device, center0=[0,0, -args.sid], rot_angle=angle) #FIXME (center)
         l_detectorsPlanes.append(det_plane)
 
     # R1=516
-    R1=434
-    R2=260
+
 
     garf_ui = {}
-    garf_ui['pth_filename'] = os.path.join(paths.current, "pths/arf_5x10_9.pth")
+    # garf_ui['pth_filename'] = os.path.join(paths.current, "pths/arf_5x10_9.pth")
+    garf_ui['pth_filename'] = args.pthgarf
     garf_ui['batchsize'] = args.batchsize
     garf_ui['device'] = device
     garf_ui['output_fn'] = os.path.join(args.folder, f"projs.mhd") if args.output is None else args.output
@@ -136,14 +136,19 @@ def main():
 
             t_selection_0 = time.time()
             fake=fake[fake[:, 0] > 0.01]
+            dirn = torch.sqrt(fake[:, 4] ** 2 + fake[:, 5] ** 2 + fake[:, 6] ** 2)
+            fake[:,4:7]=fake[:,4:7]/dirn[:,None]
+
             t_selection += (time.time() - t_selection_0)
 
             if args.save:
                 recons_generated = update_ideal_recons(batch=fake,recons=recons_generated,offset=offset,spacing=spacing,size=size,e_min=0.01)
 
             # backproject a little bit: p2= p1 - alpha * d1
+            # solved (avec inconnu=alpha) using ||p2||² = R2² puis equation degré 2 en alpha
             t_backprojction_0 = time.time()
             beta=(fake[:,1:4] * fake[:,4:7]).sum(dim=1)
+            R1,R2 = 610,330
             alpha= beta - torch.sqrt(beta**2 + R2**2-R1**2)
             fake[:,1:4] = fake[:,1:4] - alpha[:,None]*fake[:,4:7]
             t_backprojction+=(time.time() - t_backprojction_0)
@@ -171,7 +176,7 @@ def main():
 
                 for k,det in enumerate(l_detectorsPlanes):
                     cent=det.center.cpu().numpy()
-                    ax_scatter.scatter(cent[0], cent[1], cent[2], s=int(k/10), c='red')
+                    ax_scatter.scatter(cent[0], cent[1], cent[2], s=int(k/10)+1, c='red')
 
                 ax_scatter.set_xlabel('x')
                 ax_scatter.set_ylabel('y')
@@ -191,7 +196,7 @@ def main():
                     print(fake.shape[0], batch_arf_i.shape[0])
 
                     sc_xy=batch_arf_i.cpu().numpy()
-                    sc_z = 600*np.ones_like(sc_xy[:,0])
+                    sc_z = args.sid*np.ones_like(sc_xy[:,0])
                     ax_scatter.scatter(sc_xy[:,0], sc_xy[:,1],sc_z ,s=5, c='black')
 
                 if args.debug:
@@ -240,7 +245,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-a","--activity", type = float)
     parser.add_argument("-s", "--source", type=str)
-    parser.add_argument("--pth", type=str)
+    parser.add_argument("--pthgaga", type=str)
+    parser.add_argument("--pthgarf", type=str)
     parser.add_argument("-b","--batchsize", type = float, default = 100000)
     parser.add_argument("-f", "--folder", type = str)
     parser.add_argument("-o", "--output", type = str)

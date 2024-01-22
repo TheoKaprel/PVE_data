@@ -8,9 +8,9 @@ from torch.utils.data import Dataset
 import opengate as gate
 import itk
 import numpy as np
-import opengate.contrib.phantom_nema_iec_body as gate_iec
+import opengate.contrib.phantoms.nemaiec as gate_iec
 import gaga_phsp as gaga
-from opengate.source.VoxelizedSourcePDFSampler import VoxelizedSourcePDFSampler
+from opengate.sources.gansources import VoxelizedSourcePDFSampler
 
 
 class CGANSOURCE:
@@ -26,8 +26,8 @@ class CGANSOURCE:
     def init_gan(self):
         self.gan_info = Box()
         g = self.gan_info
-        g.params, g.G, _, __, ___ = gaga.load(
-            self.pth_filename, "auto", verbose=False
+        g.params, g.G, _, __ = gaga.load(
+            self.pth_filename, "auto"
         )
         g.G = g.G.to(self.device)
         g.G.eval()
@@ -83,6 +83,7 @@ class ConditionsDataset:
     def __init__(self, activity, cgan_src, source_fn,save_cond=False):
         self.total_activity = int(float(activity))
         source = itk.imread(source_fn)
+
         source_array=itk.array_from_image(source)
         self.source_size = np.array(source_array.shape)
         self.source_spacing = np.array(source.GetSpacing())
