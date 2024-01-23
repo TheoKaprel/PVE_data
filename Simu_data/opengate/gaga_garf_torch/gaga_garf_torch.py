@@ -124,7 +124,7 @@ def main():
     with torch.no_grad():
         for _ in range(n_batchs):
             t_condition_generation_0 = time.time()
-            gan_input_z_cond = dataset.get_batch(batch_size)
+            gan_input_z_cond = dataset.get_batch_torch(batch_size)
             N+=batch_size
             t_condition_generation+=(time.time() - t_condition_generation_0)
 
