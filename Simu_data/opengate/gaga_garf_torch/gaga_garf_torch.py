@@ -135,14 +135,17 @@ def main():
 
 
             t_selection_0 = time.time()
-            fake=fake[fake[:, 0] > 0.01]
+            fake=fake[fake[:, 0] > 0.100]
             dirn = torch.sqrt(fake[:, 4] ** 2 + fake[:, 5] ** 2 + fake[:, 6] ** 2)
             fake[:,4:7]=fake[:,4:7]/dirn[:,None]
 
             t_selection += (time.time() - t_selection_0)
 
             if args.save:
-                recons_generated = update_ideal_recons(batch=fake,recons=recons_generated,offset=offset,spacing=spacing,size=size,e_min=0.01)
+                recons_generated = update_ideal_recons(batch=fake,
+                                                       recons=recons_generated,
+                                                       offset=offset,spacing=spacing,size=size,
+                                                       e_min=0.130)
 
             # backproject a little bit: p2= p1 - alpha * d1
             # solved (avec inconnu=alpha) using ||p2||² = R2² puis equation degré 2 en alpha
