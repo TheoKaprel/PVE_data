@@ -97,7 +97,6 @@ class VoxelizerSourcePDFSamplerTorch:
         lx = self.imga.shape[0]
         ly = self.imga.shape[1]
         lz = self.imga.shape[2]
-        m = lx * ly * lz
 
         # normalized pdf
         pdf = imga.ravel(order="F")
@@ -119,11 +118,7 @@ class VoxelizerSourcePDFSamplerTorch:
             z_grid.permute(2, 1, 0).contiguous().view(-1),
         )
 
-        # 1D indices
-        # self.linear_indices = torch.arange(int(m))
-
     def sample_indices(self, n):
-        # indices = rs.choice(self.linear_indices, size=n, replace=True, p=self.pdf)
         indices = torch.multinomial(self.pdf, num_samples=n,replacement=True)
         i = self.xi[indices]
         j = self.yi[indices]

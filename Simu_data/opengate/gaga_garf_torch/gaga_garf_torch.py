@@ -26,7 +26,8 @@ def update_ideal_recons(batch,recons,offset,spacing,size,e_min=0.001):
     energies = batch[:,0]
 
     # filter according to E ?
-    mask = energies > e_min
+    # mask = energies > e_min
+    mask = (energies>0.140) & (energies<0.141)
     positions = positions[mask]
     directions = directions[mask]
     times = times[mask]
@@ -144,8 +145,8 @@ def main():
             if args.save:
                 recons_generated = update_ideal_recons(batch=fake,
                                                        recons=recons_generated,
-                                                       offset=offset,spacing=spacing,size=size,
-                                                       e_min=0.130)
+                                                       offset=offset[::-1],spacing=spacing,size=size,
+                                                       e_min=0.140)
 
             # backproject a little bit: p2= p1 - alpha * d1
             # solved (avec inconnu=alpha) using ||p2||² = R2² puis equation degré 2 en alpha

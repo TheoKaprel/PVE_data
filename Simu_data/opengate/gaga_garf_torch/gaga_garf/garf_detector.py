@@ -339,14 +339,18 @@ class DetectorPlane:
         pos0 = batch[:,1:4]
         dir0 = batch[:,4:7]
 
-        dir_produit_scalaire = torch.tensordot(dir0,self.normal,dims=1)
-        # keep = (dir_produit_scalaire<0)
-        t= (self.dd - torch.tensordot(pos0,self.normal, dims=1))/dir_produit_scalaire
-        # keep = keep & (t>0)
+        # dir_produit_scalaire = torch.tensordot(dir0,self.normal,dims=1)
+        dir_produit_scalaire = torch.sum(dir0*self.normal,dim=1)
+        # t= (self.dd - torch.tensordot(pos0,self.normal, dims=1))/dir_produit_scalaire
+        t = (self.dd - torch.sum(pos0*self.normal,dim=1))/dir_produit_scalaire
+
         pos_xyz = dir0*t[:,None] + pos0
 
-        pos_xy_rot = torch.matmul(self.Mt, pos_xyz.t()).t()[:,[0,1]] #FIXME
-        dir_xy_rot = torch.matmul(self.Mt, dir0.t()).t()[:,[0,1]] #FIXME
+        # pos_xy_rot = torch.matmul(self.Mt, pos_xyz.t()).t()[:,[0,1]] #FIXME
+        # dir_xy_rot = torch.matmul(self.Mt, dir0.t()).t()[:,[0,1]] #FIXME
+
+        pos_xy_rot = torch.matmul(pos_xyz, self.Mt[:2, :].t())
+        dir_xy_rot = torch.matmul(dir0, self.Mt[:2, :].t())
 
         pos_xy_rot_crystal = pos_xy_rot + 75 * dir_xy_rot
 
@@ -355,10 +359,14 @@ class DetectorPlane:
                                       (pos_xy_rot.abs().max(dim=1)[0] < self.size / 2) &
                                       (pos_xy_rot_crystal.abs().max(dim=1)[0] < self.size/2)
                                       )[0]
+        #
+        # batch_arf = torch.index_select(torch.concat((pos_xy_rot_crystal,
+        #                        dir_xy_rot,
+        #                        energ0),dim=1),dim=0,index=indexes_to_keep)
 
-        batch_arf = torch.index_select(torch.concat((pos_xy_rot_crystal,
-                               dir_xy_rot,
-                               energ0),dim=1),dim=0,index=indexes_to_keep)
+        batch_arf = torch.concat((pos_xy_rot_crystal[indexes_to_keep,:],
+                                  dir_xy_rot[indexes_to_keep,:],
+                                  energ0[indexes_to_keep,:]),dim=1)
 
         return batch_arf
 
