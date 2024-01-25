@@ -83,6 +83,7 @@ def main():
     l_detectorsPlanes = []
     for angle in l_angles:
         det_plane = DetectorPlane(size=565.511, device=device, center0=[0,0, -args.sid], rot_angle=angle) #FIXME (center)
+        # det_plane = DetectorPlane(size=565.511, device=device, center0=[0,args.sid,0], rot_angle=angle) #FIXME (center)
         l_detectorsPlanes.append(det_plane)
 
     # R1=516

@@ -400,7 +400,7 @@ def run_standalone(p):
 
     # translation
     tr = gate.image.get_translation_between_images_center(
-        "training_data/ct_4mm.mhd", p.data_folder / p.activity_image
+        p.ct_image, p.activity_image
     )
     print(f"Translation from source coord system to G4 world: {tr}")
 
@@ -408,8 +408,8 @@ def run_standalone(p):
     gaga_user_info = Box(
         {
             "pth_filename": p.gaga_pth_filename,
-            "activity_source": p.data_folder / p.activity_image,
-            "batch_size": 1e5,
+            "activity_source": p.activity_image,
+            "batch_size": p.batchsize,
             "gpu_mode": "gpu",
             "backward_distance": p.backward_distance,
             "verbose": 1,
@@ -424,9 +424,9 @@ def run_standalone(p):
             "plane_distance": p.radius,
             "detector_offset": [0, 0],  # FIXME
             "distance_to_crystal": p.crystal_dist,
-            "batch_size": 1e5,
+            "batch_size": p.batchsize,
             "gpu_mode": "gpu",
-            "verbose": 1,
+            "verbose": 0,
             "hit_slice": False,
         }
     )
@@ -444,7 +444,7 @@ def run_standalone(p):
 
     # angles
     angles=[]
-    nprojs=30
+    nprojs=p.nprojs
     l_angles = np.linspace(0, 360, nprojs+1)[:-1]
     for angle in l_angles:
         angles.append(Rotation.from_euler("z", angle, degrees=True))

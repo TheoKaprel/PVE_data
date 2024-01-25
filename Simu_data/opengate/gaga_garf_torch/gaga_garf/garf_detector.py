@@ -15,13 +15,9 @@ class GARF:
         self.device = user_info['device']
         self.nprojs = user_info['nprojs']
 
-        # self.size = 128
-        # self.spacing = 4.41806
-        # self.image_size = [self.nprojs, 128, 128]
-        # self.image_spacing = [self.spacing, self.spacing, 1]
         self.size=256
         self.spacing=2.3976
-        self.image_size=[self.nprojs, 256,256]
+        self.image_size=[2 * self.nprojs, 256,256]
         self.image_spacing = [self.spacing, self.spacing, 1]
 
         self.zeros = torch.zeros((self.image_size[1], self.image_size[2])).to(self.device)
@@ -86,7 +82,9 @@ class GARF:
 
         time_nn_predict_0 = time.time()
         w = self.nn_predict(self.model, self.nn["model_data"], ax)
-        w = torch.bernoulli(w)
+
+        # w = torch.bernoulli(w)
+        # w = w.multinomial(1,replacement=True)
 
         self.time_nn_predict += (time.time() - time_nn_predict_0)
 
@@ -114,10 +112,17 @@ class GARF:
         t0=time.time()
         # do nothing if there is no hit in the image
         if vu.shape[0] != 0:
-            # temp = np.zeros([self.image_size[1], self.image_size[2]], dtype=np.float64)
+            # PW
             temp = self.zeros.fill_(0)
             temp = self.image_from_coordinates_2(temp, vu,w[:,2])
+            # temp = self.image_from_coordinates_2(temp, vu,(w==2).to(torch.float32))
             self.output_image[proj_i,:,:]= self.output_image[proj_i,:,:] + temp
+            # SW
+            temp = self.zeros.fill_(0)
+            temp = self.image_from_coordinates_2(temp, vu,w[:,1])
+            # temp = self.image_from_coordinates_2(temp, vu,(w==1).to(torch.float32))
+            self.output_image[proj_i+self.nprojs,:,:]= self.output_image[proj_i+self.nprojs,:,:] + temp
+
         self.t_image_from_coord+=(time.time() - t0)
 
     def nn_predict(self,model, model_data, x):
@@ -339,18 +344,15 @@ class DetectorPlane:
         pos0 = batch[:,1:4]
         dir0 = batch[:,4:7]
 
-        # dir_produit_scalaire = torch.tensordot(dir0,self.normal,dims=1)
         dir_produit_scalaire = torch.sum(dir0*self.normal,dim=1)
-        # t= (self.dd - torch.tensordot(pos0,self.normal, dims=1))/dir_produit_scalaire
         t = (self.dd - torch.sum(pos0*self.normal,dim=1))/dir_produit_scalaire
 
         pos_xyz = dir0*t[:,None] + pos0
 
-        # pos_xy_rot = torch.matmul(self.Mt, pos_xyz.t()).t()[:,[0,1]] #FIXME
-        # dir_xy_rot = torch.matmul(self.Mt, dir0.t()).t()[:,[0,1]] #FIXME
-
-        pos_xy_rot = torch.matmul(pos_xyz, self.Mt[:2, :].t())
-        dir_xy_rot = torch.matmul(dir0, self.Mt[:2, :].t())
+        pos_xy_rot = torch.matmul(pos_xyz, self.Mt[:2, :].t()) #FIXME
+        dir_xy_rot = torch.matmul(dir0, self.Mt[:2, :].t()) #FIXME
+        # pos_xy_rot = torch.matmul(pos_xyz, self.Mt[[0,2], :].t())
+        # dir_xy_rot = torch.matmul(dir0, self.Mt[[0,2], :].t())
 
         pos_xy_rot_crystal = pos_xy_rot + 75 * dir_xy_rot
 
@@ -359,10 +361,6 @@ class DetectorPlane:
                                       (pos_xy_rot.abs().max(dim=1)[0] < self.size / 2) &
                                       (pos_xy_rot_crystal.abs().max(dim=1)[0] < self.size/2)
                                       )[0]
-        #
-        # batch_arf = torch.index_select(torch.concat((pos_xy_rot_crystal,
-        #                        dir_xy_rot,
-        #                        energ0),dim=1),dim=0,index=indexes_to_keep)
 
         batch_arf = torch.concat((pos_xy_rot_crystal[indexes_to_keep,:],
                                   dir_xy_rot[indexes_to_keep,:],
