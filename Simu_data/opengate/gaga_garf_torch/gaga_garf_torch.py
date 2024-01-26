@@ -10,8 +10,14 @@ import torch
 import time
 import itk
 import scipy
+from tqdm import tqdm
 from gaga_garf.cgan_source import CGANSOURCE,ConditionsDataset
 from gaga_garf.garf_detector import GARF,DetectorPlane,project_on_plane
+
+import sys
+sys.path.append('/export/home/tkaprelian/Desktop/PVE/PVE_data/Simu_data/spect_siemens_intevo/')
+print(sys.path)
+import spect_siemens_intevo as gate_intevo
 
 
 def update_ideal_recons(batch,recons,offset,spacing,size,e_min=0.001):
@@ -80,9 +86,11 @@ def main():
 
     nprojs = args.nprojs
     l_angles = torch.linspace(0, 2*torch.pi, nprojs+1)[:-1]
+    _,dist_to_crystal,__ = gate_intevo.compute_plane_position_and_distance_to_crystal(collimator_type="lehr")
+
     l_detectorsPlanes = []
     for angle in l_angles:
-        det_plane = DetectorPlane(size=565.511, device=device, center0=[0,0, -args.sid], rot_angle=angle) #FIXME (center)
+        det_plane = DetectorPlane(size=565.511, device=device, center0=[0,0, -args.sid], rot_angle=angle,dist_to_crystal=dist_to_crystal) #FIXME (center)
         # det_plane = DetectorPlane(size=565.511, device=device, center0=[0,args.sid,0], rot_angle=angle) #FIXME (center)
         l_detectorsPlanes.append(det_plane)
 
@@ -123,6 +131,9 @@ def main():
 
     N,M = 0,0
 
+
+
+    pbar=tqdm(total=N_primaries)
     with torch.no_grad():
         for _ in range(n_batchs):
             t_condition_generation_0 = time.time()
@@ -153,7 +164,7 @@ def main():
             # solved (avec inconnu=alpha) using ||p2||² = R2² puis equation degré 2 en alpha
             t_backprojction_0 = time.time()
             beta=(fake[:,1:4] * fake[:,4:7]).sum(dim=1)
-            R1,R2 = 610,330
+            R1,R2 = 610,args.sid - 50
             alpha= beta - torch.sqrt(beta**2 + R2**2-R1**2)
             fake[:,1:4] = fake[:,1:4] - alpha[:,None]*fake[:,4:7]
             t_backprojction+=(time.time() - t_backprojction_0)
@@ -175,8 +186,8 @@ def main():
                 ax_scatter = fig.add_subplot(projection='3d')
                 ax_scatter.scatter(fake_np[:,1], fake_np[:,2], fake_np[:,3], s=2)
 
-                p=dataset.generate_condition(1000)
-                ax_scatter.scatter(p[:,0], p[:,1], p[:,2], s=2, c = 'green')
+                # p=dataset.generate_condition(1000)
+                # ax_scatter.scatter(p[:,0], p[:,1], p[:,2], s=2, c = 'green')
 
 
                 for k,det in enumerate(l_detectorsPlanes):
@@ -224,6 +235,8 @@ def main():
             #     garf_detector.output_fn = output_fn.replace('.mhd', f'_{M}e7.mhd')
             #     garf_detector.save_projection()
             #     garf_detector.output_fn = output_fn
+
+            pbar.update(batch_size)
 
 
     if args.save:

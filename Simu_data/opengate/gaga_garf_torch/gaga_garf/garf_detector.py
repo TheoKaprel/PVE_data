@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import time
 
+import matplotlib.pyplot as plt
 from garf_helpers import *
 import garf
 import numpy as np
@@ -22,7 +23,6 @@ class GARF:
 
         self.zeros = torch.zeros((self.image_size[1], self.image_size[2])).to(self.device)
 
-        self.distance_to_crystal = 75
         self.degree = np.pi / 180
         self.init_garf()
 
@@ -82,6 +82,10 @@ class GARF:
 
         time_nn_predict_0 = time.time()
         w = self.nn_predict(self.model, self.nn["model_data"], ax)
+
+        # ww = w[w[:,0]<0.5]
+        # if len(ww)>0:
+        #     print(ww)
 
         # w = torch.bernoulli(w)
         # w = w.multinomial(1,replacement=True)
@@ -150,7 +154,6 @@ class GARF:
         y_pred = vy_pred
         y_pred = self.normalize_logproba(y_pred)
         y_pred = self.normalize_proba_with_russian_roulette(y_pred, 0, self.rr)
-
         # y_pred = y_pred.data.cpu().numpy()
 
         return y_pred
@@ -161,14 +164,22 @@ class GARF:
         Not clear how to deal with exp overflow ?
         (https://timvieira.github.io/blog/post/2014/02/11/exp-normalize-trick/)
         '''
-        exb = torch.exp(x)
-        exb_sum = torch.sum(exb, dim=1)
-        # divide if not equal at zero
-        p = torch.divide(exb.T, exb_sum,
-                      out=torch.zeros_like(exb.T)).T
+
+        # exb = torch.exp(x)
+        # exb_sum = torch.sum(exb, dim=1)
+        # # divide if not equal at zero
+        # p = torch.divide(exb.T, exb_sum,
+        #               out=torch.zeros_like(exb.T)).T
+
         # check (should be equal to 1.0)
         # check = np.sum(p, axis=1)
         # print(check)
+
+        b=x.amax(dim=1,keepdim=True)
+        exb=torch.exp(x-b)
+        exb_sum=torch.sum(exb,dim=1)
+        p = torch.divide(exb.T,exb_sum,out=torch.zeros_like(exb.T)).T
+
         return p
 
     def compute_angle_offset(self,angles, length):
@@ -236,7 +247,7 @@ class GARF:
         return img
 
     def image_from_coordinates_2(self, img, vu,w):
-        # for uu,vv,ww in zip(u,v,w):
+        # for uu,vv,ww in zip(vu[:,0],vu[:,1],w):
         #     img[uu,vv]+=ww
         img_r = img.ravel()
         ind_r = vu[:,1]*img.shape[0]+vu[:,0]
@@ -329,7 +340,7 @@ def get_rot_matrix(theta):
 #                          [0, 0, 1]])
 
 class DetectorPlane:
-    def __init__(self, size, device, center0, rot_angle):
+    def __init__(self, size, device, center0, rot_angle,dist_to_crystal):
         self.device = device
         self.M = get_rot_matrix(rot_angle)
         self.Mt = get_rot_matrix(-rot_angle).to(device)
@@ -337,6 +348,7 @@ class DetectorPlane:
         self.normal = -self.center / torch.norm(self.center)
         self.dd = torch.matmul(self.center, self.normal)
         self.size = size
+        self.dist_to_crystal = dist_to_crystal
 
 
     def get_intersection(self,batch):
@@ -349,16 +361,17 @@ class DetectorPlane:
 
         pos_xyz = dir0*t[:,None] + pos0
 
-        pos_xy_rot = torch.matmul(pos_xyz, self.Mt[:2, :].t()) #FIXME
-        dir_xy_rot = torch.matmul(dir0, self.Mt[:2, :].t()) #FIXME
+        pos_xyz_rot = torch.matmul(pos_xyz, self.Mt.t()) #FIXME
+        dir_xyz_rot = torch.matmul(dir0, self.Mt.t()) #FIXME
         # pos_xy_rot = torch.matmul(pos_xyz, self.Mt[[0,2], :].t())
         # dir_xy_rot = torch.matmul(dir0, self.Mt[[0,2], :].t())
 
-        pos_xy_rot_crystal = pos_xy_rot + 75 * dir_xy_rot
+        pos_xyz_rot_crystal = pos_xyz_rot + (self.dist_to_crystal/dir_xyz_rot[:,2:3]) * dir_xyz_rot
+        pos_xy_rot_crystal = pos_xyz_rot_crystal[:,0:2]
+        dir_xy_rot = dir_xyz_rot[:,0:2]
 
         indexes_to_keep = torch.where((dir_produit_scalaire<0) &
                                       (t>0) &
-                                      (pos_xy_rot.abs().max(dim=1)[0] < self.size / 2) &
                                       (pos_xy_rot_crystal.abs().max(dim=1)[0] < self.size/2)
                                       )[0]
 
