@@ -14,11 +14,6 @@ from tqdm import tqdm
 from gaga_garf.cgan_source import CGANSOURCE,ConditionsDataset
 from gaga_garf.garf_detector import GARF,DetectorPlane,project_on_plane
 
-import sys
-sys.path.append('/export/home/tkaprelian/Desktop/PVE/PVE_data/Simu_data/spect_siemens_intevo/')
-print(sys.path)
-import spect_siemens_intevo as gate_intevo
-
 
 def update_ideal_recons(batch,recons,offset,spacing,size,e_min=0.001):
     batch=batch.cpu().numpy()
@@ -86,8 +81,7 @@ def main():
 
     nprojs = args.nprojs
     l_angles = torch.linspace(0, 2*torch.pi, nprojs+1)[:-1]
-    _,dist_to_crystal,__ = gate_intevo.compute_plane_position_and_distance_to_crystal(collimator_type="lehr")
-
+    dist_to_crystal = 29.104800000000004
     l_detectorsPlanes = []
     for angle in l_angles:
         det_plane = DetectorPlane(size=565.511, device=device, center0=[0,0, -args.sid], rot_angle=angle,dist_to_crystal=dist_to_crystal) #FIXME (center)
