@@ -476,7 +476,7 @@ def generate(opt):
                     ref="src", grp=None, dtype=dtype)
 
         ########### GAN
-        activity = int(total_counts_per_proj / efficiency / 20)
+        activity = int(total_counts_per_proj / efficiency)
         print(f"ACT : {activity}")
         dataset = ConditionsDataset(activity=activity,
                                     cgan_src=cgan_source,
