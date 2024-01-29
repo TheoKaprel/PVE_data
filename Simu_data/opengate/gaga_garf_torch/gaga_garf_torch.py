@@ -104,7 +104,6 @@ def main():
     batch_size = int(float(args.batchsize))
     n_batchs = int(float(args.activity)) // batch_size
     N_primaries = int(float(args.activity))
-    N=0
 
     t_condition_generation = 0
     t_gan_generation = 0
