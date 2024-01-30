@@ -123,21 +123,24 @@ def main():
 
         if args.filetype=="npy":
             projections_np = np.load(proj_filename)
-            if args.merged:
-                projections = itk.image_from_array(projections_np[:nproj,:,:].astype(np.float32))
-            else:
-                projections = itk.image_from_array(projections_np.astype(np.float32))
+            projections = itk.image_from_array(projections_np.astype(np.float32))
             projections.CopyInformation(output_proj)
         else:
             projections = itk.imread(proj_filename, pixelType)
-            if args.merged:
-                projections_np = itk.array_from_image(projections)
-                projections_ = itk.image_from_array(projections_np[:nproj,:,:])
-                projections_.CopyInformation(projections)
-                projections=projections_
 
         osem.SetInput(1, projections)
         osem.Update()
+        if args.save_rec:
+            output_rec_filename = proj_filename.replace(f"{base}.{args.filetype}', f'_rec.{args.filetype}")
+            output_rec = osem.GetOutput()
+            if args.filetype == 'npy':
+
+                output_rec_np = itk.array_from_image(output_rec)
+                np.save(output_rec_filename, output_rec_np)
+            else:
+                itk.imwrite(output_rec, output_rec_filename)
+            print(f"Saved rec: {output_rec_filename}")
+
         forward_projector.SetInput(1, osem.GetOutput())
 
         forward_projector.Update()
@@ -151,7 +154,7 @@ def main():
             np.save(output_proj_rec_fp_filename,output_proj_rec_fp_np)
         else:
             itk.imwrite(forward_projector.GetOutput(), output_proj_rec_fp_filename)
-        print(f'output at : {output_proj_rec_fp_filename}')
+        print(f'Saved rec_fp : {output_proj_rec_fp_filename}')
 
 
 
@@ -162,7 +165,6 @@ if __name__ == '__main__':
     parser.add_argument("--baseref")
     parser.add_argument("--outputref")
     parser.add_argument("--filetype",default = "mhd", choices = ['mhd', 'mha', 'npy'])
-    parser.add_argument("--merged",action ="store_true")
     parser.add_argument("--input")
     parser.add_argument("--output")
     parser.add_argument("--geom")
@@ -173,6 +175,7 @@ if __name__ == '__main__':
     parser.add_argument('--like', type = str)
     parser.add_argument('--size', type = int)
     parser.add_argument('--spacing', type = float, help='ex : 4.6875')
+    parser.add_argument("--save_rec",action ="store_true")
     parser.add_argument("--niterations",default = 1, type = int, help = "number of iterations")
     parser.add_argument("--nprojpersubset",default = 10, type = int, help = "number of projs per subset")
     args = parser.parse_args()
