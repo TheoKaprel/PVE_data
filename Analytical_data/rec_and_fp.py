@@ -91,7 +91,7 @@ def main():
         forward_projector.SetInput(2, attmap)
 
     if args.outputref is None:
-        output_ref = "_rec_fp_att"
+        output_ref = "rec_fp_att"
     else:
         output_ref = args.outputref
 
@@ -105,9 +105,9 @@ def main():
         assert(args.n is not None)
 
         if args.baseref is not None:
-            base = args.baseref
+            base = f"{args.baseref}"
         else:
-            base = "_PVE_noisy"
+            base = "PVE_noisy"
         list_files = glob.glob(f'{args.folder}/?????_{base}.{args.filetype}')
 
         list_ready_to_rec_fp = [l for l in list_files if not os.path.exists(l.replace(base, output_ref))]
@@ -131,7 +131,7 @@ def main():
         osem.SetInput(1, projections)
         osem.Update()
         if args.save_rec:
-            output_rec_filename = proj_filename.replace(f"{base}.{args.filetype}', f'_rec.{args.filetype}")
+            output_rec_filename = proj_filename.replace(f"{base}.{args.filetype}", f"rec.{args.filetype}")
             output_rec = osem.GetOutput()
             if args.filetype == 'npy':
 
