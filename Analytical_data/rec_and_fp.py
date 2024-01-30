@@ -69,9 +69,7 @@ def main():
     osem.SetForwardProjectionFilter(FP)
     osem.SetBackProjectionFilter(BP)
 
-    # sigma0_psf, alpha_psf,_ = get_psf_params(machine=args.spect_system)
-    # temp :
-    sigma0_psf, alpha_psf = 1.4725322877230935,0.018085567219824267
+    sigma0_psf, alpha_psf,_ = get_psf_params(machine=args.spect_system)
     osem.SetSigmaZero(sigma0_psf)
     osem.SetAlphaPSF(alpha_psf)
 
@@ -93,7 +91,7 @@ def main():
         forward_projector.SetInput(2, attmap)
 
     if args.outputref is None:
-        output_ref = "_rec_fp"
+        output_ref = "_rec_fp_att"
     else:
         output_ref = args.outputref
 
@@ -106,12 +104,12 @@ def main():
         assert(args.filetype is not None)
         assert(args.n is not None)
 
-        if args.merged:
-            list_files = glob.glob(f'{args.folder}/?????_noisy_PVE_PVfree.{args.filetype}')
-            base = "_noisy_PVE_PVfree"
+        if args.baseref is not None:
+            base = args.baseref
         else:
-            list_files = glob.glob(f'{args.folder}/?????_PVE_noisy.{args.filetype}')
             base = "_PVE_noisy"
+        list_files = glob.glob(f'{args.folder}/?????_{base}.{args.filetype}')
+
         list_ready_to_rec_fp = [l for l in list_files if not os.path.exists(l.replace(base, output_ref))]
         list_to_rec_fp = random.sample(list_ready_to_rec_fp, args.n)
         choose_random = True
@@ -141,6 +139,7 @@ def main():
         osem.SetInput(1, projections)
         osem.Update()
         forward_projector.SetInput(1, osem.GetOutput())
+
         forward_projector.Update()
         output_proj_rec_fp_filename = proj_filename.replace(f'{base}.{args.filetype}', f'{output_ref}.{args.filetype}')
         if args.output is not None:
@@ -160,6 +159,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("-n", type = int, default = -1, help = "number of data to rec&fp")
     parser.add_argument("--folder")
+    parser.add_argument("--baseref")
     parser.add_argument("--outputref")
     parser.add_argument("--filetype",default = "mhd", choices = ['mhd', 'mha', 'npy'])
     parser.add_argument("--merged",action ="store_true")
