@@ -300,8 +300,8 @@ class GARF:
         print(f'TIME FOR IND TO COORD : {self.t_image_from_coord}')
 
         # convert to itk image
-        output_image_array = self.output_image.cpu().numpy()
-        self.output_image_itk = itk.image_from_array(output_image_array)
+        self.output_projections_array = self.output_image.cpu().numpy()
+        self.output_projections_itk = itk.image_from_array(self.output_projections_array)
 
         # set spacing and origin like DigitizerProjectionActor
         spacing = self.image_spacing
@@ -310,21 +310,36 @@ class GARF:
         size[0] = self.image_size[2]
         size[2] = self.image_size[0]
         origin = -size / 2.0 * spacing + spacing / 2.0
-        origin[2] = 0
-        self.output_image_itk.SetSpacing(spacing)
-        self.output_image_itk.SetOrigin(origin)
+        self.output_projections_itk.SetSpacing(spacing)
+        self.output_projections_itk.SetOrigin(origin)
 
         # convert double to float
         # InputImageType = itk.Image[itk.D, 3]
         # OutputImageType = itk.Image[itk.F, 3]
         # castImageFilter = itk.CastImageFilter[InputImageType, OutputImageType].New()
-        # castImageFilter.SetInput(self.output_image_itk)
+        # castImageFilter.SetInput(self.output_projections_itk)
         # castImageFilter.Update()
-        # self.output_image_itk = castImageFilter.GetOutput()
+        # self.output_projections_itk = castImageFilter.GetOutput()
 
 
-        itk.imwrite(self.output_image_itk, self.output_fn)
+        itk.imwrite(self.output_projections_itk, self.output_fn)
         print(f'Output projection saved in : {self.output_fn}')
+
+        # SC
+        k = 0.5
+        self.output_projections_SC_array=self.output_projections_array[:120,:,:] - k * self.output_projections_array[120:,:,:]
+        self.output_projections_SC_array[self.output_projections_SC_array<0]=0
+        self.output_projections_SC_itk = itk.image_from_array(self.output_projections_SC_array)
+        size = np.array([256,256, self.nprojs])
+        origin = -size / 2.0 * spacing + spacing / 2.0
+        self.output_projections_SC_itk.SetSpacing(spacing)
+        self.output_projections_SC_itk.SetOrigin(origin)
+        projs_SC_fn = self.output_fn.replace('.mhd', '_SC.mhd')
+        itk.imwrite(self.output_projections_SC_itk, projs_SC_fn)
+        print(f'Output projection (SC) saved in : {projs_SC_fn}')
+
+
+
 
 
 def get_rot_matrix(theta):

@@ -597,9 +597,9 @@ def generate(opt):
             print('rec_fp...')
 
             constant_image = rtk.ConstantImageSource[imageType].New()
-            constant_image.SetSpacing(vSpacing)
-            constant_image.SetOrigin(vOffset)
-            constant_image.SetSize([int(s) for s in vSize])
+            constant_image.SetSpacing(vSpacing[::-1])
+            constant_image.SetOrigin(vOffset[::-1])
+            constant_image.SetSize([int(s) for s in vSize][::-1])
             constant_image.SetConstant(1)
             output_rec = constant_image.GetOutput()
 
@@ -628,10 +628,7 @@ def generate(opt):
             forward_projector_rec_fp.SetAlpha(0)
 
 
-
-            output_forward_PVE_noisy = itk.image_from_array(noisy_projection_array.astype(dtype=np.float32))
-            output_forward_PVE_noisy.CopyInformation(output_forward_PVE)
-            osem.SetInput(1, output_forward_PVE_noisy)
+            osem.SetInput(1, garf_detector.output_projections_SC_itk)
             osem.Update()
             rec_volume = osem.GetOutput()
             rec_volume.DisconnectPipeline()
