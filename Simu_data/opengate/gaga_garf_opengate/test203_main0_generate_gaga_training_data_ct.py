@@ -4,23 +4,18 @@
 from test203_helpers import *
 import opengate as gate
 
-if __name__ == "__main__":
+import argparse
+
+def main():
     # create the simulation
     sim = gate.Simulation()
     simu_name = "gaga_training_dataset_ct_large"
-    output_folder = "training_data"
+    output_folder = args.output_folder
     os.makedirs(output_folder, exist_ok=True)
 
     # units
-    cm = gate.g4_units.cm
-    cm3 = gate.g4_units.cm3
     mm = gate.g4_units.mm
-    nm = gate.g4_units.nm
-    keV = gate.g4_units.keV
     Bq = gate.g4_units.Bq
-    kBq = 1000 * Bq
-    MBq = 1000 * kBq
-    BqmL = Bq / cm3
     sec = gate.g4_units.second
 
     # options
@@ -31,17 +26,12 @@ if __name__ == "__main__":
 
     # parameters
     p = Box()
-    p.data_folder = Path("training_data")
-    # p.ct_image = "53_CT_bg_crop_4mm_vcrop.mhd"
-    # p.activity_image = "uniform_4mm_vcrop.mhd"
-    p.ct_image = "AA_attmap_rec_fp.mhd"
-    p.activity_image = "src_uniform_AA_4mm.mhd"
+    p.data_folder = args.data
+    p.ct_image = args.ct
+    p.activity_image = args.source
     p.radionuclide = "Tc99m"
-    # p.activity = 4e6 * Bq
-    p.activity = 2e7 * Bq
+    p.activity = args.activity * Bq
     p.duration = 1 * sec
-    if ui.visu:
-        p.activity = 100 * Bq
 
     # add CT phantom
     patient = add_ct_image(sim, p)
@@ -94,3 +84,16 @@ if __name__ == "__main__":
     # print results at the end
     stats = sim.output.get_actor("stats")
     print(stats)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-a","--activity", type = float, default = 2e7)
+    parser.add_argument("-s", "--source", type=str)
+    parser.add_argument("--ct", type=str)
+    parser.add_argument("--data", type=str)
+    parser.add_argument("--output_folder", type=str)
+    args = parser.parse_args()
+
+
+    main()

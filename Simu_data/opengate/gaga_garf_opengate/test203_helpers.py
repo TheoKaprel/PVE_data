@@ -5,7 +5,6 @@ import opengate as gate
 import opengate.exception
 import sys
 sys.path.append('/export/home/tkaprelian/Desktop/PVE/PVE_data/Simu_data/spect_siemens_intevo/')
-print(sys.path)
 import spect_siemens_intevo as gate_intevo
 from opengate.sources.generic import get_rad_gamma_energy_spectrum
 import gaga_phsp as gaga
@@ -188,18 +187,10 @@ def add_intevo_head_arf(sim, p, name, n, angle):
 
 def add_ct_image(sim, p):
     patient = sim.add_volume("Image", "patient")
-    patient.image = p.data_folder / p.ct_image
-    if sim.user_info.visu:
-        ct_visu = "53_CT_bg_crop_80mm_vcrop.mhd"
-        patient.image = p.data_folder / ct_visu
-        tr = gate.image.get_translation_between_images_center(
-            p.data_folder / p.ct_image, patient.image
-        )
-        patient.translation = tr
-        print(f"CT for visu translation : {tr}")
+    patient.image = p.ct_image
     patient.material = "G4_AIR"
-    f1 = p.data_folder / "Schneider2000MaterialsTable.txt"
-    f2 = p.data_folder / "Schneider2000DensitiesTable.txt"
+    f1 = os.path.join(p.data_folder,"Schneider2000MaterialsTable.txt")
+    f2 = os.path.join(p.data_folder,"Schneider2000DensitiesTable.txt")
     gcm3 = gate.g4_units.g_cm3
     tol = 0.05 * gcm3
     vm, materials = gate.geometry.materials.HounsfieldUnit_to_material(sim, tol, f1, f2)
@@ -310,7 +301,7 @@ def add_vox_source(sim, p, patient):
     source.energy.type = "spectrum_lines"
     source.energy.spectrum_weight = w
     source.energy.spectrum_energy = e
-    source.image = p.data_folder / p.activity_image
+    source.image = p.activity_image
     source.direction.type = "iso"
     if patient.name != "world" and patient.name != "waterbox":
         source.position.translation = gate.image.get_translation_between_images_center(
