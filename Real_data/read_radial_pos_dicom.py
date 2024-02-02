@@ -5,6 +5,7 @@ import pydicom
 import matplotlib.pyplot as plt
 import numpy as np
 
+from itk import RTK as rtk
 
 def main():
     print(args)
@@ -49,12 +50,26 @@ def main():
     ax.grid(True)
 
     ax.set_title("A line plot on a polar axis", va='bottom')
+
+    if args.save_geom is not None:
+        geometry = rtk.ThreeDCircularProjectionGeometry.New()
+        radial_distances = radialPosition1 + radialPosition2
+        angles = np.linspace(0, 360, len(radial_distances)+1)
+        for i in range(len(radial_distances)):
+            geometry.AddProjection(radial_distances[i], 0, angles[i], 0, 0)
+
+        geom_file_writer = rtk.ThreeDCircularProjectionGeometryXMLFileWriter.New()
+        geom_file_writer.SetObject(geometry)
+        geom_file_writer.SetFilename(args.save_geom)
+        geom_file_writer.WriteFile()
+
     plt.show()
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("input_dicom")
+    parser.add_argument("--save_geom", type = str, default=None)
     args = parser.parse_args()
 
     main()
