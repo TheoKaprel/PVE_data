@@ -3,9 +3,7 @@
 
 from box import Box
 import torch
-import time
 from torch.utils.data import Dataset
-import opengate as gate
 import itk
 import numpy as np
 import opengate.contrib.phantoms.nemaiec as gate_iec
@@ -241,6 +239,11 @@ class ConditionsDataset:
 
     def get_batch_torch(self, n):
         i,j,k = self.sampler.sample_indices(n=n)
+
+        if self.save_cond:
+            for ii,jj,kk in zip(i,j,k):
+                id_i,id_j,id_k=ii.cpu().numpy(),jj.cpu().numpy(),kk.cpu().numpy()
+                self.condition_img[id_i,id_j,id_k]+=1
 
         # half pixel size
         hs = self.source_spacing / 2.0

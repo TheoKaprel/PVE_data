@@ -36,10 +36,10 @@ def main():
     p.size = [256, 256]
     p.spacing = [4.7951998710632 * mm / 2, 4.7951998710632 * mm / 2]
 
-    p.number_of_threads = 1
+    p.number_of_threads = 8
     p.duration = 1 * sec
     p.activity = args.activity * Bq
-    p.backward_distance = 280 * mm
+    p.backward_distance = 530 * mm
 
     p.nprojs = args.nprojs
 

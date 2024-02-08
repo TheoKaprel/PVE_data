@@ -53,13 +53,21 @@ def main():
         print('ERROR: give me geom xor (nproj and sid)')
         exit(0)
 
+    if (args.geom_acq is not None):
+        xmlReader = rtk.ThreeDCircularProjectionGeometryXMLFileReader.New()
+        xmlReader.SetFilename(args.geom_acq)
+        xmlReader.GenerateOutputInformation()
+        geometry_acquisition = xmlReader.GetOutputObject()
+    else:
+        geometry_acquisition = geometry
+
     OSEMType = rtk.OSEMConeBeamReconstructionFilter[imageType, imageType]
     osem = OSEMType.New()
     osem.SetInput(0, output_image)
 
 
 
-    osem.SetGeometry(geometry)
+    osem.SetGeometry(geometry_acquisition)
 
     osem.SetNumberOfIterations(args.niterations)
     osem.SetNumberOfProjectionsPerSubset(args.nprojpersubset)
@@ -168,6 +176,7 @@ if __name__ == '__main__':
     parser.add_argument("--input")
     parser.add_argument("--output")
     parser.add_argument("--geom")
+    parser.add_argument("--geom_acq")
     parser.add_argument("--attenuationmap")
     parser.add_argument("--nproj", type=int)
     parser.add_argument("--sid", type=float)

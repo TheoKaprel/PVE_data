@@ -12,7 +12,7 @@ import itk
 import scipy
 from tqdm import tqdm
 from gaga_garf.cgan_source import CGANSOURCE,ConditionsDataset
-from gaga_garf.garf_detector import GARF,DetectorPlane,project_on_plane
+from gaga_garf.garf_detector import GARF,DetectorPlane
 
 
 def update_ideal_recons(batch,recons,offset,spacing,size,e_min=0.001):
@@ -156,10 +156,11 @@ def main():
             # backproject a little bit: p2= p1 - alpha * d1
             # solved (avec inconnu=alpha) using ||p2||² = R2² puis equation degré 2 en alpha
             t_backprojction_0 = time.time()
-            beta=(fake[:,1:4] * fake[:,4:7]).sum(dim=1)
-            R1,R2 = 610,args.sid - 50
-            alpha= beta - torch.sqrt(beta**2 + R2**2-R1**2)
-            fake[:,1:4] = fake[:,1:4] - alpha[:,None]*fake[:,4:7]
+            # beta=(fake[:,1:4] * fake[:,4:7]).sum(dim=1)
+            # R1,R2 = 610,args.sid - 150
+            # alpha= beta - torch.sqrt(beta**2 + R2**2-R1**2)
+            # fake[:,1:4] = fake[:,1:4] - alpha[:,None]*fake[:,4:7]
+            fake[:,1:4] = fake[:,1:4] - 530 * fake[:,4:7]
             t_backprojction+=(time.time() - t_backprojction_0)
 
             if args.debug:
@@ -219,15 +220,6 @@ def main():
                 fig,ax = plt.subplots()
                 ax.plot(l_nc)
                 plt.show()
-
-
-            # if N>=1e7:
-            #     N=0
-            #     M+=1
-            #     output_fn = garf_detector.output_fn
-            #     garf_detector.output_fn = output_fn.replace('.mhd', f'_{M}e7.mhd')
-            #     garf_detector.save_projection()
-            #     garf_detector.output_fn = output_fn
 
             pbar.update(batch_size)
 
