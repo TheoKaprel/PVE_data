@@ -165,20 +165,20 @@ class GARF:
         (https://timvieira.github.io/blog/post/2014/02/11/exp-normalize-trick/)
         '''
 
-        exb = torch.exp(x)
-        exb_sum = torch.sum(exb, dim=1)
-        # divide if not equal at zero
-        p = torch.divide(exb.T, exb_sum,
-                      out=torch.zeros_like(exb.T)).T
+        # exb = torch.exp(x)
+        # exb_sum = torch.sum(exb, dim=1)
+        # # divide if not equal at zero
+        # p = torch.divide(exb.T, exb_sum,
+        #               out=torch.zeros_like(exb.T)).T
 
         # check (should be equal to 1.0)
         # check = np.sum(p, axis=1)
         # print(check)
 
-        # b=x.amax(dim=1,keepdim=True)
-        # exb=torch.exp(x-b)
-        # exb_sum=torch.sum(exb,dim=1)
-        # p = torch.divide(exb.T,exb_sum,out=torch.zeros_like(exb.T)).T
+        b=x.amax(dim=1,keepdim=True)
+        exb=torch.exp(x-b)
+        exb_sum=torch.sum(exb,dim=1)
+        p = torch.divide(exb.T,exb_sum,out=torch.zeros_like(exb.T)).T
 
         return p
 
