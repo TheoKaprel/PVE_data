@@ -51,8 +51,6 @@ def update_ideal_recons(batch,recons,offset,spacing,size,e_min=0.001):
 
     return recons
 
-    # garf_ui['pth_filename'] = os.path.join(paths.current, "pths/arf_5x10_9.pth")
-
 def main():
     t0 = time.time()
     print(args)
