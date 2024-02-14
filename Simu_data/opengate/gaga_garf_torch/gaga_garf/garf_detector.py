@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-import time
-
-import matplotlib.pyplot as plt
-from garf_helpers import *
 import garf
 import numpy as np
 import torch
@@ -26,17 +22,12 @@ class GARF:
         self.degree = np.pi / 180
         self.init_garf()
 
-        self.t_image_from_coord,self.time_nn_predict = 0,0
-        self.t_preprocess_arf,self.t_postprocess_arf = 0,0
-        self.t_remove,self.t_jsp = 0,0
-
     def init_garf(self):
         # load the pth file
         self.nn, self.model = garf.load_nn(
             self.pth_filename, verbose=False
         )
         self.model = self.model.to(self.device)
-
 
         # size and spacing (2D)
         self.model_data = self.nn["model_data"]
@@ -51,10 +42,8 @@ class GARF:
 
         # output image: nb of energy windows times nb of runs (for rotation)
         self.nb_ene = self.model_data["n_ene_win"]
-        # size and spacing in 3D
 
-        # create output image as np array
-        # self.output_image = np.zeros(self.image_size, dtype=np.float64)
+        # create output image as tensor
         self.output_image = torch.zeros(tuple(self.image_size)).to(self.device)
         # compute offset
         self.psize = [self.size * self.spacing, self.size * self.spacing]
@@ -71,63 +60,34 @@ class GARF:
         print(f'psize : {self.psize}')
 
     def apply(self,batch, proj_i):
-        t_preprocess_arf_0 = time.time()
         x = batch.clone()
 
         x[:,2] = torch.arccos(batch[:,2]) / self.degree
         x[:,3] = torch.arccos(batch[:,3]) / self.degree
         ax = x[:, 2:5]  # two angles and energy
 
-        self.t_preprocess_arf+=(time.time() - t_preprocess_arf_0)
-
-        time_nn_predict_0 = time.time()
         w = self.nn_predict(self.model, self.nn["model_data"], ax)
-
-        # ww = w[w[:,0]<0.5]
-        # if len(ww)>0:
-        #     print(ww)
 
         # w = torch.bernoulli(w)
         # w = w.multinomial(1,replacement=True)
 
-        self.time_nn_predict += (time.time() - time_nn_predict_0)
-
         # positions
-        # x_np = x.cpu().numpy()
-        t_postprocess_arf_0 = time.time()
-        x_np = x
-        # angles = x_np[:, 2:4]
-        # t = self.compute_angle_offset(angles, self.distance_to_crystal)
-
-        cx = x_np[:, 0:2]
-        # cx = cx + t
+        cx = x[:, 0:2]
         coord = (cx + (self.size-1)*self.spacing/2) / self.spacing
         vu = torch.round(coord).to(int)
 
-        self.t_jsp+=(time.time() - t_postprocess_arf_0)
-
-        t_remove_0 = time.time()
         # vu, w_pred = self.remove_out_of_image_boundaries(vu, w, self.image_size)
-        self.t_remove+=(time.time() - t_remove_0)
 
-        self.t_postprocess_arf+=(time.time() - t_postprocess_arf_0)
-
-
-        t0=time.time()
         # do nothing if there is no hit in the image
         if vu.shape[0] != 0:
             # PW
             temp = self.zeros.fill_(0)
-            temp = self.image_from_coordinates_2(temp, vu,w[:,2])
-            # temp = self.image_from_coordinates_2(temp, vu,(w==2).to(torch.float32))
+            temp = self.image_from_coordinates(temp, vu,w[:,2])
             self.output_image[proj_i,:,:]= self.output_image[proj_i,:,:] + temp
             # SW
             temp = self.zeros.fill_(0)
-            temp = self.image_from_coordinates_2(temp, vu,w[:,1])
-            # temp = self.image_from_coordinates_2(temp, vu,(w==1).to(torch.float32))
+            temp = self.image_from_coordinates(temp, vu,w[:,1])
             self.output_image[proj_i+self.nprojs,:,:]= self.output_image[proj_i+self.nprojs,:,:] + temp
-
-        self.t_image_from_coord+=(time.time() - t0)
 
     def nn_predict(self,model, model_data, x):
         '''
@@ -137,24 +97,15 @@ class GARF:
         # apply input model normalisation
         x = (x - self.x_mean) / self.x_std
 
-        # torch encapsulation
-        # x = x.astype('float32')
-        # vx = Variable(torch.from_numpy(x)).type(dtypef)
-        # vx = torch.from_numpy(x).to(device=self.device)
-
         vx = x.float()
 
         # predict values
         vy_pred = model(vx)
 
-        # convert to numpy and normalize probabilities
-
-        # y_pred = vy_pred.data.cpu().numpy()
-        # y_pred = y_pred.astype(np.float64)
+        # normalize probabilities
         y_pred = vy_pred
         y_pred = self.normalize_logproba(y_pred)
         y_pred = self.normalize_proba_with_russian_roulette(y_pred, 0, self.rr)
-        # y_pred = y_pred.data.cpu().numpy()
 
         return y_pred
 
@@ -198,57 +149,7 @@ class GARF:
         return t
 
 
-
-    def image_from_coordinates(self,img, u, v, w_pred):
-        '''
-        Convert an array of pixel coordinates u,v (int) and corresponding weight
-        into an image
-        '''
-
-        # convert to int16
-        u = u.astype(np.int16)
-        v = v.astype(np.int16)
-
-        # create a 32bit view of coordinate arrays to unite pairs of x,y into
-        # single integer
-        uv32 = np.vstack((u, v)).T.ravel().view(dtype=np.int32)
-
-        # nb of energy windows
-        nb_ene = len(w_pred[0])
-
-        # sum up values for pixel coordinates which occur multiple times
-        ch = []
-        for i in range(1, nb_ene):
-            a = np.bincount(uv32, weights=w_pred[:, i])
-            ch.append(a)
-
-        # init image
-        img.fill(0.0)
-
-        # create range array which goes along with the arrays returned by bincount
-        # (see man for np.bincount)
-        uv32Bins = np.arange(np.amax(uv32) + 1, dtype=np.int32)
-
-        # this will generate many 32bit values corresponding to 16bit value pairs
-        # lying outside of the image -> see conditions below
-
-        # generate 16bit view to convert back and reshape
-        uv16Bins = uv32Bins.view(dtype=np.uint16)
-        hs = int((uv16Bins.size / 2))
-        uv16Bins = uv16Bins.reshape((hs, 2))
-
-        # fill image using index broadcasting
-        # Important: the >0 condition is to avoid outside elements.
-        tiny = 0  ## FIXME
-        for i in range(1, nb_ene):
-            chx = ch[i - 1]
-            img[i, uv16Bins[chx > tiny, 0], uv16Bins[chx > tiny, 1]] = chx[chx > tiny]
-        # end
-        return img
-
-    def image_from_coordinates_2(self, img, vu,w):
-        # for uu,vv,ww in zip(vu[:,0],vu[:,1],w):
-        #     img[uu,vv]+=ww
+    def image_from_coordinates(self, img, vu,w):
         img_r = img.ravel()
         ind_r = vu[:,1]*img.shape[0]+vu[:,0]
         img_r.put_(index=ind_r,source=w,accumulate=True)
@@ -293,12 +194,6 @@ class GARF:
         return w_pred
 
     def save_projection(self):
-        print(f'TIME FOR PREPROC: {self.t_preprocess_arf}')
-        print(f'TIME FOR POSTROC: {self.t_postprocess_arf}')
-        print(f'dont {self.t_remove} pour remove et {self.t_jsp} pour avant remove')
-        print(f'TIME FOR NN PREDICT: {self.time_nn_predict}')
-        print(f'TIME FOR IND TO COORD : {self.t_image_from_coord}')
-
         # convert to itk image
         self.output_projections_array = self.output_image.cpu().numpy()
         self.output_projections_itk = itk.image_from_array(self.output_projections_array)
@@ -312,15 +207,6 @@ class GARF:
         origin = -size / 2.0 * spacing + spacing / 2.0
         self.output_projections_itk.SetSpacing(spacing)
         self.output_projections_itk.SetOrigin(origin)
-
-        # convert double to float
-        # InputImageType = itk.Image[itk.D, 3]
-        # OutputImageType = itk.Image[itk.F, 3]
-        # castImageFilter = itk.CastImageFilter[InputImageType, OutputImageType].New()
-        # castImageFilter.SetInput(self.output_projections_itk)
-        # castImageFilter.Update()
-        # self.output_projections_itk = castImageFilter.GetOutput()
-
 
         itk.imwrite(self.output_projections_itk, self.output_fn)
         print(f'Output projection saved in : {self.output_fn}')
@@ -341,14 +227,13 @@ class GARF:
 
 
 
-
-def get_rot_matrix(theta):
+def get_rot_matrix(theta):# use this if the desired rotation axis is "y" (default)
     theta = torch.tensor([theta])
     return torch.tensor([[torch.cos(theta), 0, torch.sin(theta)],
                          [0, 1, 0],
                          [-torch.sin(theta), 0, torch.cos(theta)]])
 
-# def get_rot_matrix(theta):#FIXME
+# def get_rot_matrix(theta):# use this if the desired rotation axis is "z"
 #     theta = torch.tensor([theta])
 #     return torch.tensor([[torch.cos(theta), -torch.sin(theta), 0],
 #                          [torch.sin(theta), torch.cos(theta), 0],
@@ -376,10 +261,10 @@ class DetectorPlane:
 
         pos_xyz = dir0*t[:,None] + pos0
 
-        pos_xyz_rot = torch.matmul(pos_xyz, self.Mt.t()) #FIXME
-        dir_xyz_rot = torch.matmul(dir0, self.Mt.t()) #FIXME
-        # pos_xy_rot = torch.matmul(pos_xyz, self.Mt[[0,2], :].t())
-        # dir_xy_rot = torch.matmul(dir0, self.Mt[[0,2], :].t())
+        pos_xyz_rot = torch.matmul(pos_xyz, self.Mt.t())
+        dir_xyz_rot = torch.matmul(dir0, self.Mt.t())
+        # pos_xy_rot = torch.matmul(pos_xyz, self.Mt[[0,2], :].t()) # use this instead if the desired rotation axis is "z"
+        # dir_xy_rot = torch.matmul(dir0, self.Mt[[0,2], :].t()) # use this instead if the desired rotation axis is "z"
 
         # pos_xyz_rot_crystal = pos_xyz_rot + (self.dist_to_crystal/dir_xyz_rot[:,2:3]) * dir_xyz_rot
         # pos_xy_rot_crystal = pos_xyz_rot_crystal[:,0:2]

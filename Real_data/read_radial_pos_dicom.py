@@ -25,9 +25,9 @@ def main():
     for v in radial_pos_detect_2:
         radialPosition2.append(float(v))
 
-    print("radial positions 1 : ")
+    print(f"radial positions 1 : starting at {ds[0x54,0x22][0][0x54, 0x0200].value}")
     print(radialPosition1)
-    print("radial positions 2 : ")
+    print(f"radial positions 2 : starting at {ds[0x54,0x22][1][0x54, 0x0200].value}")
     print(radialPosition2)
     print(len(radialPosition1))
     print(len(radialPosition2))
@@ -38,12 +38,12 @@ def main():
     # plt.show()
 
     r1,r2 = radialPosition1,radialPosition2
-    theta1 = np.linspace(np.pi, 2*np.pi, 60)
-    theta2 = np.linspace(0,np.pi, 60)
+    theta1 = np.linspace(np.pi, 2*np.pi, 61)[:-1]
+    theta2 = np.linspace(0,np.pi, 61)[:-1]
 
     fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
-    ax.plot(theta1, r1)
-    ax.plot(theta2, r2)
+    ax.plot(theta1, r1, c = "blue")
+    ax.plot(theta2, r2, c = 'orange')
     # ax.set_rmax(2)
     # ax.set_rticks([0.5, 1, 1.5, 2])  # Less radial ticks
     # ax.set_rlabel_position(-22.5)  # Move radial labels away from plotted line
@@ -53,7 +53,7 @@ def main():
 
     if args.save_geom is not None:
         geometry = rtk.ThreeDCircularProjectionGeometry.New()
-        radial_distances = radialPosition1 + radialPosition2
+        radial_distances = radialPosition2 + radialPosition1
         angles = np.linspace(0, 360, len(radial_distances)+1)
         for i in range(len(radial_distances)):
             geometry.AddProjection(radial_distances[i], 0, angles[i], 0, 0)

@@ -51,6 +51,7 @@ def update_ideal_recons(batch,recons,offset,spacing,size,e_min=0.001):
 
     return recons
 
+    # garf_ui['pth_filename'] = os.path.join(paths.current, "pths/arf_5x10_9.pth")
 
 def main():
     t0 = time.time()
@@ -88,11 +89,7 @@ def main():
         # det_plane = DetectorPlane(size=565.511, device=device, center0=[0,args.sid,0], rot_angle=angle) #FIXME (center)
         l_detectorsPlanes.append(det_plane)
 
-    # R1=516
-
-
     garf_ui = {}
-    # garf_ui['pth_filename'] = os.path.join(paths.current, "pths/arf_5x10_9.pth")
     garf_ui['pth_filename'] = args.pthgarf
     garf_ui['batchsize'] = args.batchsize
     garf_ui['device'] = device
@@ -130,7 +127,7 @@ def main():
     with torch.no_grad():
         for _ in range(n_batchs):
             t_condition_generation_0 = time.time()
-            gan_input_z_cond = dataset.get_batch_torch(batch_size)
+            gan_input_z_cond = dataset.get_batch(batch_size)
             N+=batch_size
             t_condition_generation+=(time.time() - t_condition_generation_0)
 
@@ -254,9 +251,9 @@ if __name__ == '__main__':
     parser.add_argument("-f", "--folder", type = str)
     parser.add_argument("-o", "--output", type = str)
     parser.add_argument("-n","--nprojs", type = int)
-    parser.add_argument("--sid", type=float)
+    parser.add_argument("--sid", type=float, help = "source-to-isocenter distance ")
     parser.add_argument('--debug', action="store_true")
-    parser.add_argument('--save', action="store_true")
+    parser.add_argument('--save', action="store_true", help="will save conditions, and generated positions (for debug)")
 
     args = parser.parse_args()
 
