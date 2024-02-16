@@ -3,6 +3,8 @@
 import argparse
 import pathlib
 import os
+
+import itk
 import numpy as np
 import matplotlib.pyplot as plt
 from box import Box
@@ -82,6 +84,12 @@ def main():
     n_batchs = int(float(args.activity)) // batch_size
     N_primaries = int(float(args.activity))
 
+    if args.save:
+        spacing = np.array([1,1,1])
+        size = np.array([64,64,64])
+        offset = (-spacing * size  + spacing) / 2
+        recons = np.zeros((64,64,64))
+
     N,M = 0,0
 
     pbar=tqdm(total=N_primaries)
@@ -90,6 +98,15 @@ def main():
             N+=batch_size
 
             fake = generate_point_source_torch(n=batch_size,device=device,E0 = 0.1405)
+
+            if args.save:
+                positions = fake[1:4,:]
+                pix = np.rint((positions - offset) / spacing).astype(int)
+                size = [size[2], size[1], size[0]]
+                for i in [0, 1, 2]:
+                    pix = pix[(pix[:, i] < size[i]) & (pix[:, i] > 0)]
+                for x in pix:
+                    recons[x[2], x[1], x[0]] += 1
 
             if args.debug:
                 fig,ax=plt.subplots(3,4)
@@ -141,6 +158,11 @@ def main():
 
     garf_detector.save_projection()
 
+    if args.save:
+        recons_img = itk.image_from_array(recons)
+        recons_img.SetSpacing(spacing)
+        recons_img.SetOrigin(offset)
+        itk.imwrite(args.ouptut.replace('.mhd', '_conditions.mhd'), recons_img)
 
     print(f"TOTAL TIME : {time.time() - t0}")
 
@@ -154,5 +176,6 @@ if __name__ == '__main__':
     parser.add_argument("-n","--nprojs", type = int)
     parser.add_argument("--sid", type=float)
     parser.add_argument('--debug', action="store_true")
+    parser.add_argument('--save', action="store_true")
     args = parser.parse_args()
     main()

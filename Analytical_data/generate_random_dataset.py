@@ -44,6 +44,7 @@ parser.add_argument('--sid',type = float, default = None, help = 'if no geom, pr
 parser.add_argument('--fov', type=str,help="FOV (mm,mm) of the detector. Should be in the format --fov 532,388 ")
 parser.add_argument('--attenuationmapfolder',default = None, help = 'path to the attenuationmaps folder (random choice in the folder)')
 parser.add_argument('--attmapaugmentation', action="store_true", help = "add this if data augmentation is needed for the attenuation map. Max rotation : (5,360,5) and max translation : (50,50,50) ")
+parser.add_argument('--organlabels', action="store_true", help = "use --organlabels if you want to assign different activity ratios to main organs. For now: body, liver, kidneys, and bones.")
 parser.add_argument('--output_folder','-o', default = './dataset', help = " Absolute or relative path to the output folder")
 parser.add_argument('--spect_system', default = "ge-discovery", choices=['ge-discovery', 'siemens-intevo'], help = 'SPECT system simulated for PVE projections')
 parser.add_argument('--save_src',action ="store_true", help = "if you want to also save the source that will be forward projected")
@@ -154,6 +155,11 @@ def generate(opt):
     if opt.attenuationmapfolder is not None:
         attmap_refs_list = glob.glob(os.path.join(opt.attenuationmapfolder, '*_attmap.mhd'))
         with_attmaps=True
+        if opt.organlabels:
+            organ_labels = open(os.path.join(opt.attenuationmapfolder, 'organ_labels.json')).read()
+            organ_labels = json.loads(organ_labels)
+            labels_refs_list = [att_fn.replace('_attmap.mhd', '_labels_rot.mhd') for att_fn in attmap_refs_list]
+
     else:
         with_attmaps=False
 
@@ -197,6 +203,11 @@ def generate(opt):
         # get source image parameters
         if with_attmaps:
             attmap = itk.imread(attmap_ref,pixel_type=pixelType)
+            if opt.organlabels:
+                labels_fn = attmap_ref.replace('_attmap.mhd', '_labels_rot.mhd')
+                labels = itk.imread(labels_fn)
+                labels_array = itk.array_from_image(labels)
+
             if opt.attmapaugmentation:
                 rot=np.random.rand(3)*[5,360,5]
                 transl = np.random.rand(3)*100-50
@@ -263,7 +274,9 @@ def generate(opt):
             # background = cylinder with revolution axis = Y
             background_array = np.zeros_like(X)
 
-            if ((with_attmaps) and (attmap_np.max()>0)):
+            if ((with_attmaps) and (opt.organlabels)):
+                background_array[labels_array==int(organ_labels["body"])]=1
+            elif ((with_attmaps) and (attmap_np.max()>0)):
                 background_array[attmap_np>0.01]=1
             else:
                 while (background_array.max()==0): # to avoid empty background
@@ -280,6 +293,11 @@ def generate(opt):
 
             src_array += background_array
 
+        if opt.organlabels:
+            src_array[labels_array==int(organ_labels["liver"])]=np.random.rand()*(5-3)+3
+            src_array[labels_array==int(organ_labels["kidney_left"])]=np.random.rand()*(5-3)+3
+            src_array[labels_array==int(organ_labels["kidney_right"])]=np.random.rand()*(5-3)+3
+            src_array[labels_array==int(organ_labels["skeleton"])]=np.random.rand()*(5-3)+3
 
         random_nb_of_sphers = np.random.randint(1,opt.nspheres)
         if opt.grad_act:
