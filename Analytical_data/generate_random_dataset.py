@@ -311,7 +311,8 @@ def generate(opt):
 
 
         for s in range(random_nb_of_sphers):
-            random_activity = sample_activity(min_r=min_ratio,max_r=Max_ratio,lbda=lbda,with_bg=opt.background)
+            # random_activity = sample_activity(min_r=min_ratio,max_r=Max_ratio,lbda=lbda,with_bg=opt.background)
+            random_activity = np.random.rand()*(Max_ratio-min_ratio)+min_ratio
 
             if opt.background is None:
                 center = (2 * np.random.rand(3) - 1) * (lengths / 2)
