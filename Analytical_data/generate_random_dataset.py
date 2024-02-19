@@ -275,7 +275,7 @@ def generate(opt):
             background_array = np.zeros_like(X)
 
             if ((with_attmaps) and (opt.organlabels)):
-                background_array[labels_array==int(organ_labels["body"])]=1
+                background_array[labels_array>0]=1
             elif ((with_attmaps) and (attmap_np.max()>0)):
                 background_array[attmap_np>0.01]=1
             else:
