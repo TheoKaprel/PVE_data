@@ -267,9 +267,6 @@ def generate(opt):
 
         src_array = np.zeros_like(X)
 
-        if opt.lesion_mask:
-            lesion_array=np.zeros_like(X)
-
         if opt.background:
             # background = cylinder with revolution axis = Y
             background_array = np.zeros_like(X)
@@ -299,6 +296,7 @@ def generate(opt):
             src_array[labels_array==int(organ_labels["kidney_right"])]=np.random.rand()*(5-3)+3
             src_array[labels_array==int(organ_labels["skeleton"])]=np.random.rand()*(5-3)+3
 
+        lesion_array=np.zeros_like(X)
         random_nb_of_sphers = np.random.randint(1,opt.nspheres)
         if opt.grad_act:
             M = 8
@@ -334,8 +332,7 @@ def generate(opt):
             else: # convex shape
                 lesion = generate_convex(X=X,Y=Y,Z=Z,center=center,min_radius=opt.min_radius, max_radius = opt.max_radius, prop_radius = opt.prop_radius)
 
-            if opt.lesion_mask:
-                lesion_array+=lesion
+
 
             if opt.grad_act:
                 rndm_grad_act_scaled_scaled = rndm_grad_act_scaled / np.mean(rndm_grad_act_scaled[lesion>0])
@@ -343,7 +340,9 @@ def generate(opt):
             else:
                 lesion = random_activity * lesion
 
-            src_array += lesion
+            lesion_array += lesion
+
+        src_array[lesion_array > 0] = lesion_array[lesion_array > 0]
 
         time_src+=(time.time() - time_src_0)
         if opt.verbose:
