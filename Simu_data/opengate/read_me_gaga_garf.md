@@ -60,6 +60,3 @@ outputs : test203/garf_tc99m_lehr_rr50.pth
 
 
 5) Simu gaga-garf: 
-
-
-    python test

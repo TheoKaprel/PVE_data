@@ -14,13 +14,13 @@ class GARF:
 
         self.size=256
         self.spacing=2.3976
-        self.image_size=[2 * self.nprojs, 256,256]
         self.image_spacing = [self.spacing, self.spacing, 1]
-
-        self.zeros = torch.zeros((self.image_size[1], self.image_size[2])).to(self.device)
 
         self.degree = np.pi / 180
         self.init_garf()
+
+        self.zeros = torch.zeros((self.image_size[1], self.image_size[2])).to(self.device)
+
 
     def init_garf(self):
         # load the pth file
@@ -44,6 +44,7 @@ class GARF:
         self.nb_ene = self.model_data["n_ene_win"]
 
         # create output image as tensor
+        self.image_size = [(self.nb_ene-1) * self.nprojs, self.size, self.size]
         self.output_image = torch.zeros(tuple(self.image_size)).to(self.device)
         # compute offset
         self.psize = [self.size * self.spacing, self.size * self.spacing]
@@ -80,14 +81,19 @@ class GARF:
 
         # do nothing if there is no hit in the image
         if vu.shape[0] != 0:
-            # PW
-            temp = self.zeros.fill_(0)
-            temp = self.image_from_coordinates(temp, vu,w[:,2])
-            self.output_image[proj_i,:,:]= self.output_image[proj_i,:,:] + temp
-            # SW
-            temp = self.zeros.fill_(0)
-            temp = self.image_from_coordinates(temp, vu,w[:,1])
-            self.output_image[proj_i+self.nprojs,:,:]= self.output_image[proj_i+self.nprojs,:,:] + temp
+            # # PW
+            # temp = self.zeros.fill_(0)
+            # temp = self.image_from_coordinates(temp, vu,w[:,2])
+            # self.output_image[proj_i,:,:]= self.output_image[proj_i,:,:] + temp
+            # # SW
+            # temp = self.zeros.fill_(0)
+            # temp = self.image_from_coordinates(temp, vu,w[:,1])
+            # self.output_image[proj_i+self.nprojs,:,:]= self.output_image[proj_i+self.nprojs,:,:] + temp
+
+            for enw in range(self.nb_ene-1):
+                temp = self.zeros.fill_(0)
+                temp = self.image_from_coordinates(temp, vu, w[:,enw+1])
+                self.output_image[proj_i+enw*self.nprojs,:,:] = self.output_image[proj_i+enw*self.nprojs,:,:] + temp
 
     def nn_predict(self,model, model_data, x):
         '''

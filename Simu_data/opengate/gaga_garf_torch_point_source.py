@@ -26,7 +26,7 @@ def sample_pos_R(max_radius,n):
     z = r * torch.cos(theta)
     return torch.column_stack((x,y,z))
 
-def generate_point_source_torch(n,device, E0 = 0.1405):
+def generate_point_source_torch(n,device, E0, E0_proba=None):
     min_theta = torch.tensor([0], device=device)
     max_theta = torch.tensor([torch.pi], device=device)
     min_phi = torch.tensor([0], device=device)
@@ -48,7 +48,12 @@ def generate_point_source_torch(n,device, E0 = 0.1405):
     directions = torch.column_stack((dx,dy,dz))
 
     positions = sample_pos_R(max_radius=1,n=n).to(device)
-    energies = E0 * torch.ones_like(dx)
+    if len(E0)>1:
+        E0_1 = torch.bernoulli(input=torch.ones_like(dx) * E0_proba[0])
+        energies = E0[0] * E0_1 + E0[1] * (1 - E0_1)
+    else:
+        energies = E0 * torch.ones_like(dx)
+
     times = torch.zeros_like(dx)
 
     return torch.column_stack((energies,positions,directions,times))
@@ -92,12 +97,20 @@ def main():
 
     N,M = 0,0
 
+    if (args.radionuclide).lower()=="tc99m":
+        E0 = [0.1405]
+        proba = [1]
+    elif (args.radionuclide).lower()=="lu177":
+        E0 = [0.113, 0.208]
+        proba = [6.2,11]
+        proba = [p/sum(proba) for p in proba]
+
     pbar=tqdm(total=N_primaries)
     with torch.no_grad():
         for _ in range(n_batchs):
             N+=batch_size
 
-            fake = generate_point_source_torch(n=batch_size,device=device,E0 = 0.1405)
+            fake = generate_point_source_torch(n=batch_size,device=device,E0=E0,E0_proba=proba)
 
             if args.save:
                 positions = fake[1:4,:]
@@ -169,6 +182,7 @@ def main():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-a","--activity", type = float)
+    parser.add_argument("--radionuclide", type = str)
     parser.add_argument("--pthgarf", type=str)
     parser.add_argument("-b","--batchsize", type = float, default = 100000)
     parser.add_argument("-f", "--folder", type = str)
