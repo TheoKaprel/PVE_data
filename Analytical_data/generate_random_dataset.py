@@ -294,11 +294,6 @@ def generate(opt):
 
             src_array += background_array
 
-        if opt.organlabels is not None:
-            min_ratio_rois,max_ratio_rois = 3,6
-            for organ in organ_labels.keys():
-                if ((organ!="body") and (np.random.rand()>2/3)): # choose each organ with proba 2/3
-                    src_array[labels_array==int(organ_labels[organ])]= np.random.rand()*(max_ratio_rois-min_ratio_rois)+min_ratio_rois
 
         lesion_array=np.zeros_like(X)
         random_nb_of_sphers = np.random.randint(1,opt.nspheres)
@@ -311,6 +306,19 @@ def generate(opt):
             min_scale, max_scale = 0.5, 1.5
             rndm_grad_act_scaled = rndm_grad_act_0_1 * (max_scale - min_scale) + min_scale
 
+        if opt.organlabels is not None:
+            min_ratio_rois,max_ratio_rois = 3,6
+            for organ in organ_labels.keys():
+                if ((organ!="body") and (np.random.rand()>2/3)): # choose each organ with proba 2/3
+                    organ_rndm_activity = np.random.rand() * (max_ratio_rois - min_ratio_rois) + min_ratio_rois
+
+                    if opt.grad_act:
+                        rndm_grad_act_scaled_scaled = rndm_grad_act_scaled / np.mean(rndm_grad_act_scaled[labels_array==int(organ_labels[organ])])
+                        organ_act = (labels_array==int(organ_labels[organ])) * (rndm_grad_act_scaled_scaled * organ_rndm_activity)
+                    else:
+                        organ_act = (labels_array == int(organ_labels[organ])) * (organ_rndm_activity)
+
+                    src_array+=organ_act
 
         for s in range(random_nb_of_sphers):
             # random_activity = sample_activity(min_r=min_ratio,max_r=Max_ratio,lbda=lbda,with_bg=opt.background)
