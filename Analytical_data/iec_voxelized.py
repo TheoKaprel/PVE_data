@@ -14,7 +14,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--spacing', required = True)
 @click.option('-o', '--output', required = True)
 def create_iec(spacing, output):
-    output = Path(output)
+    # output = Path(output)
 
     # create the simulation
     sim = gate.Simulation()

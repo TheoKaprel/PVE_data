@@ -180,7 +180,7 @@ if __name__ == '__main__':
     parser.add_argument("--attenuationmap")
     parser.add_argument("--nproj", type=int)
     parser.add_argument("--sid", type=float)
-    parser.add_argument('--spect_system', default="ge-discovery", choices=['ge-discovery', 'siemens-intevo'],help='SPECT system simulated for PVE projections')
+    parser.add_argument('--spect_system', default="ge-discovery", choices=['ge-discovery', 'siemens-intevo-lehr', 'siemens-intevo-megp'],help='SPECT system simulated for PVE projections')
     parser.add_argument('--like', type = str)
     parser.add_argument('--size', type = int)
     parser.add_argument('--spacing', type = float, help='ex : 4.6875')

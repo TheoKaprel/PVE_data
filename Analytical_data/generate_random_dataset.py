@@ -27,8 +27,8 @@ parser.add_argument('--like', default = None, help = "Instead of specifying spac
 parser.add_argument('--min_radius', default = 4,type = float, help = 'minimum radius of the random spheres')
 parser.add_argument('--max_radius', default = 32,type = float, help = 'max radius of the random spheres')
 parser.add_argument('--prop_radius', default = "uniform", choices=['uniform', 'squared_inv'], help = 'proportion of radius between min/max')
-parser.add_argument('--min_ratio', default = 1/1000,type = float, help = 'min bg:src ratio. If no background, it is the min activity')
-parser.add_argument('--max_ratio', default = 1/8,type = float, help = 'max bg:src ratio. If no background, it is the max activity')
+parser.add_argument('--min_ratio', default = 10,type = float, help = 'min bg:src ratio. If no background, it is the min activity')
+parser.add_argument('--max_ratio', default = 20,type = float, help = 'max bg:src ratio. If no background, it is the max activity')
 parser.add_argument('--min_activity', default = 10, type = float, help = "minimum activity in MBq. Then, N_min = A_min * 1e6 * 20s * efficiency ")
 parser.add_argument('--max_activity', default = 100, type = float, help = "maximal activity in MBq. Then, N_min = A_max * 1e6 * 20s * efficiency")
 parser.add_argument('--nspheres', default = 1,type = int, help = 'max number of spheres to generate on each source')
@@ -44,9 +44,9 @@ parser.add_argument('--sid',type = float, default = None, help = 'if no geom, pr
 parser.add_argument('--fov', type=str,help="FOV (mm,mm) of the detector. Should be in the format --fov 532,388 ")
 parser.add_argument('--attenuationmapfolder',default = None, help = 'path to the attenuationmaps folder (random choice in the folder)')
 parser.add_argument('--attmapaugmentation', action="store_true", help = "add this if data augmentation is needed for the attenuation map. Max rotation : (5,360,5) and max translation : (50,50,50) ")
-parser.add_argument('--organlabels', action="store_true", help = "use --organlabels if you want to assign different activity ratios to main organs. For now: body, liver, kidneys, and bones.")
+parser.add_argument('--organlabels', type = str, help = "use --organlabels if you want to assign different activity ratios to main organs. For now: body, liver, kidneys, and bones.")
 parser.add_argument('--output_folder','-o', default = './dataset', help = " Absolute or relative path to the output folder")
-parser.add_argument('--spect_system', default = "ge-discovery", choices=['ge-discovery', 'siemens-intevo'], help = 'SPECT system simulated for PVE projections')
+parser.add_argument('--spect_system', default = "ge-discovery", choices=['ge-discovery', 'siemens-intevo-lehr', "siemens-intevo-megp"], help = 'SPECT system simulated for PVE projections')
 parser.add_argument('--save_src',action ="store_true", help = "if you want to also save the source that will be forward projected")
 parser.add_argument('--lesion_mask',action ="store_true", help = "if you want to also save the source that will be forward projected")
 parser.add_argument('--rec_fp',action="store_true", help = "noisy projections are reconstructed with 1 osem-rm iter and forward-projected w/o rm to obtain ABCDE_rec_fp.mha")
@@ -94,6 +94,8 @@ def generate(opt):
         print('ERROR: give me geom xor (nproj and sid)')
         exit(0)
 
+    sid = geometry.GetSourceToIsocenterDistances()[0]
+
     # Projections infos
     dtype = get_dtype(opt.dtype)
     pixelType = itk.F
@@ -123,8 +125,10 @@ def generate(opt):
 
         fov_maskmult=itk.MultiplyImageFilter[imageType,imageType,imageType].New()
         fov_maskmult.SetInput1(fovmask)
+        fov_area = fov[0]*fov[1]
     else:
         fov_is_set=False
+        fov_area = (size_proj*spacing_proj)**2
 
     min_ratio, Max_ratio = opt.min_ratio, opt.max_ratio
     if opt.background:
@@ -133,18 +137,13 @@ def generate(opt):
         dataset_infos['bg_shape_params'] = {'mean_xzy': f'({background_radius_x_mean},{background_radius_z_mean},{background_radius_y_mean})',
                                             'std_xzy': f'({background_radius_x_std},{background_radius_z_std},{background_radius_y_std})'}
 
-        R = 100 # proba ratio max/min : p(M)/p(m)=R
-        lbda = np.log(R) / (Max_ratio - min_ratio)
-    else:
-        lbda = None
-
     p_sphere,p_ellipse,p_cylinder,p_convex = opt.sphere,opt.ellipse,opt.cylinder,opt.convex
     assert(p_sphere+p_ellipse+p_cylinder+p_convex==1)
 
-
+    time_per_proj = 20
     min_activity,max_activity = opt.min_activity, opt.max_activity
-    min_count= int(min_activity * 1e6 * 20 * efficiency)
-    max_count= int(max_activity * 1e6 * 20 * efficiency)
+    min_count= int(min_activity * 1e6 * time_per_proj * efficiency)
+    max_count= int(max_activity * 1e6 * time_per_proj * efficiency)
 
     print(f'Activity between {min_activity} MBq and {max_activity} MBq --> nb of counts between {min_count} and {max_count}')
 
@@ -153,13 +152,14 @@ def generate(opt):
     dataset_infos['src_refs']=[]
 
     if opt.attenuationmapfolder is not None:
-        attmap_refs_list = glob.glob(os.path.join(opt.attenuationmapfolder, '*_attmap.mhd'))
+        attmap_refs_list = glob.glob(os.path.join(opt.attenuationmapfolder, '*_attmap_rot.mhd'))
         with_attmaps=True
-        if opt.organlabels:
-            organ_labels = open(os.path.join(opt.attenuationmapfolder, 'organ_labels.json')).read()
+        if opt.organlabels is not None:
+            organ_labels = open(opt.organlabels).read()
             organ_labels = json.loads(organ_labels)
-            labels_refs_list = [att_fn.replace('_attmap.mhd', '_labels_rot.mhd') for att_fn in attmap_refs_list]
-
+            with_rois = True
+        else:
+            with_rois = False
     else:
         with_attmaps=False
 
@@ -203,8 +203,8 @@ def generate(opt):
         # get source image parameters
         if with_attmaps:
             attmap = itk.imread(attmap_ref,pixel_type=pixelType)
-            if opt.organlabels:
-                labels_fn = attmap_ref.replace('_attmap.mhd', '_labels_rot.mhd')
+            if with_rois:
+                labels_fn = attmap_ref.replace('_attmap_rot.mhd', '_rois_labels_rot.mhd')
                 labels = itk.imread(labels_fn)
                 labels_array = itk.array_from_image(labels)
 
@@ -212,6 +212,10 @@ def generate(opt):
                 rot=np.random.rand(3)*[5,360,5]
                 transl = np.random.rand(3)*100-50
                 attmap = gatetools.applyTransformation(input=attmap, like=None, spacinglike=None, matrix=None, newsize=None,
+                                              neworigin=None, newspacing=None, newdirection=None, force_resample=True,
+                                              keep_original_canvas=None, adaptive=None, rotation=rot, rotation_center=None,
+                                              translation=transl, pad=None, interpolation_mode=None, bspline_order=2)
+                labels_array = gatetools.applyTransformation(input=labels_array, like=None, spacinglike=None, matrix=None, newsize=None,
                                               neworigin=None, newspacing=None, newdirection=None, force_resample=True,
                                               keep_original_canvas=None, adaptive=None, rotation=rot, rotation_center=None,
                                               translation=transl, pad=None, interpolation_mode=None, bspline_order=2)
@@ -271,7 +275,7 @@ def generate(opt):
             # background = cylinder with revolution axis = Y
             background_array = np.zeros_like(X)
 
-            if ((with_attmaps) and (opt.organlabels)):
+            if ((with_attmaps) and (with_rois)):
                 background_array[labels_array>0]=1
             elif ((with_attmaps) and (attmap_np.max()>0)):
                 background_array[attmap_np>0.01]=1
@@ -290,11 +294,11 @@ def generate(opt):
 
             src_array += background_array
 
-        if opt.organlabels:
-            src_array[labels_array==int(organ_labels["liver"])]=np.random.rand()*(5-3)+3
-            src_array[labels_array==int(organ_labels["kidney_left"])]=np.random.rand()*(5-3)+3
-            src_array[labels_array==int(organ_labels["kidney_right"])]=np.random.rand()*(5-3)+3
-            src_array[labels_array==int(organ_labels["skeleton"])]=np.random.rand()*(5-3)+3
+        if opt.organlabels is not None:
+            min_ratio_rois,max_ratio_rois = 3,6
+            for organ in organ_labels.keys():
+                if ((organ!="body") and (np.random.rand()>2/3)): # choose each organ with proba 2/3
+                    src_array[labels_array==int(organ_labels[organ])]= np.random.rand()*(max_ratio_rois-min_ratio_rois)+min_ratio_rois
 
         lesion_array=np.zeros_like(X)
         random_nb_of_sphers = np.random.randint(1,opt.nspheres)
@@ -333,7 +337,6 @@ def generate(opt):
                 lesion = generate_convex(X=X,Y=Y,Z=Z,center=center,min_radius=opt.min_radius, max_radius = opt.max_radius, prop_radius = opt.prop_radius)
 
 
-
             if opt.grad_act:
                 rndm_grad_act_scaled_scaled = rndm_grad_act_scaled / np.mean(rndm_grad_act_scaled[lesion>0])
                 lesion = lesion * (rndm_grad_act_scaled_scaled*random_activity)
@@ -349,7 +352,7 @@ def generate(opt):
             print('fp...')
 
         total_counts_per_proj = round(np.random.rand() * (max_count - min_count) + min_count)
-        print(f"{total_counts_per_proj} ({total_counts_per_proj/(1e6 * 20 * efficiency)} MBq)")
+        print(f"{total_counts_per_proj} ({total_counts_per_proj/(1e6 * time_per_proj * efficiency)} MBq)")
         src_array_normedToTotalCounts = src_array / np.sum(src_array) * total_counts_per_proj * spacing_proj**2 / (vSpacing[0]*vSpacing[1]*vSpacing[2])
 
         src_img_normedToTotalCounts = itk.image_from_array(src_array_normedToTotalCounts.astype(np.float32))
@@ -360,9 +363,6 @@ def generate(opt):
 
         # saving of source 3D image
         if opt.save_src:
-            # src_img = itk.image_from_array(src_array.astype(np.float32))
-            # src_img.SetSpacing(vSpacing[::-1])
-            # src_img.SetOrigin(vOffset[::-1])
             save_me(img=src_img_normedToTotalCounts, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
                     ref="src", grp=grp, dtype=dtype)
 
@@ -466,12 +466,10 @@ def generate(opt):
                     ref="PVE_noisy", grp=grp, dtype=dtype, img_like=output_forward_PVE)
 
 
-
-
         if opt.rec_fp:
             print('rec_fp...')
             if with_attmaps:
-                attmap_rec_fp = itk.imread(attmap_ref.replace('.mhd', '_rec_fp.mhd'), pixel_type=pixelType)
+                attmap_rec_fp = itk.imread(attmap_ref.replace('.mhd', '_4mm.mhd'), pixel_type=pixelType)
                 if opt.attmapaugmentation:
                     # apply the same transformation that to attmap
                     attmap_rec_fp = gatetools.applyTransformation(input=attmap_rec_fp, like=None, spacinglike=None, matrix=None, newsize=None,

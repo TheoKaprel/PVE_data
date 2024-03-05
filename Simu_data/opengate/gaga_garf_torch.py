@@ -214,6 +214,7 @@ if __name__ == '__main__':
     parser.add_argument("-f", "--folder", type = str)
     parser.add_argument("-o", "--output", type = str)
     parser.add_argument("-n","--nprojs", type = int)
+    parser.add_argument("--rot", type = str)
     parser.add_argument("--sid", type=float, help = "source-to-isocenter distance ")
     parser.add_argument('--debug', action="store_true")
     parser.add_argument('--save', action="store_true", help="will save conditions, and generated positions (for debug)")

@@ -7,8 +7,6 @@ def get_psf_params(machine, verbose = True):
     # Units in mm
 
     c = (2 * np.sqrt(2 * np.log(2)))
-
-
     if machine=="ge-discovery":
         # holes diameter
         d = 1.5
@@ -91,9 +89,13 @@ def get_detector_params(machine):
     if machine=='ge-discovery':
         size = 128
         spacing = 4.41806
-    elif machine=='siemens-intevo':
+    elif machine=='siemens-intevo-lehr':
         size = 256
         spacing = 2.3976
+    elif machine == 'siemens-intevo-megp':
+        size = 128
+        spacing = 4.7952
+
     return size,spacing
 
 def get_FWHM_b(machine, b):
