@@ -1,5 +1,3 @@
-set -x
-
 file=$1
 basename=${file%.mhd}
 rot=${basename}_rot.mhd
@@ -16,6 +14,3 @@ echo ${rot_2mm}
 
 clitkAffineTransform -i ${rot} -o ${rot_4mm}  --spacing 4.6875,4.6875,4.6875 --adaptive --interp 0
 echo ${rot_4mm}
-
-
-set +x

@@ -49,7 +49,7 @@ parser.add_argument('--output_folder','-o', default = './dataset', help = " Abso
 parser.add_argument('--spect_system', default = "ge-discovery", choices=['ge-discovery', 'siemens-intevo-lehr', "siemens-intevo-megp"], help = 'SPECT system simulated for PVE projections')
 parser.add_argument('--save_src',action ="store_true", help = "if you want to also save the source that will be forward projected")
 parser.add_argument('--lesion_mask',action ="store_true", help = "if you want to also save the source that will be forward projected")
-parser.add_argument('--rec_fp',action="store_true", help = "noisy projections are reconstructed with 1 osem-rm iter and forward-projected w/o rm to obtain ABCDE_rec_fp.mha")
+parser.add_argument('--rec_fp',type = int, default = 0, help = "noisy projections are reconstructed with 1 osem-rm iter and forward-projected w/o rm to obtain ABCDE_rec_fp.mha")
 parser.add_argument("-v", "--verbose", action="store_true")
 def generate(opt):
     print(opt)
@@ -367,7 +367,7 @@ def generate(opt):
         src_img_normedToTotalCounts.SetSpacing(vSpacing[::-1])
         src_img_normedToTotalCounts.SetOrigin(vOffset[::-1])
 
-        if opt.rec_fp:
+        if opt.rec_fp>0:
             if with_attmaps:
                 attmap_rec_fp = itk.imread(attmap_ref.replace('.mhd', '_4mm.mhd'), pixel_type=pixelType)
                 if opt.attmapaugmentation:
@@ -506,7 +506,7 @@ def generate(opt):
                     ref="PVE_noisy", grp=grp, dtype=dtype, img_like=output_forward_PVE)
 
 
-        if opt.rec_fp:
+        if opt.rec_fp>0:
             print('rec_fp...')
             # if with_attmaps:
             #     attmap_rec_fp = itk.imread(attmap_ref.replace('.mhd', '_4mm.mhd'), pixel_type=pixelType)
@@ -539,7 +539,7 @@ def generate(opt):
             osem = OSEMType.New()
             osem.SetInput(0, output_rec)
             osem.SetGeometry(geometry)
-            osem.SetNumberOfIterations(10)
+            osem.SetNumberOfIterations(opt.rec_fp)
             osem.SetNumberOfProjectionsPerSubset(15)
             osem.SetBetaRegularization(0)
 
