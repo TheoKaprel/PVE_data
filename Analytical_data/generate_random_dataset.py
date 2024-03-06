@@ -367,12 +367,44 @@ def generate(opt):
         src_img_normedToTotalCounts.SetSpacing(vSpacing[::-1])
         src_img_normedToTotalCounts.SetOrigin(vOffset[::-1])
 
+        if opt.rec_fp:
+            if with_attmaps:
+                attmap_rec_fp = itk.imread(attmap_ref.replace('.mhd', '_4mm.mhd'), pixel_type=pixelType)
+                if opt.attmapaugmentation:
+                    # apply the same transformation that to attmap
+                    attmap_rec_fp = gatetools.applyTransformation(input=attmap_rec_fp, like=None, spacinglike=None, matrix=None, newsize=None,
+                                                  neworigin=None, newspacing=None, newdirection=None, force_resample=True,
+                                                  keep_original_canvas=None, adaptive=None, rotation=rot, rotation_center=None,
+                                                  translation=transl, pad=None, interpolation_mode=None, bspline_order=2)
+                save_me(img=attmap_rec_fp, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
+                        ref="attmap_rec_fp", grp=grp, dtype=dtype)
+
+                attmap_rec_fp_np = itk.array_from_image(attmap_rec_fp)
+                vSpacing_recpfp = np.array(attmap_rec_fp.GetSpacing())
+                vSize_recfp = np.array(attmap_rec_fp_np.shape)[::-1]
+                vOffset_recfp = np.array(attmap_rec_fp.GetOrigin())
+            else:
+                vSpacing_recpfp = np.array([4.6875, 4.6875, 4.6875])
+                vSize_recfp = np.array([128, 128, 128])
+                vOffset_recfp = [(-sp * size + sp) / 2 for (sp, size) in zip(vSpacing_recpfp, vSize_recfp)]
 
 
         # saving of source 3D image
         if opt.save_src:
             save_me(img=src_img_normedToTotalCounts, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
                     ref="src", grp=grp, dtype=dtype)
+
+            src_img_normedToTotalCounts_4mm = gatetools.applyTransformation(input=src_img_normedToTotalCounts, like=attmap_rec_fp, spacinglike=None, matrix=None, newsize=None,
+                                                   neworigin=None, newspacing=None, newdirection=None,
+                                                   force_resample=True,
+                                                   keep_original_canvas=None, adaptive=None, rotation=None,
+                                                   rotation_center=None,
+                                                   translation=None, pad=None, interpolation_mode="NN",
+                                                   bspline_order=2)
+
+            save_me(img=src_img_normedToTotalCounts_4mm, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
+                    ref="src_4mm", grp=grp, dtype=dtype)
+
 
         if opt.lesion_mask:
             lesion_mask = (lesion_array > 0).astype(np.float32)
@@ -476,25 +508,25 @@ def generate(opt):
 
         if opt.rec_fp:
             print('rec_fp...')
-            if with_attmaps:
-                attmap_rec_fp = itk.imread(attmap_ref.replace('.mhd', '_4mm.mhd'), pixel_type=pixelType)
-                if opt.attmapaugmentation:
-                    # apply the same transformation that to attmap
-                    attmap_rec_fp = gatetools.applyTransformation(input=attmap_rec_fp, like=None, spacinglike=None, matrix=None, newsize=None,
-                                                  neworigin=None, newspacing=None, newdirection=None, force_resample=True,
-                                                  keep_original_canvas=None, adaptive=None, rotation=rot, rotation_center=None,
-                                                  translation=transl, pad=None, interpolation_mode=None, bspline_order=2)
-                save_me(img=attmap_rec_fp, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
-                        ref="attmap_rec_fp", grp=grp, dtype=dtype)
-
-                attmap_rec_fp_np = itk.array_from_image(attmap_rec_fp)
-                vSpacing_recpfp = np.array(attmap_rec_fp.GetSpacing())
-                vSize_recfp = np.array(attmap_rec_fp_np.shape)[::-1]
-                vOffset_recfp = np.array(attmap_rec_fp.GetOrigin())
-            else:
-                vSpacing_recpfp = np.array([4.6875, 4.6875, 4.6875])
-                vSize_recfp = np.array([128, 128, 128])
-                vOffset_recfp = [(-sp * size + sp) / 2 for (sp, size) in zip(vSpacing_recpfp, vSize_recfp)]
+            # if with_attmaps:
+            #     attmap_rec_fp = itk.imread(attmap_ref.replace('.mhd', '_4mm.mhd'), pixel_type=pixelType)
+            #     if opt.attmapaugmentation:
+            #         # apply the same transformation that to attmap
+            #         attmap_rec_fp = gatetools.applyTransformation(input=attmap_rec_fp, like=None, spacinglike=None, matrix=None, newsize=None,
+            #                                       neworigin=None, newspacing=None, newdirection=None, force_resample=True,
+            #                                       keep_original_canvas=None, adaptive=None, rotation=rot, rotation_center=None,
+            #                                       translation=transl, pad=None, interpolation_mode=None, bspline_order=2)
+            #     save_me(img=attmap_rec_fp, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
+            #             ref="attmap_rec_fp", grp=grp, dtype=dtype)
+            #
+            #     attmap_rec_fp_np = itk.array_from_image(attmap_rec_fp)
+            #     vSpacing_recpfp = np.array(attmap_rec_fp.GetSpacing())
+            #     vSize_recfp = np.array(attmap_rec_fp_np.shape)[::-1]
+            #     vOffset_recfp = np.array(attmap_rec_fp.GetOrigin())
+            # else:
+            #     vSpacing_recpfp = np.array([4.6875, 4.6875, 4.6875])
+            #     vSize_recfp = np.array([128, 128, 128])
+            #     vOffset_recfp = [(-sp * size + sp) / 2 for (sp, size) in zip(vSpacing_recpfp, vSize_recfp)]
 
             constant_image = rtk.ConstantImageSource[imageType].New()
             constant_image.SetSpacing(vSpacing_recpfp)
