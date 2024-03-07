@@ -320,7 +320,7 @@ def generate(opt):
                         else:
                             organ_act = (labels_array == int(organ_labels[organ])) * (organ_rndm_activity)
 
-                    src_array+=organ_act
+                        src_array+=organ_act
 
         for s in range(random_nb_of_sphers):
             # random_activity = sample_activity(min_r=min_ratio,max_r=Max_ratio,lbda=lbda,with_bg=opt.background)
