@@ -309,14 +309,16 @@ def generate(opt):
         if opt.organlabels is not None:
             min_ratio_rois,max_ratio_rois = 3,6
             for organ in organ_labels.keys():
-                if ((organ!="body") and (np.random.rand()>2/3)): # choose each organ with proba 2/3
-                    organ_rndm_activity = np.random.rand() * (max_ratio_rois - min_ratio_rois) + min_ratio_rois
+                if ((organ!="body") and (np.random.rand()>2/3)): # choose each organ (except background body) with proba 2/3
+                    if (labels_array==int(organ_labels[organ])).any(): # if the organ is present in the attmap, then...
+                        organ_rndm_activity = np.random.rand() * (max_ratio_rois - min_ratio_rois) + min_ratio_rois
 
-                    if opt.grad_act:
-                        rndm_grad_act_scaled_scaled = rndm_grad_act_scaled / np.mean(rndm_grad_act_scaled[labels_array==int(organ_labels[organ])])
-                        organ_act = (labels_array==int(organ_labels[organ])) * (rndm_grad_act_scaled_scaled * organ_rndm_activity)
-                    else:
-                        organ_act = (labels_array == int(organ_labels[organ])) * (organ_rndm_activity)
+                        if opt.grad_act:
+                            mean = np.mean(rndm_grad_act_scaled[labels_array==int(organ_labels[organ])])
+                            rndm_grad_act_scaled_scaled = rndm_grad_act_scaled / mean
+                            organ_act = (labels_array==int(organ_labels[organ])) * (rndm_grad_act_scaled_scaled * organ_rndm_activity)
+                        else:
+                            organ_act = (labels_array == int(organ_labels[organ])) * (organ_rndm_activity)
 
                     src_array+=organ_act
 
@@ -394,16 +396,17 @@ def generate(opt):
             save_me(img=src_img_normedToTotalCounts, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
                     ref="src", grp=grp, dtype=dtype)
 
-            src_img_normedToTotalCounts_4mm = gatetools.applyTransformation(input=src_img_normedToTotalCounts, like=attmap_rec_fp, spacinglike=None, matrix=None, newsize=None,
-                                                   neworigin=None, newspacing=None, newdirection=None,
-                                                   force_resample=True,
-                                                   keep_original_canvas=None, adaptive=None, rotation=None,
-                                                   rotation_center=None,
-                                                   translation=None, pad=None, interpolation_mode="NN",
-                                                   bspline_order=2)
+            if opt.rec_fp>0:
+                src_img_normedToTotalCounts_4mm = gatetools.applyTransformation(input=src_img_normedToTotalCounts, like=attmap_rec_fp, spacinglike=None, matrix=None, newsize=None,
+                                                       neworigin=None, newspacing=None, newdirection=None,
+                                                       force_resample=True,
+                                                       keep_original_canvas=None, adaptive=None, rotation=None,
+                                                       rotation_center=None,
+                                                       translation=None, pad=None, interpolation_mode="NN",
+                                                       bspline_order=2)
 
-            save_me(img=src_img_normedToTotalCounts_4mm, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
-                    ref="src_4mm", grp=grp, dtype=dtype)
+                save_me(img=src_img_normedToTotalCounts_4mm, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
+                        ref="src_4mm", grp=grp, dtype=dtype)
 
 
         if opt.lesion_mask:
