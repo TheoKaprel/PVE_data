@@ -29,7 +29,7 @@ def main():
     p.data_folder = args.data
     p.ct_image = args.ct
     p.activity_image = args.source
-    p.radionuclide = "Tc99m"
+    p.radionuclide = args.radionuclide
     p.activity = args.activity * Bq
     p.duration = 1 * sec
 
@@ -91,6 +91,7 @@ if __name__ == "__main__":
     parser.add_argument("-a","--activity", type = float, default = 2e7)
     parser.add_argument("-s", "--source", type=str)
     parser.add_argument("--ct", type=str)
+    parser.add_argument("--radionuclide", type=str, choices=['Tc99m', 'Lu177'])
     parser.add_argument("--data", type=str)
     parser.add_argument("--output_folder", type=str)
     args = parser.parse_args()

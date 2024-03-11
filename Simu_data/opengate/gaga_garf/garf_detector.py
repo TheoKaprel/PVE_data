@@ -11,9 +11,13 @@ class GARF:
         self.output_fn = user_info['output_fn']
         self.device = user_info['device']
         self.nprojs = user_info['nprojs']
+        self.size=user_info['npix']
 
-        self.size=256
-        self.spacing=2.3976
+        if self.size==256:
+            self.spacing=2.3976
+        elif self.size==128:
+            self.spacing= 2*2.3976
+
         self.image_spacing = [self.spacing, self.spacing, 1]
 
         self.degree = np.pi / 180
@@ -222,7 +226,7 @@ class GARF:
         self.output_projections_SC_array=self.output_projections_array[:self.nprojs,:,:] - k * self.output_projections_array[self.nprojs:,:,:]
         self.output_projections_SC_array[self.output_projections_SC_array<0]=0
         self.output_projections_SC_itk = itk.image_from_array(self.output_projections_SC_array)
-        size = np.array([256,256, self.nprojs])
+        size = np.array([self.size,self.size, self.nprojs])
         origin = -size / 2.0 * spacing + spacing / 2.0
         self.output_projections_SC_itk.SetSpacing(spacing)
         self.output_projections_SC_itk.SetOrigin(origin)

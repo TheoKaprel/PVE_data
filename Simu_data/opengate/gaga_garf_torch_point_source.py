@@ -73,7 +73,7 @@ def main():
     dist_to_crystal = 29.104800000000004
     l_detectorsPlanes = []
     for angle in l_angles:
-        det_plane = DetectorPlane(size=565.511, device=device, center0=[0,0, -args.sid], rot_angle=angle,dist_to_crystal=dist_to_crystal) #FIXME (center)
+        det_plane = DetectorPlane(size=2.3976*256, device=device, center0=[0,0, -args.sid], rot_angle=angle,dist_to_crystal=dist_to_crystal) #FIXME (center)
         # det_plane = DetectorPlane(size=565.511, device=device, center0=[0,args.sid,0], rot_angle=angle) #FIXME (center)
         l_detectorsPlanes.append(det_plane)
 
@@ -83,6 +83,11 @@ def main():
     garf_ui['device'] = device
     garf_ui['output_fn'] = os.path.join(args.folder, f"projs.mhd") if args.output is None else args.output
     garf_ui['nprojs'] = len(l_detectorsPlanes)
+    if (args.radionuclide).lower()=="tc99m":
+        garf_ui['npix'] = 256
+    elif (args.radionuclide).lower()=="lu177":
+        garf_ui['npix'] = 128
+
     garf_detector = GARF(user_info=garf_ui)
 
     batch_size = int(float(args.batchsize))
