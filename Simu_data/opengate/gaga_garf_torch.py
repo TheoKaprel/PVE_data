@@ -58,6 +58,10 @@ def main():
     garf_ui['device'] = device
     garf_ui['output_fn'] = os.path.join(args.folder, f"projs.mhd") if args.output is None else args.output
     garf_ui['nprojs'] = len(l_detectorsPlanes)
+    if (args.radionuclide).lower()=="tc99m":
+        garf_ui['npix'] = 256
+    elif (args.radionuclide).lower()=="lu177":
+        garf_ui['npix'] = 128
     garf_detector = GARF(user_info=garf_ui)
 
     dataset = ConditionsDataset(activity=args.activity,cgan_src=cgan_source,source_fn=args.source,save_cond=args.save)
@@ -218,7 +222,7 @@ if __name__ == '__main__':
     parser.add_argument("--sid", type=float, help = "source-to-isocenter distance ")
     parser.add_argument('--debug', action="store_true")
     parser.add_argument('--save', action="store_true", help="will save conditions, and generated positions (for debug)")
-
+    parser.add_argument("--radionuclide", type = str)
     args = parser.parse_args()
 
     main()

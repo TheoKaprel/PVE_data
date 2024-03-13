@@ -221,18 +221,18 @@ class GARF:
         itk.imwrite(self.output_projections_itk, self.output_fn)
         print(f'Output projection saved in : {self.output_fn}')
 
-        # SC
-        k = 0.5
-        self.output_projections_SC_array=self.output_projections_array[:self.nprojs,:,:] - k * self.output_projections_array[self.nprojs:,:,:]
-        self.output_projections_SC_array[self.output_projections_SC_array<0]=0
-        self.output_projections_SC_itk = itk.image_from_array(self.output_projections_SC_array)
-        size = np.array([self.size,self.size, self.nprojs])
-        origin = -size / 2.0 * spacing + spacing / 2.0
-        self.output_projections_SC_itk.SetSpacing(spacing)
-        self.output_projections_SC_itk.SetOrigin(origin)
-        projs_SC_fn = self.output_fn.replace('.mhd', '_SC.mhd')
-        itk.imwrite(self.output_projections_SC_itk, projs_SC_fn)
-        print(f'Output projection (SC) saved in : {projs_SC_fn}')
+        # # SC
+        # k = 0.5
+        # self.output_projections_SC_array=self.output_projections_array[:self.nprojs,:,:] - k * self.output_projections_array[self.nprojs:,:,:]
+        # self.output_projections_SC_array[self.output_projections_SC_array<0]=0
+        # self.output_projections_SC_itk = itk.image_from_array(self.output_projections_SC_array)
+        # size = np.array([self.size,self.size, self.nprojs])
+        # origin = -size / 2.0 * spacing + spacing / 2.0
+        # self.output_projections_SC_itk.SetSpacing(spacing)
+        # self.output_projections_SC_itk.SetOrigin(origin)
+        # projs_SC_fn = self.output_fn.replace('.mhd', '_SC.mhd')
+        # itk.imwrite(self.output_projections_SC_itk, projs_SC_fn)
+        # print(f'Output projection (SC) saved in : {projs_SC_fn}')
 
 
 
