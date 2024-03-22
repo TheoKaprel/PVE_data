@@ -4,10 +4,9 @@
 import opengate as gate
 import opengate.exception
 import sys
-sys.path.append('/export/home/tkaprelian/Desktop/PVE/PVE_data/Simu_data/spect_siemens_intevo/')
+sys.path.append(os.path.join(os.getcwd(),"../spect_siemens_intevo"))
 import spect_siemens_intevo as gate_intevo
 from opengate.sources.generic import get_rad_gamma_energy_spectrum
-import gaga_phsp as gaga
 from gaga_phsp import gaga_helpers_gate
 
 import os
