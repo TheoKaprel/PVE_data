@@ -5,9 +5,7 @@ import opengate as gate
 import opengate.exception
 import sys
 import os
-print(os.path.join(os.getcwd(),"../spect_siemens_intevo_loc"))
-
-sys.path.append(os.path.join(os.getcwd(),"../spect_siemens_intevo_loc"))
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),"../spect_siemens_intevo_loc"))
 import spect_siemens_intevo as gate_intevo
 from opengate.sources.generic import get_rad_gamma_energy_spectrum
 from gaga_phsp import gaga_helpers_gate

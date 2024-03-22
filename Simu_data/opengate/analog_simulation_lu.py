@@ -4,7 +4,7 @@ from test203_helpers import *
 from box import Box
 import sys
 import os
-sys.path.append(os.path.join(os.getcwd(),"../spect_siemens_intevo_loc"))
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),"../spect_siemens_intevo_loc"))
 import spect_siemens_intevo as gate_intevo
 from opengate.actors.digitizers import energy_windows_peak_scatter
 
