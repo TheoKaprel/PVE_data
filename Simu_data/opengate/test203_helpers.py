@@ -4,12 +4,11 @@
 import opengate as gate
 import opengate.exception
 import sys
+import os
 sys.path.append(os.path.join(os.getcwd(),"../spect_siemens_intevo"))
 import spect_siemens_intevo as gate_intevo
 from opengate.sources.generic import get_rad_gamma_energy_spectrum
 from gaga_phsp import gaga_helpers_gate
-
-import os
 from path import Path
 import inspect
 import numpy as np
