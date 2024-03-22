@@ -14,7 +14,7 @@ def update_ideal_recons(batch,recons,offset,spacing,size,e_min=0.001):
 
     # filter according to E ?
     # mask = energies > e_min
-    mask = (energies>0.140) & (energies<0.141)
+    mask = (energies>e_min*0.99) & (energies<e_min*1.01)
     positions = positions[mask]
     directions = directions[mask]
     times = times[mask]

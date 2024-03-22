@@ -79,6 +79,7 @@ def get_psf_params(machine, verbose = True):
         print(f'sigma0 = {sigma0_psf}')
         print(f'alpha = {alpha_psf}')
         print(f'efficiency : {round(efficiency*100, 8)} %')
+        print(f"--sigmazero {sigma0_psf} --alphapsf {alpha_psf}")
 
     return sigma0_psf, alpha_psf, efficiency
 

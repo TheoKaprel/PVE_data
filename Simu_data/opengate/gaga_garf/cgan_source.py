@@ -147,6 +147,8 @@ class ConditionsDataset:
         self.offset = torch.from_numpy(self.offset).to(self.device).flip(0)
         print(self.offset)
 
+        self.max_radius = 0
+
 
     def save_conditions(self, fn):
         condition_img_itk = itk.image_from_array(self.condition_img)
@@ -199,6 +201,12 @@ class ConditionsDataset:
         condx = torch.column_stack((p,dir))
 
         condx = (condx - self.xmeanc) / self.xstdc
-        z = self.z_rand((n,self.z_dim),device=self.device)
-        gan_input_z_cond = torch.cat((z, condx), dim=1).float()
+        z_rand = self.z_rand((n,self.z_dim),device=self.device)
+        gan_input_z_cond = torch.cat((z_rand, condx), dim=1).float()
+
+        r = torch.sqrt(p[0]**2 + p[2] **2)
+        if r.max()>self.max_radius:
+            self.max_radius = r.max()
+            print(r.mean())
+
         return gan_input_z_cond

@@ -43,6 +43,13 @@ def main():
         *energy_windows_peak_scatter("peak208", "scatter3", "scatter4", p2, 0.2, 0.1),
     ]
 
+    # {'name': 'scatter1', 'min': 0.09681411428571429, 'max': 0.10165482},
+    # {'name': 'peak113', 'min': 0.10165482, 'max': 0.12424478},
+    # {'name': 'scatter2', 'min': 0.12424478, 'max': 0.13078397894736843},
+    # {'name': 'scatter3', 'min': 0.1785996, 'max': 0.18752958},
+    # {'name': 'peak208', 'min': 0.18752958, 'max': 0.22920282},
+    # {'name': 'scatter4', 'min': 0.22920282, 'max': 0.24126612631578948}
+
     # spect
     arf, ew = gate_intevo.create_simu_for_arf_training_dataset(
         sim, colli_type, 300 * keV, activity, rr=50, channels=channels, radius=radius

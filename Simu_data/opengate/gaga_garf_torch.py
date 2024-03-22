@@ -115,7 +115,7 @@ def main():
                 recons_generated = helpers.update_ideal_recons(batch=fake,
                                                        recons=recons_generated,
                                                        offset=offset[::-1],spacing=spacing,size=size,
-                                                       e_min=0.140)
+                                                       e_min=0.208 if (args.radionuclide).lower()=="lu177" else 0.140)
 
             # backproject a little bit: p2= p1 - alpha * d1
             # solved (avec inconnu=alpha) using ||p2||² = R2² puis equation degré 2 en alpha
@@ -207,6 +207,7 @@ def main():
     print(f"INTERSECTION TIME : {t_intersection}")
     print(f"APPLY TIME : {t_apply}")
     print(f"SAVING TIME : {t_save}")
+    print(f"MAX RADIUS SAMPLED : {dataset.max_radius}")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
