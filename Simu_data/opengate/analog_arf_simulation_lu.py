@@ -64,8 +64,8 @@ def main():
     p_garf.output_folder = output_folder
 
     # SPECT
-    add_intevo_head_arf(sim, p_garf, "arf1", 0, angle=args.angle)
-    add_intevo_head_arf(sim, p_garf, "arf2", 1, angle=180+args.angle)
+    add_intevo_head_arf(sim, p_garf, "arf", 0, angle=args.angle)
+    # add_intevo_head_arf(sim, p_garf, "arf2", 1, angle=180+args.angle)
 
 
     sim.add_actor("SimulationStatisticsActor", "stats")
