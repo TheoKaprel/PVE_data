@@ -10,21 +10,34 @@ from opengate.actors.digitizers import energy_windows_peak_scatter
 
 
 def main():
+    # units
+    m = gate.g4_units.m
+    mm = gate.g4_units.mm
+    Bq = gate.g4_units.Bq
+    sec = gate.g4_units.second
+
     # create the simulation
     sim = gate.Simulation()
-    simu_name = "analog_simu_lu177_megp"
+    simu_name = f"analog_simu_lu177_megp_{args.activity}_{args.sid}mm"
     output_folder = args.output_folder
     os.makedirs(output_folder, exist_ok=True)
 
-    # units
-    mm = gate.g4_units.mm
-    keV = gate.g4_units.keV
-    Bq = gate.g4_units.Bq
-    sec = gate.g4_units.second
+    # world size
+    world = sim.world
+    world.size = [2 * m, 2 * m, 3 * m]
+    world.material = "G4_AIR"
+
+    # basic physics
+    sim.physics_manager.physics_list_name = "G4EmStandardPhysics_option3"
+    sim.physics_manager.set_production_cut("world", "all", 1e3 * m)
 
     # options
     ui = sim.user_info
     ui.number_of_threads = 8
+
+    print(f"Simu          : {simu_name}")
+    print(f"Output folder : {output_folder}")
+    print(f"Nb threads    : {ui.number_of_threads}")
 
     # source/ct parameters
     p = Box()
@@ -37,35 +50,23 @@ def main():
     patient = add_ct_image(sim, p)
     source = add_vox_source(sim, p, patient)
 
-    # spect info
-    colli_type = "melp"
-    radius = args.sid * mm
+    # parameters
+    p_garf = Box()
+    p_garf.size = [128,128]
+    p_garf.spacing = [4.7951998710632 * mm, 4.7951998710632 * mm]
+    p_garf.plane_size = [p_garf.size[0] * p_garf.spacing[0], p_garf.size[1] * p_garf.spacing[1]]
+    p_garf.radius = args.sid * mm
+    p_garf.detector_offset = 0 * mm
+    p_garf.colli_type = "melp"
+    p_garf.radionuclide = "Lu177"
+    p_garf.garf_pth_filename = args.garf
+    p_garf.simu_name = simu_name
+    p_garf.output_folder = output_folder
 
-    # channels
-    head,colli,crystal = gate_intevo.add_intevo_spect_head(sim, "spect", colli_type, debug=ui.visu)
-    digit = gate_intevo.add_digitizer_v2(sim, crystal.name, "digit")
-    gate_intevo.set_head_orientation(head, colli_type, radius, gantry_angle = args.angle)
+    # SPECT
+    add_intevo_head_arf(sim, p_garf, "arf1", 0, angle=args.angle)
+    add_intevo_head_arf(sim, p_garf, "arf2", 1, angle=180+args.angle)
 
-    # channels
-    p1 = 112.9498 * keV
-    p2 = 208.3662 * keV
-    channels = [
-        *energy_windows_peak_scatter("peak113", "scatter1", "scatter2", p1, 0.2, 0.1),
-        *energy_windows_peak_scatter("peak208", "scatter3", "scatter4", p2, 0.2, 0.1),
-    ]
-    # output projection (not needed)
-    ew = sim.get_actor_user_info("digit_energy_window")
-    ew.channels = channels
-    proj = digit.find_first_module("projection")
-    channel_names = [c["name"] for c in ew.channels]
-    proj.input_digi_collections = channel_names
-
-    if args.output_projs is None:
-        output_projs_fn = "projs.mhd"
-    else:
-        output_projs_fn = args.output_projs
-
-    proj.output = os.path.join(output_folder, output_projs_fn)
 
     sim.add_actor("SimulationStatisticsActor", "stats")
 
@@ -87,6 +88,7 @@ if __name__ == '__main__':
     parser.add_argument("--angle", type=float)
     parser.add_argument("--source")
     parser.add_argument("--ct")
+    parser.add_argument("--garf")
     parser.add_argument("--data")
     parser.add_argument("--output_folder")
     parser.add_argument("--output_projs")
