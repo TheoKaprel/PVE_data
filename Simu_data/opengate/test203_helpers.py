@@ -182,6 +182,7 @@ def add_intevo_head_arf(sim, p, name, n, angle):
     print(f"ARF detector size    : {p.plane_size}")
     print(f"ARF detector offset  : {p.detector_offset}")
 
+    return arf
 
 def add_ct_image(sim, p):
     patient = sim.add_volume("Image", "patient")

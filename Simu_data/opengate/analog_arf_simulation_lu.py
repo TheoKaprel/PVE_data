@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 import argparse
+
+import itk
+
 from test203_helpers import *
 from box import Box
 import sys
@@ -47,8 +50,6 @@ def main():
     p.radionuclide = "Lu177"
     p.activity = args.activity * Bq
     p.duration = 1 * sec
-    patient = add_ct_image(sim, p)
-    source = add_vox_source(sim, p, patient)
 
     # parameters
     p_garf = Box()
@@ -64,8 +65,13 @@ def main():
     p_garf.output_folder = output_folder
 
     # SPECT
-    add_intevo_head_arf(sim, p_garf, "arf", 0, angle=args.angle)
-    # add_intevo_head_arf(sim, p_garf, "arf2", 1, angle=180+args.angle)
+    list_arf_projs = []
+    for i in range(args.n):
+        arf = add_intevo_head_arf(sim, p_garf, f"arf{i}", i, angle=args.angle + (360/args.n * i)%360)
+        list_arf_projs.append(arf.output)
+
+    patient = add_ct_image(sim, p)
+    source = add_vox_source(sim, p, patient)
 
 
     sim.add_actor("SimulationStatisticsActor", "stats")
@@ -80,6 +86,17 @@ def main():
     stats.write(f"{output_folder}/{simu_name}_stats.txt")
     print(stats)
 
+    # merge projections :
+    merged_peak = None
+    for i in range(args.n):
+        proj  = itk.imread(list_arf_projs[i])
+        array = itk.array_from_image(proj)
+        if merged_peak is None:
+            merged_peak = array[4:5,:,:]
+        else:
+            merged_peak = np.concatenate((merged_peak, array[4:5,:,:]), axis=0)
+    merged_peak_itk = itk.image_from_array(merged_peak)
+    itk.imwrite(merged_peak_itk, os.path.join(args.output_folder, "merged_peak.mhd"))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -91,6 +108,7 @@ if __name__ == '__main__':
     parser.add_argument("--garf")
     parser.add_argument("--data")
     parser.add_argument("--output_folder")
+    parser.add_argument("-n", type = int)
     parser.add_argument("--output_projs")
     args = parser.parse_args()
 
