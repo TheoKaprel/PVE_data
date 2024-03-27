@@ -270,6 +270,8 @@ def add_garf_detector(
     arf = add_arf_actor(
         sim, arf_plane, size, spacing, crystal_dist, f"{name}_garf", pth_filename
     )
+    sim.add_parallel_world(f"{name}_world")
+    arf_plane.mother = f"{name}_world"
     return arf
 
 

@@ -36,7 +36,7 @@ def main():
 
     # options
     ui = sim.user_info
-    ui.number_of_threads = 8
+    ui.number_of_threads = 10
 
     print(f"Simu          : {simu_name}")
     print(f"Output folder : {output_folder}")
