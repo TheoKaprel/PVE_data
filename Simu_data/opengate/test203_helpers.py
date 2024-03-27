@@ -200,8 +200,11 @@ def add_ct_image(sim, p):
     print(f"CT image mat: {len(patient.voxel_materials)} materials")
 
     # associated physics
-    mm = gate.g4_units.mm
-    sim.physics_manager.set_production_cut("patient", "all", 1 * mm)
+    # mm = gate.g4_units.mm
+    # sim.physics_manager.set_production_cut("patient", "all", 1 * mm)
+
+    m = gate.g4_units.m
+    sim.physics_manager.set_production_cut("patient", "all", 1e3 * m)
 
     return patient
 

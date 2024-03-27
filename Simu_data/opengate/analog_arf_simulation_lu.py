@@ -36,7 +36,7 @@ def main():
 
     # options
     ui = sim.user_info
-    ui.number_of_threads = 10
+    ui.number_of_threads = args.t
 
     print(f"Simu          : {simu_name}")
     print(f"Output folder : {output_folder}")
@@ -109,6 +109,7 @@ if __name__ == '__main__':
     parser.add_argument("--data")
     parser.add_argument("--output_folder")
     parser.add_argument("-n", type = int)
+    parser.add_argument("-t", type = int)
     parser.add_argument("--output_projs")
     args = parser.parse_args()
 
