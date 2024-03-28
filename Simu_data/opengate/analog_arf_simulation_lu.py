@@ -10,7 +10,7 @@ import os
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),"../spect_siemens_intevo_loc"))
 import spect_siemens_intevo as gate_intevo
 from opengate.actors.digitizers import energy_windows_peak_scatter
-
+import pickle
 
 def main():
     # units
@@ -54,7 +54,7 @@ def main():
     # parameters
     p_garf = Box()
     p_garf.size = [128,128]
-    p_garf.spacing = [4.7951998710632 * mm, 4.7951998710632 * mm]
+    p_garf.spacing = [4.7952 * mm, 4.7952 * mm]
     p_garf.plane_size = [p_garf.size[0] * p_garf.spacing[0], p_garf.size[1] * p_garf.spacing[1]]
     p_garf.radius = args.sid * mm
     p_garf.detector_offset = 0 * mm
@@ -68,7 +68,7 @@ def main():
     list_arf_projs = []
     for i in range(args.n):
         arf = add_intevo_head_arf(sim, p_garf, f"arf{i}", i, angle=args.angle + (360/args.n * i)%360)
-        list_arf_projs.append(arf.output)
+        list_arf_projs.append(arf._name)
 
     patient = add_ct_image(sim, p)
     source = add_vox_source(sim, p, patient)
@@ -89,14 +89,14 @@ def main():
     # merge projections :
     merged_peak = None
     for i in range(args.n):
-        proj  = itk.imread(list_arf_projs[i])
-        array = itk.array_from_image(proj)
+        arf = output.get_actor(list_arf_projs[i])
+        array = itk.array_from_image(arf.output_image)
         if merged_peak is None:
             merged_peak = array[4:5,:,:]
         else:
             merged_peak = np.concatenate((merged_peak, array[4:5,:,:]), axis=0)
     merged_peak_itk = itk.image_from_array(merged_peak)
-    itk.imwrite(merged_peak_itk, os.path.join(args.output_folder, "merged_peak.mhd"))
+    itk.imwrite(merged_peak_itk, os.path.join(args.output_folder, args.output_projs))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

@@ -171,7 +171,8 @@ def add_intevo_head_arf(sim, p, name, n, angle):
         p.detector_offset,
         p.garf_pth_filename,
     )
-    arf.output = f"{p.output_folder}/{p.simu_name}_{n}.mhd"
+    # arf.output = f"{p.output_folder}/{p.simu_name}_{n}.mhd"
+    arf.output = None
 
     # print
     pos, crystal_dist, psd = gate_intevo.compute_plane_position_and_distance_to_crystal(
