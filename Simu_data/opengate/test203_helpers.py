@@ -323,6 +323,7 @@ def add_vox_source(sim, p, patient):
     print(f"Vox source total activity: {source.activity/Bq} Bq")
     print(f"{p.radionuclide} yield: {np.sum(w)}")
     print(f"Expected events: {ne}")
+    print(f"Number of threads : {ui.number_of_threads}")
     return source
 
 

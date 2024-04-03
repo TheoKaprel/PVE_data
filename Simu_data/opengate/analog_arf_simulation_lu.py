@@ -10,7 +10,7 @@ import os
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),"../spect_siemens_intevo_loc"))
 import spect_siemens_intevo as gate_intevo
 from opengate.actors.digitizers import energy_windows_peak_scatter
-import pickle
+
 
 def main():
     # units
@@ -21,7 +21,7 @@ def main():
 
     # create the simulation
     sim = gate.Simulation()
-    simu_name = f"analog_simu_lu177_megp_{args.activity}_{args.sid}mm"
+    simu_name = f"analog_simu_lu177_megp_{args.activity}_{args.sid}mm_{args.t}t_{args.n}angles"
     output_folder = args.output_folder
     os.makedirs(output_folder, exist_ok=True)
 
@@ -73,7 +73,6 @@ def main():
     patient = add_ct_image(sim, p)
     source = add_vox_source(sim, p, patient)
 
-
     sim.add_actor("SimulationStatisticsActor", "stats")
 
     print(sim.user_info)
@@ -87,16 +86,15 @@ def main():
     print(stats)
 
     # merge projections :
-    merged_peak = None
+    merged_projs = np.zeros((3*args.n, 128,128))
     for i in range(args.n):
-        arf = output.get_actor(list_arf_projs[i])
-        array = itk.array_from_image(arf.output_image)
-        if merged_peak is None:
-            merged_peak = array[4:5,:,:]
-        else:
-            merged_peak = np.concatenate((merged_peak, array[4:5,:,:]), axis=0)
-    merged_peak_itk = itk.image_from_array(merged_peak)
-    itk.imwrite(merged_peak_itk, os.path.join(args.output_folder, args.output_projs))
+        arf_i = output.get_actor(list_arf_projs[i])
+        array_i = itk.array_from_image(arf_i.output_image)
+        merged_projs[i,:,:] = array_i[3:4,:,:] # lower scatter window
+        merged_projs[i+args.n,:,:] = array_i[4:5,:,:] # peak window
+        merged_projs[i+2*args.n,:,:] = array_i[5:6,:,:] # upper scatter window
+    merged_projs = itk.image_from_array(merged_projs)
+    itk.imwrite(merged_projs, os.path.join(args.output_folder, args.output_projs))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -112,6 +110,6 @@ if __name__ == '__main__':
     parser.add_argument("-t", type = int)
     parser.add_argument("--output_projs")
     args = parser.parse_args()
-
+    print(args)
 
     main()
