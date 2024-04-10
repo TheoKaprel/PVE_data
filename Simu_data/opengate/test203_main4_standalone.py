@@ -23,8 +23,7 @@ def main():
 
     p.radius = args.sid * mm
     p.detector_offset = 0 * mm
-    p.colli_type = "lehr"
-    p.radionuclide = "Tc99m"
+
 
     # p.data_folder = Path("training_data")
     p.ct_image = args.ct
@@ -33,8 +32,18 @@ def main():
     p.gaga_pth_filename = args.pthgaga
 
 
-    p.size = [256, 256]
-    p.spacing = [4.7951998710632 * mm / 2, 4.7951998710632 * mm / 2]
+    p.colli_type = "lehr"
+    p.radionuclide = args.radionuclide
+    if args.radionuclide=="Tc99m":
+        p.size = [256, 256]
+        p.spacing = [4.7952 * mm / 2, 4.7952 * mm / 2]
+    elif args.radionuclide=="Lu177":
+        p.size = [128, 128]
+        p.spacing = [4.7952 * mm, 4.7952 * mm]
+    else:
+        print('ERROR: wrong radionuclide.')
+        exit(0)
+
 
     p.number_of_threads = 8
     p.duration = 1 * sec
@@ -61,6 +70,7 @@ if __name__ == "__main__":
     parser.add_argument("-a","--activity", type = float)
     parser.add_argument("--ct", type = str)
     parser.add_argument("-s", "--source", type=str)
+    parser.add_argument("--radionuclide", type=str, choices=['Tc99m', 'Lu177'])
     parser.add_argument("--pthgaga", type=str)
     parser.add_argument("--pthgarf", type=str)
     parser.add_argument("-b","--batchsize", type = float, default = 100000)

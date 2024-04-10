@@ -6,7 +6,7 @@ rot_4mm=${basename}_rot_4mm.mhd
 
 tktk_center_image.py -i ${file} -o ${rot}
 
-clitkAffineTransform -i ${rot} -o ${rot} -m ~/Desktop/PVE/PVE_data/Analytical_data/matrix_rotation.mat --pad 0 --interp 0
+clitkAffineTransform -i ${rot} -o ${rot} -m ~/Desktop/PVE/PVE_data/Analytical_data/matrix_rotation.mat --pad 0 --interp 0 --transform_grid 
 echo ${rot}
 
 clitkAffineTransform -i ${rot} -o ${rot_2mm} --spacing 2.3976,2.3976,2.3976 --adaptive --interp 0 
