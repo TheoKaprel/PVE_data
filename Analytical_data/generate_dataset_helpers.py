@@ -175,11 +175,15 @@ def save_me(img=None,array=None,ftype=None,output_folder=None, src_ref=None, ref
     elif ftype in ["mhd", "mha"]:
         filename = os.path.join(output_folder, f'{src_ref}_{ref}.{ftype}')
         if ((array is not None) and (img is None)):
-            output_img = itk.image_from_array(array)
+            output_img = itk.image_from_array(array.astype(dtype))
             output_img.SetSpacing(img_like.GetSpacing())
             output_img.SetOrigin(img_like.GetOrigin())
             itk.imwrite(output_img, filename)
         elif ((array is None) and (img is not None)):
+            array = itk.array_from_image(img)
+            array = array.astype(dtype)
+            imggg = itk.image_from_array(array)
+            imggg.CopyInformation(img)
             itk.imwrite(img, filename)
         else:
             print("ERROR : give at leat array or img (not both)")

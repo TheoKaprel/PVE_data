@@ -45,6 +45,7 @@ parser.add_argument('--fov', type=str,help="FOV (mm,mm) of the detector. Should 
 parser.add_argument('--attenuationmapfolder',default = None, help = 'path to the attenuationmaps folder (random choice in the folder)')
 parser.add_argument('--attmapaugmentation', action="store_true", help = "add this if data augmentation is needed for the attenuation map. Max rotation : (5,360,5) and max translation : (50,50,50) ")
 parser.add_argument('--organlabels', type = str, help = "use --organlabels if you want to assign different activity ratios to main organs. For now: body, liver, kidneys, and bones.")
+parser.add_argument('--organratios', type = str, help = "if --organlabels is specified, you have to also specify min/ma ratios for each organ in organlabels")
 parser.add_argument('--output_folder','-o', default = './dataset', help = " Absolute or relative path to the output folder")
 parser.add_argument('--spect_system', default = "ge-discovery", choices=['ge-discovery', 'siemens-intevo-lehr', "siemens-intevo-megp"], help = 'SPECT system simulated for PVE projections')
 parser.add_argument('--save_src',action ="store_true", help = "if you want to also save the source that will be forward projected")
@@ -125,10 +126,8 @@ def generate(opt):
 
         fov_maskmult=itk.MultiplyImageFilter[imageType,imageType,imageType].New()
         fov_maskmult.SetInput1(fovmask)
-        fov_area = fov[0]*fov[1]
     else:
         fov_is_set=False
-        fov_area = (size_proj*spacing_proj)**2
 
     min_ratio, Max_ratio = opt.min_ratio, opt.max_ratio
     if opt.background:
@@ -152,11 +151,14 @@ def generate(opt):
     dataset_infos['src_refs']=[]
 
     if opt.attenuationmapfolder is not None:
-        attmap_refs_list = glob.glob(os.path.join(opt.attenuationmapfolder, '*_attmap_rot.mhd'))
+        attmap_refs_list = glob.glob(os.path.join(opt.attenuationmapfolder, '*_attmap_cropped_rot.mhd'))
         with_attmaps=True
         if opt.organlabels is not None:
             organ_labels = open(opt.organlabels).read()
             organ_labels = json.loads(organ_labels)
+
+            organ_ratios = open(opt.organratios).read()
+            organ_ratios = json.loads(organ_ratios)
             with_rois = True
         else:
             with_rois = False
@@ -204,9 +206,9 @@ def generate(opt):
         if with_attmaps:
             attmap = itk.imread(attmap_ref,pixel_type=pixelType)
             if with_rois:
-                labels_fn = attmap_ref.replace('_attmap_rot.mhd', '_rois_labels_rot.mhd')
+                labels_fn = attmap_ref.replace('_attmap_cropped_rot.mhd', '_rois_labels_cropped_rot.mhd')
                 labels = itk.imread(labels_fn)
-                labels_array = itk.array_from_image(labels)
+
 
             if opt.attmapaugmentation:
                 rot=np.random.rand(3)*[5,360,5]
@@ -215,14 +217,19 @@ def generate(opt):
                                               neworigin=None, newspacing=None, newdirection=None, force_resample=True,
                                               keep_original_canvas=None, adaptive=None, rotation=rot, rotation_center=None,
                                               translation=transl, pad=None, interpolation_mode=None, bspline_order=2)
-                labels_array = gatetools.applyTransformation(input=labels_array, like=None, spacinglike=None, matrix=None, newsize=None,
+
+                if with_rois:
+                    labels = gatetools.applyTransformation(input=labels, like=None, spacinglike=None, matrix=None, newsize=None,
                                               neworigin=None, newspacing=None, newdirection=None, force_resample=True,
                                               keep_original_canvas=None, adaptive=None, rotation=rot, rotation_center=None,
                                               translation=transl, pad=None, interpolation_mode=None, bspline_order=2)
 
+            if with_rois:
+                labels_array = itk.array_from_image(labels)
 
-            save_me(img=attmap,ftype=opt.type,output_folder=opt.output_folder, src_ref=source_ref,
-                    ref="attmap", grp=grp,dtype=dtype)
+
+            # save_me(img=attmap,ftype=opt.type,output_folder=opt.output_folder, src_ref=source_ref,
+            #         ref="attmap", grp=grp,dtype=dtype)
 
             forward_projector_attmap = rtk.ZengForwardProjectionImageFilter.New()
             forward_projector_attmap.SetInput(0, output_proj.GetOutput())
@@ -307,10 +314,14 @@ def generate(opt):
             rndm_grad_act_scaled = rndm_grad_act_0_1 * (max_scale - min_scale) + min_scale
 
         if opt.organlabels is not None:
-            min_ratio_rois,max_ratio_rois = 3,6
+            # min_ratio_rois,max_ratio_rois = 3,6
             for organ in organ_labels.keys():
                 if ((organ!="body") and (np.random.rand()>2/3)): # choose each organ (except background body) with proba 2/3
                     if (labels_array==int(organ_labels[organ])).any(): # if the organ is present in the attmap, then...
+
+                        min_ratio_rois = organ_ratios[organ][0]
+                        max_ratio_rois = organ_ratios[organ][1]
+
                         organ_rndm_activity = np.random.rand() * (max_ratio_rois - min_ratio_rois) + min_ratio_rois
 
                         if opt.grad_act:
@@ -379,14 +390,14 @@ def generate(opt):
                                                   keep_original_canvas=None, adaptive=None, rotation=rot, rotation_center=None,
                                                   translation=transl, pad=None, interpolation_mode=None, bspline_order=2)
                 save_me(img=attmap_rec_fp, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
-                        ref="attmap_rec_fp", grp=grp, dtype=dtype)
+                        ref="attmap_4mm", grp=grp, dtype=dtype)
 
                 attmap_rec_fp_np = itk.array_from_image(attmap_rec_fp)
                 vSpacing_recpfp = np.array(attmap_rec_fp.GetSpacing())
                 vSize_recfp = np.array(attmap_rec_fp_np.shape)[::-1]
                 vOffset_recfp = np.array(attmap_rec_fp.GetOrigin())
             else:
-                vSpacing_recpfp = np.array([4.6875, 4.6875, 4.6875])
+                vSpacing_recpfp = np.array([4.7952, 4.7952, 4.7952])
                 vSize_recfp = np.array([128, 128, 128])
                 vOffset_recfp = [(-sp * size + sp) / 2 for (sp, size) in zip(vSpacing_recpfp, vSize_recfp)]
 
@@ -413,6 +424,23 @@ def generate(opt):
             lesion_mask = (lesion_array > 0).astype(np.float32)
             lesion_mask_img = itk.image_from_array(lesion_mask)
             lesion_mask_img.CopyInformation(src_img_normedToTotalCounts)
+
+
+            lesion_mask_4mm = gatetools.applyTransformation(input=lesion_mask_img,
+                                                                            like=attmap_rec_fp, spacinglike=None,
+                                                                            matrix=None, newsize=None,
+                                                                            neworigin=None, newspacing=None,
+                                                                            newdirection=None,
+                                                                            force_resample=True,
+                                                                            keep_original_canvas=None, adaptive=None,
+                                                                            rotation=None,
+                                                                            rotation_center=None,
+                                                                            translation=None, pad=None,
+                                                                            interpolation_mode="NN",
+                                                                            bspline_order=2)
+            save_me(img=lesion_mask_4mm,ftype=opt.type, output_folder = opt.output_folder, src_ref = source_ref,
+                    ref = "lesion_mask_4mm", grp = grp, dtype = np.uint16)
+
             forward_projector.SetInput(1, lesion_mask_img)
 
             forward_projector.SetSigmaZero(sigma0_psf)
@@ -428,7 +456,7 @@ def generate(opt):
             lesion_mask_fp_array = (lesion_mask_fp_array > 0.05*lesion_mask_fp_array.max()).astype(np.float32)
 
             save_me(array=lesion_mask_fp_array,ftype=opt.type, output_folder = opt.output_folder, src_ref = source_ref,
-                    ref = "lesion_mask_fp", grp = grp, dtype = dtype, img_like = output_forward_lesion_mask)
+                    ref = "lesion_mask_fp", grp = grp, dtype = np.uint16, img_like = output_forward_lesion_mask)
 
 
         # fowardprojections :
@@ -468,7 +496,7 @@ def generate(opt):
             output_forward_PVE_array = itk.array_from_image(output_forward_PVE).astype(dtype=dtype)
             noisy_projection_array = np.random.poisson(lam=output_forward_PVE_array, size=output_forward_PVE_array.shape).astype(dtype=np.float64)
             save_me(array=noisy_projection_array, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
-                    ref="PVE_att_noisy", grp=grp, dtype=dtype, img_like=output_forward_PVE)
+                    ref="PVE_att_noisy", grp=grp, dtype=np.uint16, img_like=output_forward_PVE)
 
 
             # proj att+PVfree
@@ -506,31 +534,11 @@ def generate(opt):
             noisy_projection_array = np.random.poisson(lam=output_forward_PVE_array, size=output_forward_PVE_array.shape).astype(dtype=np.float64)
 
             save_me(array=noisy_projection_array, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
-                    ref="PVE_noisy", grp=grp, dtype=dtype, img_like=output_forward_PVE)
+                    ref="PVE_noisy", grp=grp, dtype=np.uint16, img_like=output_forward_PVE)
 
 
         if opt.rec_fp>0:
             print('rec_fp...')
-            # if with_attmaps:
-            #     attmap_rec_fp = itk.imread(attmap_ref.replace('.mhd', '_4mm.mhd'), pixel_type=pixelType)
-            #     if opt.attmapaugmentation:
-            #         # apply the same transformation that to attmap
-            #         attmap_rec_fp = gatetools.applyTransformation(input=attmap_rec_fp, like=None, spacinglike=None, matrix=None, newsize=None,
-            #                                       neworigin=None, newspacing=None, newdirection=None, force_resample=True,
-            #                                       keep_original_canvas=None, adaptive=None, rotation=rot, rotation_center=None,
-            #                                       translation=transl, pad=None, interpolation_mode=None, bspline_order=2)
-            #     save_me(img=attmap_rec_fp, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
-            #             ref="attmap_rec_fp", grp=grp, dtype=dtype)
-            #
-            #     attmap_rec_fp_np = itk.array_from_image(attmap_rec_fp)
-            #     vSpacing_recpfp = np.array(attmap_rec_fp.GetSpacing())
-            #     vSize_recfp = np.array(attmap_rec_fp_np.shape)[::-1]
-            #     vOffset_recfp = np.array(attmap_rec_fp.GetOrigin())
-            # else:
-            #     vSpacing_recpfp = np.array([4.6875, 4.6875, 4.6875])
-            #     vSize_recfp = np.array([128, 128, 128])
-            #     vOffset_recfp = [(-sp * size + sp) / 2 for (sp, size) in zip(vSpacing_recpfp, vSize_recfp)]
-
             constant_image = rtk.ConstantImageSource[imageType].New()
             constant_image.SetSpacing(vSpacing_recpfp)
             constant_image.SetOrigin(vOffset_recfp)
@@ -577,16 +585,6 @@ def generate(opt):
 
             # forward_projs
             forward_projector_rec_fp.SetInput(1, rec_volume)
-            forward_projector_rec_fp.Update()
-            output_rec_fp = forward_projector_rec_fp.GetOutput()
-            if fov_is_set:
-                fov_maskmult.SetInput2(output_rec_fp)
-                output_rec_fp = fov_maskmult.GetOutput()
-
-            save_me(img=output_rec_fp, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
-                    ref="rec_fp", grp=grp, dtype=dtype)
-
-
             forward_projector_rec_fp.SetInput(2, attmap_rec_fp)
             forward_projector_rec_fp.Update()
             output_rec_fp_att = forward_projector_rec_fp.GetOutput()
