@@ -145,6 +145,11 @@ def generate(opt):
     max_count= int(max_activity * 1e6 * time_per_proj * efficiency)
 
     print(f'Activity between {min_activity} MBq and {max_activity} MBq --> nb of counts between {min_count} and {max_count}')
+    """
+     Attention, my bad, c pas vrai que l activité de Lu177 ou Tc99m est de 20/100 MBq.
+     Quand je dis ça je ne compte QUE les désintégrations qui produisent un gamma de 208 kev, c'est à dire 11% d'entre elles. 
+     Donc 100MBq ici ça signifie 100 * 100/11 = 909 MBq de vrai Lu177
+     """
 
     print(json.dumps(dataset_infos, indent = 3))
 

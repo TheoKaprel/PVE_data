@@ -14,7 +14,7 @@ def convert():
     ext_typ=args.type
 
     list_frstkey = glob.glob(os.path.join(args.folder, f"?????_{keys[0]}.{ext_typ}"))
-    f = h5py.File(os.path.join(args.folder, args.output), 'a')
+    f = h5py.File(args.output, 'a')
     list_keys=list(f.keys())
     print(list_frstkey)
     for i,fn_src in enumerate(list_frstkey):

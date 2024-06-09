@@ -1,8 +1,11 @@
 import numpy as np
 import argparse
 
+spect_systems_list = ['ge-discovery', 'siemens-intevo-lehr',  'siemens-intevo-megp',
+                        'siemens-intevo-lehr-analytic','siemens-intevo-megp-analytic']
+
 def get_psf_params(machine, verbose = True):
-    assert (machine in ['ge-discovery', 'siemens-intevo-lehr',  'siemens-intevo-megp'])
+    assert (machine in spect_systems_list)
 
     # Units in mm
 
@@ -31,7 +34,7 @@ def get_psf_params(machine, verbose = True):
         efficiency = (K * (d / leff) * d / (d + t)) ** 2
         sensitivity = efficiency * 60 * 3.7 * 10 ** 4
 
-    elif machine=="siemens-intevo-analytic":
+    elif machine=="siemens-intevo-lehr-analytic":
         d1 = 1.11 # diameters across the flats
         # d2 = 2/np.sqrt(3) * d1  # long diameters
         # d_mean = d1 * 3 *np.log(3)/np.pi # mean diameter
@@ -44,6 +47,30 @@ def get_psf_params(machine, verbose = True):
 
         # Effective length
         leff = l - 2 / mu
+
+        sigma0_psf = d / (2*np.sqrt(2*np.log(2)))
+        alpha_psf= d / (2*np.sqrt(2*np.log(2))) / leff
+
+        w = t * l / (2 * d + t)
+        septal_penetration = np.exp(-w * mu)
+
+        K = 0.26  # hexagonal holes
+        efficiency = (K * (d / leff) * d / (d + t)) ** 2
+        sensitivity = efficiency * 60 * 3.7 * 10 ** 4
+    elif machine=="siemens-intevo-megp-analytic":
+        d1 = 2.94 # diameters across the flats
+        d = d1
+        l = 40.64
+        t = 1.14
+
+        # linear attenuation coefficient at 200 keV in Pb (Lead)
+        mu = 0.936 * 11.35 / 10 # (mm)^-1
+
+        # Effective length
+        leff = l - 2 / mu
+
+        sigma_fwhm = d
+        alpha_fwhm = d/leff
 
         sigma0_psf = d / (2*np.sqrt(2*np.log(2)))
         alpha_psf= d / (2*np.sqrt(2*np.log(2))) / leff
@@ -85,7 +112,7 @@ def get_psf_params(machine, verbose = True):
 
 
 def get_detector_params(machine):
-    assert (machine in ['ge-discovery', 'siemens-intevo-lehr',  'siemens-intevo-megp'])
+    assert (machine in spect_systems_list)
 
     if machine=='ge-discovery':
         size = 128
@@ -110,7 +137,7 @@ def get_FWHM_b(machine, b):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--spect_system', default="ge-discovery", choices=['ge-discovery', 'siemens-intevo-lehr', 'siemens-intevo-megp'],
+    parser.add_argument('--spect_system', default="ge-discovery", choices=spect_systems_list,
                         help='SPECT system simulated for PVE projections')
 
     args = parser.parse_args()
