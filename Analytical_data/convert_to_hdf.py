@@ -40,6 +40,7 @@ def convert():
             for key in keys:
                 save_key_in_grp(grp=grp,ref=ref,key=key,folder=args.folder,ext_typ=ext_typ)
 
+    f.close()
     print('done!')
 
 
@@ -49,9 +50,10 @@ def save_key_in_grp(grp,ref,key,folder,ext_typ):
         array = itk.array_from_image(itk.imread(array_fn))
     else:
         array = np.load(array_fn)
-    dset_key = grp.create_dataset(key, array.shape, dtype='float16')
-    dset_key[:, :, :] = array
 
+    if key not in list(grp.keys()):
+        dset_key = grp.create_dataset(key, array.shape, dtype='float16')
+        dset_key[:, :, :] = array
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
