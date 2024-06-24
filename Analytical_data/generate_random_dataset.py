@@ -319,9 +319,8 @@ def generate(opt):
             rndm_grad_act_scaled = rndm_grad_act_0_1 * (max_scale - min_scale) + min_scale
 
         if opt.organlabels is not None:
-            # min_ratio_rois,max_ratio_rois = 3,6
             for organ in organ_labels.keys():
-                if ((organ!="body") and (np.random.rand()>2/3)): # choose each organ (except background body) with proba 2/3
+                if ((organ!="body") and (np.random.rand()>2/3)): # choose each organ (except background body) with proba 1/3
                     if (labels_array==int(organ_labels[organ])).any(): # if the organ is present in the attmap, then...
 
                         min_ratio_rois = organ_ratios[organ][0]
