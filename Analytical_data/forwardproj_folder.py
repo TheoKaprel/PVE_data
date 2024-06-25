@@ -4,6 +4,7 @@ import itk
 import numpy as np
 import argparse
 import os
+import random
 from itk import RTK as rtk
 
 from parameters import get_psf_params,get_detector_params
@@ -13,7 +14,7 @@ from generate_dataset_helpers import get_dtype,strParamToArray,chooseRandomRef,g
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("--input_folder", '-i')
 parser.add_argument('--itype', default = 'mhd', help = "Create mha, mhd,npy image")
-parser.add_argument('--type', default = 'mha', help = "Create mha, mhd,npy image")
+parser.add_argument('--otype', default = 'mha', help = "Create mha, mhd,npy image")
 parser.add_argument('--dtype', default = 'float64', help = "if npy, image dtype")
 parser.add_argument('--nproj',type = int, default = None, help = 'if no geom, precise nb of proj angles')
 parser.add_argument('--sid',type = float, default = None, help = 'if no geom, precise detector-to-isocenter distance (mm)')
@@ -69,9 +70,11 @@ def generate(opt):
         fov_is_set=False
 
     itype = opt.itype
-    list_rec = glob.glob(os.path.join(opt.input_folder, f'*_rec.{itype}'))
+    otype = opt.otype
 
-    for rec in list_rec:
+    while len(glob.glob(os.path.join(opt.output_folder, f'*_rec_fp.{otype}')))<len(glob.glob(os.path.join(opt.input_folder, f'*_rec.{itype}'))):
+
+        rec =  random.choice(glob.glob(os.path.join(opt.input_folder, f'*_rec.{itype}')))
 
         ref = rec.split(f'_rec.{itype}')[0][-5:]
         print(ref)
@@ -100,7 +103,7 @@ def generate(opt):
             fov_maskmult.SetInput2(output_rec_fp)
             output_rec_fp = fov_maskmult.GetOutput()
 
-        save_me(img=output_rec_fp, ftype=opt.type, output_folder=opt.output_folder, src_ref=ref,
+        save_me(img=output_rec_fp, ftype=opt.otype, output_folder=opt.output_folder, src_ref=ref,
                 ref="rec_fp", grp=None, dtype=dtype)
 
 
