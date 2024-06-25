@@ -75,8 +75,11 @@ def generate(opt):
     while len(glob.glob(os.path.join(opt.output_folder, f'*_rec_fp.{otype}')))<len(glob.glob(os.path.join(opt.input_folder, f'*_rec.{itype}'))):
 
         rec =  random.choice(glob.glob(os.path.join(opt.input_folder, f'*_rec.{itype}')))
-
         ref = rec.split(f'_rec.{itype}')[0][-5:]
+        while not os.path.exists(os.path.join(opt.output_folder, f'{ref}_rec_fp.{otype}')):
+            rec = random.choice(glob.glob(os.path.join(opt.input_folder, f'*_rec.{itype}')))
+            ref = rec.split(f'_rec.{itype}')[0][-5:]
+        
         print(ref)
         if itype in ['mhd', 'mha']:
             rec_img = itk.imread(rec)
