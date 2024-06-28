@@ -568,12 +568,17 @@ def generate(opt):
             if with_attmaps:
                 osem.SetInput(2, attmap_rec_fp)
 
+            forward_projector_rec_fp_att = rtk.ZengForwardProjectionImageFilter.New()
+            forward_projector_rec_fp_att.SetInput(0, output_proj.GetOutput())
+            forward_projector_rec_fp_att.SetGeometry(geometry)
+            forward_projector_rec_fp_att.SetSigmaZero(0)
+            forward_projector_rec_fp_att.SetAlpha(0)
+
             forward_projector_rec_fp = rtk.ZengForwardProjectionImageFilter.New()
             forward_projector_rec_fp.SetInput(0, output_proj.GetOutput())
             forward_projector_rec_fp.SetGeometry(geometry)
             forward_projector_rec_fp.SetSigmaZero(0)
             forward_projector_rec_fp.SetAlpha(0)
-
 
 
             output_forward_PVE_noisy = itk.image_from_array(noisy_projection_array.astype(dtype=np.float32))
@@ -587,17 +592,28 @@ def generate(opt):
             save_me(img=rec_volume, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
                     ref="rec", grp=grp, dtype=dtype)
 
-            # forward_projs
-            forward_projector_rec_fp.SetInput(1, rec_volume)
-            forward_projector_rec_fp.SetInput(2, attmap_rec_fp)
-            forward_projector_rec_fp.Update()
-            output_rec_fp_att = forward_projector_rec_fp.GetOutput()
+            # forward_projs rec_fp_att
+            forward_projector_rec_fp_att.SetInput(1, rec_volume)
+            forward_projector_rec_fp_att.SetInput(2, attmap_rec_fp)
+            forward_projector_rec_fp_att.Update()
+            output_rec_fp_att = forward_projector_rec_fp_att.GetOutput()
             if fov_is_set:
                 fov_maskmult.SetInput2(output_rec_fp_att)
                 output_rec_fp_att = fov_maskmult.GetOutput()
 
             save_me(img=output_rec_fp_att, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
                     ref="rec_fp_att", grp=grp, dtype=dtype)
+
+            # forward_projs rec_fp
+            forward_projector_rec_fp.SetInput(1, rec_volume)
+            forward_projector_rec_fp.Update()
+            output_rec_fp = forward_projector_rec_fp.GetOutput()
+            if fov_is_set:
+                fov_maskmult.SetInput2(output_rec_fp)
+                output_rec_fp = fov_maskmult.GetOutput()
+
+            save_me(img=output_rec_fp, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
+                    ref="rec_fp", grp=grp, dtype=dtype)
 
 
         if with_attmaps:
