@@ -51,6 +51,7 @@ parser.add_argument('--spect_system', default = "ge-discovery", choices=['ge-dis
 parser.add_argument('--save_src',action ="store_true", help = "if you want to also save the source that will be forward projected")
 parser.add_argument('--lesion_mask',action ="store_true", help = "if you want to also save the source that will be forward projected")
 parser.add_argument('--rec_fp',type = int, default = 0, help = "noisy projections are reconstructed with 1 osem-rm iter and forward-projected w/o rm to obtain ABCDE_rec_fp.mha")
+parser.add_argument('--project',action= 'store_true', help = "wheter or not to project the created source")
 parser.add_argument("-v", "--verbose", action="store_true")
 def generate(opt):
     print(opt)
@@ -379,6 +380,7 @@ def generate(opt):
         total_counts_per_proj = round(np.random.rand() * (max_count - min_count) + min_count)
         print(f"{total_counts_per_proj} ({total_counts_per_proj/(1e6 * time_per_proj * efficiency)} MBq)")
         src_array_normedToTotalCounts = src_array / np.sum(src_array) * total_counts_per_proj * spacing_proj**2 / (vSpacing[0]*vSpacing[1]*vSpacing[2])
+        # src_array_normedToTotalCounts = src_array
 
         src_img_normedToTotalCounts = itk.image_from_array(src_array_normedToTotalCounts.astype(np.float32))
         src_img_normedToTotalCounts.SetSpacing(vSpacing[::-1])
@@ -411,6 +413,7 @@ def generate(opt):
             save_me(img=src_img_normedToTotalCounts, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
                     ref="src", grp=grp, dtype=dtype)
 
+
             if opt.rec_fp>0:
                 src_img_normedToTotalCounts_4mm = gatetools.applyTransformation(input=src_img_normedToTotalCounts, like=attmap_rec_fp, spacinglike=None, matrix=None, newsize=None,
                                                        neworigin=None, newspacing=None, newdirection=None,
@@ -423,197 +426,197 @@ def generate(opt):
                 save_me(img=src_img_normedToTotalCounts_4mm, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
                         ref="src_4mm", grp=grp, dtype=dtype)
 
+        if opt.project:
+            if opt.lesion_mask:
+                lesion_mask = (lesion_array > 0).astype(np.float32)
+                lesion_mask_img = itk.image_from_array(lesion_mask)
+                lesion_mask_img.CopyInformation(src_img_normedToTotalCounts)
 
-        if opt.lesion_mask:
-            lesion_mask = (lesion_array > 0).astype(np.float32)
-            lesion_mask_img = itk.image_from_array(lesion_mask)
-            lesion_mask_img.CopyInformation(src_img_normedToTotalCounts)
+
+                lesion_mask_4mm = gatetools.applyTransformation(input=lesion_mask_img,
+                                                                                like=attmap_rec_fp, spacinglike=None,
+                                                                                matrix=None, newsize=None,
+                                                                                neworigin=None, newspacing=None,
+                                                                                newdirection=None,
+                                                                                force_resample=True,
+                                                                                keep_original_canvas=None, adaptive=None,
+                                                                                rotation=None,
+                                                                                rotation_center=None,
+                                                                                translation=None, pad=None,
+                                                                                interpolation_mode="NN",
+                                                                                bspline_order=2)
+                save_me(img=lesion_mask_4mm,ftype=opt.type, output_folder = opt.output_folder, src_ref = source_ref,
+                        ref = "lesion_mask_4mm", grp = grp, dtype = np.uint16)
+
+                forward_projector.SetInput(1, lesion_mask_img)
+
+                forward_projector.SetSigmaZero(sigma0_psf)
+                forward_projector.SetAlpha(alpha_psf)
+                forward_projector.Update()
+                output_forward_lesion_mask = forward_projector.GetOutput()
+                output_forward_lesion_mask.DisconnectPipeline()
+                if fov_is_set:
+                    fov_maskmult.SetInput2(output_forward_lesion_mask)
+                    output_forward_lesion_mask = fov_maskmult.GetOutput()
+
+                lesion_mask_fp_array = itk.array_from_image(output_forward_lesion_mask)
+                lesion_mask_fp_array = (lesion_mask_fp_array > 0.05*lesion_mask_fp_array.max()).astype(np.float32)
+
+                save_me(array=lesion_mask_fp_array,ftype=opt.type, output_folder = opt.output_folder, src_ref = source_ref,
+                        ref = "lesion_mask_fp", grp = grp, dtype = np.uint16, img_like = output_forward_lesion_mask)
 
 
-            lesion_mask_4mm = gatetools.applyTransformation(input=lesion_mask_img,
-                                                                            like=attmap_rec_fp, spacinglike=None,
-                                                                            matrix=None, newsize=None,
-                                                                            neworigin=None, newspacing=None,
-                                                                            newdirection=None,
-                                                                            force_resample=True,
-                                                                            keep_original_canvas=None, adaptive=None,
-                                                                            rotation=None,
-                                                                            rotation_center=None,
-                                                                            translation=None, pad=None,
-                                                                            interpolation_mode="NN",
-                                                                            bspline_order=2)
-            save_me(img=lesion_mask_4mm,ftype=opt.type, output_folder = opt.output_folder, src_ref = source_ref,
-                    ref = "lesion_mask_4mm", grp = grp, dtype = np.uint16)
+            # fowardprojections :
+            forward_projector.SetInput(1, src_img_normedToTotalCounts)
 
-            forward_projector.SetInput(1, lesion_mask_img)
-
-            forward_projector.SetSigmaZero(sigma0_psf)
-            forward_projector.SetAlpha(alpha_psf)
+            #proj PVfree
+            forward_projector.SetSigmaZero(0)
+            forward_projector.SetAlpha(0)
             forward_projector.Update()
-            output_forward_lesion_mask = forward_projector.GetOutput()
-            output_forward_lesion_mask.DisconnectPipeline()
+            output_forward_PVfree = forward_projector.GetOutput()
+            output_forward_PVfree.DisconnectPipeline()
             if fov_is_set:
-                fov_maskmult.SetInput2(output_forward_lesion_mask)
-                output_forward_lesion_mask = fov_maskmult.GetOutput()
+                fov_maskmult.SetInput2(output_forward_PVfree)
+                output_forward_PVfree = fov_maskmult.GetOutput()
 
-            lesion_mask_fp_array = itk.array_from_image(output_forward_lesion_mask)
-            lesion_mask_fp_array = (lesion_mask_fp_array > 0.05*lesion_mask_fp_array.max()).astype(np.float32)
-
-            save_me(array=lesion_mask_fp_array,ftype=opt.type, output_folder = opt.output_folder, src_ref = source_ref,
-                    ref = "lesion_mask_fp", grp = grp, dtype = np.uint16, img_like = output_forward_lesion_mask)
-
-
-        # fowardprojections :
-        forward_projector.SetInput(1, src_img_normedToTotalCounts)
-
-        #proj PVfree
-        forward_projector.SetSigmaZero(0)
-        forward_projector.SetAlpha(0)
-        forward_projector.Update()
-        output_forward_PVfree = forward_projector.GetOutput()
-        output_forward_PVfree.DisconnectPipeline()
-        if fov_is_set:
-            fov_maskmult.SetInput2(output_forward_PVfree)
-            output_forward_PVfree = fov_maskmult.GetOutput()
-
-        save_me(img=output_forward_PVfree, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
-                ref="PVfree", grp=grp, dtype=dtype)
-
-        if with_attmaps:
-            forward_projector_with_att.SetInput(1, src_img_normedToTotalCounts)
-
-            # proj att+PVE
-            forward_projector_with_att.SetSigmaZero(sigma0_psf)
-            forward_projector_with_att.SetAlpha(alpha_psf)
-            forward_projector_with_att.Update()
-            output_forward_PVE = forward_projector_with_att.GetOutput()
-            output_forward_PVE.DisconnectPipeline()
-            if fov_is_set:
-                fov_maskmult.SetInput2(output_forward_PVE)
-                output_forward_PVE = fov_maskmult.GetOutput()
-
-
-            save_me(img=output_forward_PVE, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
-                    ref="PVE_att", grp=grp, dtype=dtype)
-
-            # proj noise(att+PVE)
-            output_forward_PVE_array = itk.array_from_image(output_forward_PVE).astype(dtype=dtype)
-            noisy_projection_array = np.random.poisson(lam=output_forward_PVE_array, size=output_forward_PVE_array.shape).astype(dtype=np.float64)
-            save_me(array=noisy_projection_array, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
-                    ref="PVE_att_noisy", grp=grp, dtype=np.uint16, img_like=output_forward_PVE)
-
-
-            # proj att+PVfree
-            forward_projector_with_att.SetSigmaZero(0)
-            forward_projector_with_att.SetAlpha(0)
-            forward_projector_with_att.Update()
-            output_forward_PVfree_att = forward_projector_with_att.GetOutput()
-            output_forward_PVfree_att.DisconnectPipeline()
-            if fov_is_set:
-                fov_maskmult.SetInput2(output_forward_PVfree_att)
-                output_forward_PVfree_att = fov_maskmult.GetOutput()
-
-            save_me(img=output_forward_PVfree_att, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
-                    ref="PVfree_att", grp=grp, dtype=dtype)
-
-
-
-        else:
-            # proj PVE
-            forward_projector.SetSigmaZero(sigma0_psf)
-            forward_projector.SetAlpha(alpha_psf)
-            forward_projector.Update()
-            output_forward_PVE = forward_projector.GetOutput()
-            output_forward_PVE.DisconnectPipeline()
-            if fov_is_set:
-                fov_maskmult.SetInput2(output_forward_PVE)
-                output_forward_PVE = fov_maskmult.GetOutput()
-
-            save_me(img=output_forward_PVE, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
-                    ref="PVE", grp=grp, dtype=dtype)
-
-
-            # proj noise(PVE)
-            output_forward_PVE_array = itk.array_from_image(output_forward_PVE).astype(dtype=dtype)
-            noisy_projection_array = np.random.poisson(lam=output_forward_PVE_array, size=output_forward_PVE_array.shape).astype(dtype=np.float64)
-
-            save_me(array=noisy_projection_array, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
-                    ref="PVE_noisy", grp=grp, dtype=np.uint16, img_like=output_forward_PVE)
-
-
-        if opt.rec_fp>0:
-            print('rec_fp...')
-            constant_image = rtk.ConstantImageSource[imageType].New()
-            constant_image.SetSpacing(vSpacing_recpfp)
-            constant_image.SetOrigin(vOffset_recfp)
-            constant_image.SetSize([int(s) for s in vSize_recfp])
-            constant_image.SetConstant(1)
-            output_rec = constant_image.GetOutput()
-
-            OSEMType = rtk.OSEMConeBeamReconstructionFilter[imageType, imageType]
-            osem = OSEMType.New()
-            osem.SetInput(0, output_rec)
-            osem.SetGeometry(geometry)
-            osem.SetNumberOfIterations(opt.rec_fp)
-            osem.SetNumberOfProjectionsPerSubset(15)
-            osem.SetBetaRegularization(0)
-
-            FP = osem.ForwardProjectionType_FP_ZENG
-            BP = osem.BackProjectionType_BP_ZENG
-            osem.SetSigmaZero(sigma0_psf)
-            osem.SetAlphaPSF(alpha_psf)
-            osem.SetForwardProjectionFilter(FP)
-            osem.SetBackProjectionFilter(BP)
+            save_me(img=output_forward_PVfree, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
+                    ref="PVfree", grp=grp, dtype=dtype)
 
             if with_attmaps:
-                osem.SetInput(2, attmap_rec_fp)
+                forward_projector_with_att.SetInput(1, src_img_normedToTotalCounts)
 
-            forward_projector_rec_fp_att = rtk.ZengForwardProjectionImageFilter.New()
-            forward_projector_rec_fp_att.SetInput(0, output_proj.GetOutput())
-            forward_projector_rec_fp_att.SetGeometry(geometry)
-            forward_projector_rec_fp_att.SetSigmaZero(0)
-            forward_projector_rec_fp_att.SetAlpha(0)
-
-            forward_projector_rec_fp = rtk.ZengForwardProjectionImageFilter.New()
-            forward_projector_rec_fp.SetInput(0, output_proj.GetOutput())
-            forward_projector_rec_fp.SetGeometry(geometry)
-            forward_projector_rec_fp.SetSigmaZero(0)
-            forward_projector_rec_fp.SetAlpha(0)
+                # proj att+PVE
+                forward_projector_with_att.SetSigmaZero(sigma0_psf)
+                forward_projector_with_att.SetAlpha(alpha_psf)
+                forward_projector_with_att.Update()
+                output_forward_PVE = forward_projector_with_att.GetOutput()
+                output_forward_PVE.DisconnectPipeline()
+                if fov_is_set:
+                    fov_maskmult.SetInput2(output_forward_PVE)
+                    output_forward_PVE = fov_maskmult.GetOutput()
 
 
-            output_forward_PVE_noisy = itk.image_from_array(noisy_projection_array.astype(dtype=np.float32))
-            output_forward_PVE_noisy.CopyInformation(output_forward_PVE)
-            osem.SetInput(1, output_forward_PVE_noisy)
-            osem.Update()
-            rec_volume = osem.GetOutput()
-            rec_volume.DisconnectPipeline()
+                save_me(img=output_forward_PVE, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
+                        ref="PVE_att", grp=grp, dtype=dtype)
 
-            # save rec_fp
-            save_me(img=rec_volume, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
-                    ref="rec", grp=grp, dtype=dtype)
+                # proj noise(att+PVE)
+                output_forward_PVE_array = itk.array_from_image(output_forward_PVE).astype(dtype=dtype)
+                noisy_projection_array = np.random.poisson(lam=output_forward_PVE_array, size=output_forward_PVE_array.shape).astype(dtype=np.float64)
+                save_me(array=noisy_projection_array, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
+                        ref="PVE_att_noisy", grp=grp, dtype=np.uint16, img_like=output_forward_PVE)
 
-            # forward_projs rec_fp_att
-            forward_projector_rec_fp_att.SetInput(1, rec_volume)
-            forward_projector_rec_fp_att.SetInput(2, attmap_rec_fp)
-            forward_projector_rec_fp_att.Update()
-            output_rec_fp_att = forward_projector_rec_fp_att.GetOutput()
-            if fov_is_set:
-                fov_maskmult.SetInput2(output_rec_fp_att)
-                output_rec_fp_att = fov_maskmult.GetOutput()
 
-            save_me(img=output_rec_fp_att, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
-                    ref="rec_fp_att", grp=grp, dtype=dtype)
+                # proj att+PVfree
+                forward_projector_with_att.SetSigmaZero(0)
+                forward_projector_with_att.SetAlpha(0)
+                forward_projector_with_att.Update()
+                output_forward_PVfree_att = forward_projector_with_att.GetOutput()
+                output_forward_PVfree_att.DisconnectPipeline()
+                if fov_is_set:
+                    fov_maskmult.SetInput2(output_forward_PVfree_att)
+                    output_forward_PVfree_att = fov_maskmult.GetOutput()
 
-            # forward_projs rec_fp
-            forward_projector_rec_fp.SetInput(1, rec_volume)
-            forward_projector_rec_fp.Update()
-            output_rec_fp = forward_projector_rec_fp.GetOutput()
-            if fov_is_set:
-                fov_maskmult.SetInput2(output_rec_fp)
-                output_rec_fp = fov_maskmult.GetOutput()
+                save_me(img=output_forward_PVfree_att, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
+                        ref="PVfree_att", grp=grp, dtype=dtype)
 
-            save_me(img=output_rec_fp, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
-                    ref="rec_fp", grp=grp, dtype=dtype)
+
+
+            else:
+                # proj PVE
+                forward_projector.SetSigmaZero(sigma0_psf)
+                forward_projector.SetAlpha(alpha_psf)
+                forward_projector.Update()
+                output_forward_PVE = forward_projector.GetOutput()
+                output_forward_PVE.DisconnectPipeline()
+                if fov_is_set:
+                    fov_maskmult.SetInput2(output_forward_PVE)
+                    output_forward_PVE = fov_maskmult.GetOutput()
+
+                save_me(img=output_forward_PVE, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
+                        ref="PVE", grp=grp, dtype=dtype)
+
+
+                # proj noise(PVE)
+                output_forward_PVE_array = itk.array_from_image(output_forward_PVE).astype(dtype=dtype)
+                noisy_projection_array = np.random.poisson(lam=output_forward_PVE_array, size=output_forward_PVE_array.shape).astype(dtype=np.float64)
+
+                save_me(array=noisy_projection_array, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
+                        ref="PVE_noisy", grp=grp, dtype=np.uint16, img_like=output_forward_PVE)
+
+
+            if opt.rec_fp>0:
+                print('rec_fp...')
+                constant_image = rtk.ConstantImageSource[imageType].New()
+                constant_image.SetSpacing(vSpacing_recpfp)
+                constant_image.SetOrigin(vOffset_recfp)
+                constant_image.SetSize([int(s) for s in vSize_recfp])
+                constant_image.SetConstant(1)
+                output_rec = constant_image.GetOutput()
+
+                OSEMType = rtk.OSEMConeBeamReconstructionFilter[imageType, imageType]
+                osem = OSEMType.New()
+                osem.SetInput(0, output_rec)
+                osem.SetGeometry(geometry)
+                osem.SetNumberOfIterations(opt.rec_fp)
+                osem.SetNumberOfProjectionsPerSubset(15)
+                osem.SetBetaRegularization(0)
+
+                FP = osem.ForwardProjectionType_FP_ZENG
+                BP = osem.BackProjectionType_BP_ZENG
+                osem.SetSigmaZero(sigma0_psf)
+                osem.SetAlphaPSF(alpha_psf)
+                osem.SetForwardProjectionFilter(FP)
+                osem.SetBackProjectionFilter(BP)
+
+                if with_attmaps:
+                    osem.SetInput(2, attmap_rec_fp)
+
+                forward_projector_rec_fp_att = rtk.ZengForwardProjectionImageFilter.New()
+                forward_projector_rec_fp_att.SetInput(0, output_proj.GetOutput())
+                forward_projector_rec_fp_att.SetGeometry(geometry)
+                forward_projector_rec_fp_att.SetSigmaZero(0)
+                forward_projector_rec_fp_att.SetAlpha(0)
+
+                forward_projector_rec_fp = rtk.ZengForwardProjectionImageFilter.New()
+                forward_projector_rec_fp.SetInput(0, output_proj.GetOutput())
+                forward_projector_rec_fp.SetGeometry(geometry)
+                forward_projector_rec_fp.SetSigmaZero(0)
+                forward_projector_rec_fp.SetAlpha(0)
+
+
+                output_forward_PVE_noisy = itk.image_from_array(noisy_projection_array.astype(dtype=np.float32))
+                output_forward_PVE_noisy.CopyInformation(output_forward_PVE)
+                osem.SetInput(1, output_forward_PVE_noisy)
+                osem.Update()
+                rec_volume = osem.GetOutput()
+                rec_volume.DisconnectPipeline()
+
+                # save rec_fp
+                save_me(img=rec_volume, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
+                        ref="rec", grp=grp, dtype=dtype)
+
+                # forward_projs rec_fp_att
+                forward_projector_rec_fp_att.SetInput(1, rec_volume)
+                forward_projector_rec_fp_att.SetInput(2, attmap_rec_fp)
+                forward_projector_rec_fp_att.Update()
+                output_rec_fp_att = forward_projector_rec_fp_att.GetOutput()
+                if fov_is_set:
+                    fov_maskmult.SetInput2(output_rec_fp_att)
+                    output_rec_fp_att = fov_maskmult.GetOutput()
+
+                save_me(img=output_rec_fp_att, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
+                        ref="rec_fp_att", grp=grp, dtype=dtype)
+
+                # forward_projs rec_fp
+                forward_projector_rec_fp.SetInput(1, rec_volume)
+                forward_projector_rec_fp.Update()
+                output_rec_fp = forward_projector_rec_fp.GetOutput()
+                if fov_is_set:
+                    fov_maskmult.SetInput2(output_rec_fp)
+                    output_rec_fp = fov_maskmult.GetOutput()
+
+                save_me(img=output_rec_fp, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
+                        ref="rec_fp", grp=grp, dtype=dtype)
 
 
         if with_attmaps:
