@@ -32,7 +32,7 @@ def main():
 
     # basic physics
     sim.physics_manager.physics_list_name = "G4EmStandardPhysics_option3"
-    sim.physics_manager.set_production_cut("world", "all", 1e3 * m)
+    sim.physics_manager.set_production_cut("world", "all", 1 * mm)
 
     # options
     ui = sim.user_info

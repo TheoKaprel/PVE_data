@@ -5,9 +5,11 @@ import opengate as gate
 from test203_helpers import *
 from box import Box
 import sys
-sys.path.append('/export/home/tkaprelian/Desktop/PVE/PVE_data/Simu_data/spect_siemens_intevo/')
+sys.path.append('/export/home/tkaprelian/Desktop/PVE/PVE_data/Simu_data/spect_siemens_intevo_loc/')
 import spect_siemens_intevo as gate_intevo
 import os
+from opengate.sources.generic import get_rad_gamma_energy_spectrum
+
 
 def main():
     # create the simulation
@@ -31,15 +33,35 @@ def main():
     ui.visu_type = "vrml"
 
     # source/ct parameters
-    p = Box()
-    p.data_folder = args.data
-    p.ct_image = args.ct
-    p.activity_image = args.source
-    p.radionuclide = "Tc99m"
-    p.activity = args.activity * Bq
-    p.duration = 1 * sec
-    patient = add_ct_image(sim, p)
-    source = add_vox_source(sim, p, patient)
+    # p = Box()
+    # p.data_folder = args.data
+    # p.ct_image = args.ct
+    # p.activity_image = args.source
+    # p.radionuclide = "Tc99m"
+    # p.activity = args.activity * Bq
+    # p.duration = 1 * sec
+    # patient = add_ct_image(sim, p)
+    # source = add_vox_source(sim, p, patient)
+
+    world = sim.world
+    m = gate.g4_units.m
+    world.size = [2 * m, 2 * m, 3 * m]
+    world.material = "G4_AIR"
+    mm = gate.g4_units.mm
+    sim.physics_manager.set_production_cut("world", "all", 1 * mm)
+    source = sim.add_source("GenericSource", "pointsource")
+    w, e = get_rad_gamma_energy_spectrum("Tc99m")
+    source.mother = "world"
+    source.particle = "gamma"
+    source.energy.type = "spectrum_lines"
+    source.energy.spectrum_weight = w
+    source.energy.spectrum_energy = e
+    source.direction.type = "iso"
+    source.position.type = "sphere"
+    Bq = gate.g4_units.Bq
+    ui = sim.user_info
+    source.activity = args.activity * Bq / ui.number_of_threads
+
 
     # spect info
     colli_type = "lehr"
@@ -50,6 +72,7 @@ def main():
 
     head,colli,crystal = gate_intevo.add_intevo_spect_head(sim, "spect", colli_type, debug=ui.visu)
     digit = gate_intevo.add_digitizer_v2(sim, crystal.name, "digit")
+    # digit = gate_intevo.add_digitizer_validated_Tc99m(sim, head, crystal,args.output_folder)
     gate_intevo.set_head_orientation(head, colli_type, radius)
 
     channels = [

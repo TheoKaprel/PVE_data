@@ -50,7 +50,7 @@ def get_psf_params(machine, verbose = True):
 
         sigma0_psf = d / (2*np.sqrt(2*np.log(2)))
         alpha_psf= d / (2*np.sqrt(2*np.log(2))) / leff
-
+        alpha_fwhm, sigma_fwhm = c * alpha_psf, c * sigma0_psf
         w = t * l / (2 * d + t)
         septal_penetration = np.exp(-w * mu)
 

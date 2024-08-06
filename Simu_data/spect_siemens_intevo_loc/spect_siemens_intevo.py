@@ -6,7 +6,7 @@ from opengate.actors.digitizers import *
 from opengate.managers import Simulation
 from opengate.contrib.spect import genm670
 from box import Box
-
+import os
 # colors
 red = [1, 0.7, 0.7, 0.8]
 blue = [0.5, 0.5, 1, 0.8]
@@ -637,7 +637,7 @@ def add_digitizer_ene_win(sim, head, crystal, sc):
     cc.output = ""  # No output
     return cc
 
-
+deg = gate.g4_units.deg
 def add_digitizer_proj(sim, crystal, cc):
     mm = gate.g4_units.mm
     deg = gate.g4_units.deg
@@ -777,6 +777,89 @@ def add_digitizer_v3(sim, crystal_name, name):
     # end
     return digitizer
 
+def add_digitizer_validated_Tc99m(sim, head, crystal,of):
+    digit_chain = {}
+    mm = gate.g4_units.mm
+    # hits
+    hc = add_digitizer_hits(sim, head, crystal)
+    digit_chain[hc.name] = hc
+
+    # singles
+    sc = add_digitizer_adder(sim, head, crystal, hc)
+    digit_chain[sc.name] = sc
+
+    # blurring
+    eb, sb = add_digitizer_blur_validated(sim, head, crystal, sc,of)
+    digit_chain[eb.name] = eb
+    digit_chain[sb.name] = sb
+
+    # energy windows
+    cc = add_digitizer_ene_win_Tc99m(sim, head, crystal, sb)
+    digit_chain[cc.name] = cc
+
+    # projection
+    # proj = add_digitizer_proj(sim, head, crystal, cc)
+    spacing = 2.3975999355316 * mm
+    np = 256
+    proj = add_digitizer_proj_2(sim, head, crystal, cc, spacing, np)
+    digit_chain[proj.name] = proj
+
+    return digit_chain
+mm = gate.g4_units.mm
+def add_digitizer_blur_validated(sim, head, crystal, sc,of):
+    keV = gate.g4_units.keV
+    MeV = 1000*keV
+    mm = gate.g4_units.mm
+    eb = sim.add_actor("DigitizerBlurringActor", f"Singles_{crystal.name}_eblur")
+    eb.output = sc.output
+    eb.mother = crystal.name
+    eb.input_digi_collection = sc.name
+    eb.blur_attribute = "TotalEnergyDeposit"
+    eb.blur_method = "InverseSquare"
+    eb.blur_resolution = 0.0945
+    eb.blur_reference_value = 140.57 * keV
+
+    # spatial blurring
+    sb = sim.add_actor("DigitizerSpatialBlurringActor", f"Singles_{crystal.name}_sblur")
+    sb.output = os.path.join(of,f"{head.name}_singles.root")
+    sb.mother = crystal.name
+    sb.input_digi_collection = eb.name
+    sb.blur_attribute = "PostPosition"
+    sb.blur_fwhm = 3.9 * mm #intrinsic spatial resolution at 140 keV for 9.5 mm thick NaI
+    sb.keep_in_solid_limits = True
+
+    return eb, sb
+
+def add_digitizer_ene_win_Tc99m(sim, head, crystal, sc):
+    # energy windows
+    cc = sim.add_actor("DigitizerEnergyWindowsActor", f"EnergyWindows_{crystal.name}")
+    keV = gate.g4_units.keV
+    MeV = 1000*keV
+    channels = [
+        {"name": f"spectrum_{head.name}", "min": 3 * keV, "max": 515 * keV},
+        {"name": f"scatter_{head.name}", "min": 108.57749938965 * keV, "max": 129.5924987793 * keV},
+        {"name": f"peak140_{head.name}", "min": 129.5924987793 * keV, "max": 150.60751342773 * keV},
+    ]
+    cc.mother = sc.mother
+    cc.input_digi_collection = sc.name
+    cc.channels = channels
+    cc.output = ""  # No output
+    return cc
+
+def add_digitizer_proj_2(sim, head, crystal, cc, spacing = 4.7951998710632 * mm, np = 128):
+    # projection
+    proj = sim.add_actor("DigitizerProjectionActor", f"Projection_{crystal.name}")
+    proj.mother = cc.mother
+    proj.input_digi_collections = [x["name"] for x in cc.channels]
+    proj.spacing = [spacing , spacing ]
+    proj.size = [np, np]
+    proj.output = "proj.mhd"
+    proj.origin_as_image_center = True
+    r1 = Rotation.from_euler("y", 90 * deg)
+    r2 = Rotation.from_euler("x", 90 * deg)
+    proj.detector_orientation_matrix = (r2 * r1).as_matrix()
+    return proj
+
 
 def get_plane_position_and_distance_to_crystal(collimator_type):
     """
@@ -812,6 +895,9 @@ def compute_plane_position_and_distance_to_crystal(collimator_type):
     y = genm670.get_volume_position_in_head(sim, "spect", "crystal", "center", axis=0)
     crystal_distance = y - pos
     psd = spect.size[2] / 2.0 - pos
+    print('pos, crystal_distance, psd : ')
+    print(pos, crystal_distance, psd)
+
     return pos, crystal_distance, psd
 
 
@@ -850,7 +936,7 @@ def add_detection_plane_for_arf(
 
 def set_head_orientation(head, collimator_type, radius, gantry_angle=0):
     # pos is the distance from entrance detection plane and head boundary
-    pos, _, _ = compute_plane_position_and_distance_to_crystal(collimator_type)
+    pos, cd, _ = compute_plane_position_and_distance_to_crystal(collimator_type)
     distance = radius - pos
     # rotation X180 is to set the detector head-foot
     # rotation Z90 is the gantry angle
