@@ -30,19 +30,6 @@ def main():
         geometry.AddProjection(args.sid, 0, list_angles[i], origin_projs[0], origin_projs[1])
 
 
-    OSEMType = rtk.OSEMConeBeamReconstructionFilter[imageType, imageType]
-    osem = OSEMType.New()
-    osem.SetGeometry(geometry)
-
-    osem.SetNumberOfIterations(args.niterations)
-    osem.SetNumberOfProjectionsPerSubset(args.nprojpersubset)
-    osem.SetBetaRegularization(0)
-    FP = osem.ForwardProjectionType_FP_ZENG
-    BP = osem.BackProjectionType_BP_ZENG
-    osem.SetForwardProjectionFilter(FP)
-    osem.SetBackProjectionFilter(BP)
-    osem.SetSigmaZero(0)
-    osem.SetAlphaPSF(0)
 
     base = args.baseref
     list_files = glob.glob(f'{args.folder}/?????_{base}.npy')
@@ -74,7 +61,18 @@ def main():
         constant_image.SetConstant(1)
         output_image = constant_image.GetOutput()
 
-
+        OSEMType = rtk.OSEMConeBeamReconstructionFilter[imageType, imageType]
+        osem = OSEMType.New()
+        osem.SetGeometry(geometry)
+        osem.SetNumberOfIterations(args.niterations)
+        osem.SetNumberOfProjectionsPerSubset(args.nprojpersubset)
+        osem.SetBetaRegularization(0)
+        FP = osem.ForwardProjectionType_FP_ZENG
+        BP = osem.BackProjectionType_BP_ZENG
+        osem.SetForwardProjectionFilter(FP)
+        osem.SetBackProjectionFilter(BP)
+        osem.SetSigmaZero(0)
+        osem.SetAlphaPSF(0)
         osem.SetInput(0, output_image)
         osem.SetInput(1, projections)
         osem.SetInput(2, attmap)
