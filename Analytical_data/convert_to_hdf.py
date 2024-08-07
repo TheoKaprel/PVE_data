@@ -30,7 +30,8 @@ def convert():
 
         if save==False:
             if ref in list_keys:
-                del f[ref]
+                if args.delt:
+                    del f[ref]
         else:
             if ref not in list_keys:
                 grp = f.create_group(ref)
@@ -60,6 +61,7 @@ if __name__ == '__main__':
     parser.add_argument('--folder')
     parser.add_argument('--keys', type=str)
     parser.add_argument('--type', type=str)
+    parser.add_argument("--delt", action="store_true")
     parser.add_argument('--output')
     args = parser.parse_args()
     convert()
