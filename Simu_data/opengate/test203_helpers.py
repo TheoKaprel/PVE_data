@@ -309,10 +309,10 @@ def add_vox_source(sim, p, patient):
     source.energy.spectrum_energy = e
     source.image = p.activity_image
     source.direction.type = "iso"
-    if patient.name != "world" and patient.name != "waterbox":
-        source.position.translation = gate.image.get_translation_between_images_center(
-            patient.image, source.image
-        )
+    # if patient.name != "world" and patient.name != "waterbox":
+    #     source.position.translation = gate.image.get_translation_between_images_center(
+    #         patient.image, source.image
+    #     )
 
     Bq = gate.g4_units.Bq
     ui = sim.user_info
