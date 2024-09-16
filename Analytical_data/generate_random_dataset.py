@@ -12,7 +12,7 @@ import h5py
 import gatetools
 
 from parameters import get_psf_params,get_detector_params
-from generate_dataset_helpers import get_dtype,strParamToArray,chooseRandomRef,generate_convex,generate_cylinder,generate_sphere,generate_ellipse,generate_bg_cylinder,sample_activity,random_3d_function,save_me
+from generate_dataset_helpers import get_dtype,strParamToArray,chooseRandomRef,generate_convex,generate_cylinder,generate_sphere,generate_ellipse,generate_bg_cylinder,sample_activity,random_3d_function,random_3d_function_,save_me
 
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -302,7 +302,7 @@ def generate(opt):
 
             if opt.grad_act:
                 M = 5
-                background_array = background_array * random_3d_function(a0 = 10,xx = X,yy=Y,zz=Z,M=M)/10
+                background_array = background_array * random_3d_function_(a0 = 10,xx = X,yy=Y,zz=Z,M=M)/10
                 background_array[background_array<0] = 0
 
             src_array += background_array
@@ -312,7 +312,7 @@ def generate(opt):
         random_nb_of_sphers = np.random.randint(1,opt.nspheres)
         if opt.grad_act:
             M = 8
-            rndm_grad_act = random_3d_function(a0=10, xx=X, yy=Y, zz=Z, M=M)/10
+            rndm_grad_act = random_3d_function_(a0=10, xx=X, yy=Y, zz=Z, M=M)/10
 
             # rndm_grad_act scaled between 0.5 and 1.5.
             rndm_grad_act_0_1 =  (rndm_grad_act - rndm_grad_act.min()) / (rndm_grad_act.max() - rndm_grad_act.min())
@@ -342,7 +342,7 @@ def generate(opt):
             # random_activity = sample_activity(min_r=min_ratio,max_r=Max_ratio,lbda=lbda,with_bg=opt.background)
             random_activity = np.random.rand()*(Max_ratio-min_ratio)+min_ratio
 
-            if opt.background is None:
+            if not opt.background:
                 center = (2 * np.random.rand(3) - 1) * (lengths / 2)
             else:
                 # center of the sphere inside the background

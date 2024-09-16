@@ -166,6 +166,34 @@ def random_3d_function(a0, xx, yy, zz, M):
     interpolated_values = interp((xx, yy, zz))
     return interpolated_values
 
+def random_3d_function_(a0, xx, yy, zz, M):
+    # Coarser grid for function generation
+    N = 64
+    size_x, size_y, size_z = N,N,N
+    # Define the range of the 3D grid (adjust as needed)
+    x0 = np.linspace(xx[0,0,0], xx[-1,0,0], size_x)
+    y0 = np.linspace(yy[0,0,0], yy[0,-1,0], size_y)
+    z0 = np.linspace(zz[0,0,0], zz[0,0,-1], size_z)
+    period = xx[-1,0,0]-xx[0,0,0]
+    xx0, yy0, zz0 = np.meshgrid(x0, y0, z0, indexing='ij')
+
+    # Generate random Fourier coefficients
+    coeffs = np.random.normal(0, 1,(2*M+1,2*M+1,2*M+1))
+    phases = 2*np.pi*np.random.rand(2*M+1,2*M+1,2*M+1) - np.pi
+
+    # Compute the Fourier Transform
+    coarse_f = np.zeros_like(xx0, dtype=np.float64)
+    for m_x in range(-M,M+1):
+        for m_y in range(-M,M+1):
+            for m_z in range(-M,M+1):
+                coarse_f += coeffs[m_x+M, m_y+M, m_z+M]*np.cos(2*np.pi * (m_x*xx0 + m_y*yy0+m_z*zz0)/period + phases[m_x+M, m_y+M, m_z+M])\
+                            / (m_x**2 + m_y**2 + m_z**2) if (m_x,m_y,m_z)!=(0,0,0) else 0
+    coarse_f += a0
+
+    interp = RegularGridInterpolator((x0, y0, z0), coarse_f)
+    interpolated_values = interp((xx, yy, zz))
+    return interpolated_values
+
 def save_me(img=None,array=None,ftype=None,output_folder=None, src_ref=None, ref=None, grp=None, dtype=None, img_like=None):
     if ftype=="h5":
         if ((array is None) and (img is not None)):
