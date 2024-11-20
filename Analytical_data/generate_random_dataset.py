@@ -158,6 +158,8 @@ def generate(opt):
 
     if opt.attenuationmapfolder is not None:
         attmap_refs_list = glob.glob(os.path.join(opt.attenuationmapfolder, '*_attmap_cropped_rot.mhd'))
+        print(f"LIST of Attmap to chooose: {attmap_refs_list}")
+
         with_attmaps=True
         if opt.organlabels is not None:
             organ_labels = open(opt.organlabels).read()
@@ -283,6 +285,8 @@ def generate(opt):
         X, Y, Z = np.meshgrid(lspaceX, lspaceY, lspaceZ, indexing='ij')
 
         src_array = np.zeros_like(X)
+        lesion_labels_mask = np.zeros_like(X)
+        # src_array_nograd = np.zeros_like(src_array)
 
         if opt.background:
             # background = cylinder with revolution axis = Y
@@ -300,13 +304,13 @@ def generate(opt):
                     background_array = generate_bg_cylinder(X,Y,Z,activity=bg_level,center=bg_center,radius_xzy=bg_radius_xzy)
 
 
+            # src_array_nograd +=background_array
             if opt.grad_act:
                 M = 5
                 background_array = background_array * random_3d_function_(a0 = 10,xx = X,yy=Y,zz=Z,M=M)/10
                 background_array[background_array<0] = 0
 
             src_array += background_array
-
 
         lesion_array=np.zeros_like(X)
         random_nb_of_sphers = np.random.randint(1,opt.nspheres)
@@ -321,7 +325,7 @@ def generate(opt):
 
         if opt.organlabels is not None:
             for organ in organ_labels.keys():
-                if ((organ!="body") and (np.random.rand()>2/3)): # choose each organ (except background body) with proba 1/3
+                if ((organ!="body") and (np.random.rand()>0)): # choose each organ (except background body) with proba 1/3
                     if (labels_array==int(organ_labels[organ])).any(): # if the organ is present in the attmap, then...
 
                         min_ratio_rois = organ_ratios[organ][0]
@@ -335,6 +339,8 @@ def generate(opt):
                             organ_act = (labels_array==int(organ_labels[organ])) * (rndm_grad_act_scaled_scaled * organ_rndm_activity)
                         else:
                             organ_act = (labels_array == int(organ_labels[organ])) * (organ_rndm_activity)
+
+                        # src_array_nograd+=(labels_array == int(organ_labels[organ])) * (organ_rndm_activity)
 
                         src_array+=organ_act
 
@@ -369,7 +375,10 @@ def generate(opt):
             else:
                 lesion = random_activity * lesion
 
+            # src_array_nograd[lesion > 0] = random_activity*lesion[lesion>0]
             lesion_array += lesion
+
+            lesion_labels_mask[lesion>0] = int(s+1)
 
         src_array[lesion_array > 0] = lesion_array[lesion_array > 0]
 
@@ -380,11 +389,20 @@ def generate(opt):
         total_counts_per_proj = round(np.random.rand() * (max_count - min_count) + min_count)
         print(f"{total_counts_per_proj} ({total_counts_per_proj/(1e6 * time_per_proj * efficiency)} MBq)")
         src_array_normedToTotalCounts = src_array / np.sum(src_array) * total_counts_per_proj * spacing_proj**2 / (vSpacing[0]*vSpacing[1]*vSpacing[2])
-        # src_array_normedToTotalCounts = src_array
+        # src_array_nograd_normedToTotalCounts = src_array_nograd / np.sum(src_array_nograd) * total_counts_per_proj * spacing_proj**2 / (vSpacing[0]*vSpacing[1]*vSpacing[2])
 
         src_img_normedToTotalCounts = itk.image_from_array(src_array_normedToTotalCounts.astype(np.float32))
         src_img_normedToTotalCounts.SetSpacing(vSpacing[::-1])
         src_img_normedToTotalCounts.SetOrigin(vOffset[::-1])
+
+        lesion_labels_mask_img = itk.image_from_array(lesion_labels_mask.astype(np.float32))
+        lesion_labels_mask_img.SetSpacing(vSpacing[::-1])
+        lesion_labels_mask_img.SetOrigin(vOffset[::-1])
+
+
+        # src_img_nograd_normedToTotalCounts = itk.image_from_array(src_array_nograd_normedToTotalCounts.astype(np.float32))
+        # src_img_nograd_normedToTotalCounts.SetSpacing(vSpacing[::-1])
+        # src_img_nograd_normedToTotalCounts.SetOrigin(vOffset[::-1])
 
         if opt.rec_fp>0:
             if with_attmaps:
@@ -413,6 +431,12 @@ def generate(opt):
             save_me(img=src_img_normedToTotalCounts, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
                     ref="src", grp=grp, dtype=dtype)
 
+            save_me(img=lesion_labels_mask_img, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
+                    ref="lesion_labels_mask", grp=grp, dtype=dtype)
+
+
+            # save_me(img=src_img_nograd_normedToTotalCounts, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
+            #         ref="src_nograd", grp=grp, dtype=dtype)
 
             if opt.rec_fp>0:
                 src_img_normedToTotalCounts_4mm = gatetools.applyTransformation(input=src_img_normedToTotalCounts, like=attmap_rec_fp, spacinglike=None, matrix=None, newsize=None,

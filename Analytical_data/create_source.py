@@ -17,8 +17,8 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
               help = "Number of spherical sources")
 @click.option('--value', type = float,multiple = True, default = [1],
               help = 'Activity concentration to assign to the source', show_default=True)
-@click.option('--type', type = str, default = "sphere", help = 'sphere or square')
-@click.option('--radius', type = float,multiple = True, default = [64],
+@click.option('--type', type = str, help = 'sphere or square', multiple = True)
+@click.option('--radius', type = (float,float,float),multiple = True, default = ([64,64,64],),
               help = 'Radius of activity source (mm)', show_default=True)
 @click.option('--center', type = (float,float,float), multiple = True,
               help = 'Center of the point source (Ox,Oy,Oz) (mm)')
@@ -76,16 +76,19 @@ def create_source(size, spacing, like,n_source, value,type, center, radius, back
 
     for s in range(n_source):
         center_s = [center[s][2], center[s][1], center[s][0]]
-        radius_s = radius[s]
-        if type == 'sphere':
-            src_array += value[s]*(( ( ((X - center_s[0]) / radius_s) ** 2
-                                       + ((Y - center_s[1]) / radius_s) ** 2
-                                       + ((Z - center_s[2])/ radius_s) ** 2  ) < 1).astype(float))
-        elif type=='square':
-            src_array += value[s]*(((np.abs(X-center_s[0])<radius_s)*
-                                    (np.abs(Y-center_s[1])<radius_s)*
-                                    (np.abs(Z-center_s[2])<radius_s)).astype(float))
-
+        radius_s = [radius[s][2], radius[s][1], radius[s][0]]
+        if type[s] == 'sphere':
+            src_array += value[s]*(( ( ((X - center_s[0]) / radius_s[0]) ** 2
+                                       + ((Y - center_s[1]) / radius_s[1]) ** 2
+                                       + ((Z - center_s[2])/ radius_s[2]) ** 2  ) < 1).astype(float))
+        elif type[s]=='square':
+            src_array += value[s]*(((np.abs(X-center_s[0])<radius_s[0])*
+                                    (np.abs(Y-center_s[1])<radius_s[1])*
+                                    (np.abs(Z-center_s[2])<radius_s[2])).astype(float))
+        elif type[s]=="cylinder":
+            print("cylindre pelo")
+            src_array += value[s]*(( ( ((X - center_s[0]) / radius_s[0]) ** 2
+                                       + ((Z - center_s[2])/ radius_s[2]) ** 2  ) < 1).astype(float))*(np.abs(Y-center_s[1])<radius_s[1])
 
 
     src_img = itk.image_from_array(src_array)
