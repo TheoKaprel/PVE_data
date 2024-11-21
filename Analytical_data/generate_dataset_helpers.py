@@ -194,13 +194,8 @@ def random_3d_function_(a0, xx, yy, zz, M):
     interpolated_values = interp((xx, yy, zz))
     return interpolated_values
 
-def save_me(img=None,array=None,ftype=None,output_folder=None, src_ref=None, ref=None, grp=None, dtype=None, img_like=None):
-    if ftype=="h5":
-        if ((array is None) and (img is not None)):
-            array=itk.array_from_image(img)
-        dset_ref = grp.create_dataset(ref, array.shape, dtype=dtype)
-        dset_ref[:, :, :] = array
-    elif ftype in ["mhd", "mha"]:
+def save_me(img=None,array=None,ftype=None,output_folder=None, src_ref=None, ref=None, dtype=None, img_like=None):
+    if ftype in ["mhd", "mha"]:
         filename = os.path.join(output_folder, f'{src_ref}_{ref}.{ftype}')
         if ((array is not None) and (img is None)):
             output_img = itk.image_from_array(array.astype(dtype))
