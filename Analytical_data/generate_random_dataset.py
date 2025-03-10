@@ -43,6 +43,7 @@ parser.add_argument('--attenuationmapfolder',default = None, help = 'path to the
 parser.add_argument('--attmapaugmentation', action="store_true", help = "add this if data augmentation is needed for the attenuation map. Max rotation : (5,360,5) and max translation : (50,50,50) ")
 parser.add_argument('--organlabels', type = str, help = "use --organlabels if you want to assign different activity ratios to main organs. For now: body, liver, kidneys, and bones.")
 parser.add_argument('--organratios', type = str, help = "if --organlabels is specified, you have to also specify min/ma ratios for each organ in organlabels")
+parser.add_argument('--organproba', type = float, default = 1, help= "Proba for each organ in labels to have uptake")
 parser.add_argument('--output_folder','-o', default = './dataset', help = " Absolute or relative path to the output folder")
 parser.add_argument('--spect_system', default = "ge-discovery", choices=['ge-discovery', 'siemens-intevo-lehr', "siemens-intevo-megp"], help = 'SPECT system simulated for PVE projections')
 parser.add_argument('--save_src',action ="store_true", help = "if you want to also save the source that will be forward projected")
@@ -299,7 +300,7 @@ def generate(opt):
 
         if opt.organlabels is not None:
             for organ in organ_labels.keys():
-                if ((organ!="body") and (np.random.rand()>0)): # choose each organ (except background body) with proba 1/3
+                if ((organ!="body") and (np.random.rand()<opt.organproba)): # choose each organ (except background body) with proba opt.organproba
                     if (labels_array==int(organ_labels[organ])).any(): # if the organ is present in the attmap, then...
 
                         min_ratio_rois = organ_ratios[organ][0]
