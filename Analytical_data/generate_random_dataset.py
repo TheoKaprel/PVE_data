@@ -387,7 +387,7 @@ def generate(opt):
                 attmap_4mm = gatetools.applyTransformation(input=attmap_4mm, like=None, spacinglike=None, matrix=None, newsize=None,
                                               neworigin=None, newspacing=None, newdirection=None, force_resample=True,
                                               keep_original_canvas=None, adaptive=None, rotation=rot, rotation_center=None,
-                                              translation=transl, pad=None, interpolation_mode=None, bspline_order=2)
+                                              translation=transl, pad=0, interpolation_mode="linear", bspline_order=2)
             save_me(img=attmap_4mm, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
                     ref="attmap_4mm", dtype=dtype)
 
@@ -403,11 +403,11 @@ def generate(opt):
 
         # saving of source 3D image
         if opt.save_src:
-            save_me(img=src_img_normedToTotalCounts, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
-                    ref="src", dtype=dtype)
+            # save_me(img=src_img_normedToTotalCounts, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
+            #         ref="src", dtype=dtype)
 
-            save_me(img=lesion_labels_mask_img, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
-                    ref="lesion_labels_mask", dtype=dtype)
+            # save_me(img=lesion_labels_mask_img, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
+            #         ref="lesion_labels_mask", dtype=dtype)
 
 
             # save_me(img=src_img_nograd_normedToTotalCounts, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
