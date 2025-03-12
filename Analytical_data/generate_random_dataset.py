@@ -419,7 +419,7 @@ def generate(opt):
                                                    force_resample=True,
                                                    keep_original_canvas=None, adaptive=None, rotation=None,
                                                    rotation_center=None,
-                                                   translation=None, pad=None, interpolation_mode="NN",
+                                                   translation=None, pad=None, interpolation_mode="linear",
                                                    bspline_order=2)
 
             save_me(img=src_img_normedToTotalCounts_4mm, ftype=opt.type, output_folder=opt.output_folder, src_ref=source_ref,
