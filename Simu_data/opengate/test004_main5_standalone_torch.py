@@ -48,7 +48,7 @@ if __name__ == '__main__':
     parser.add_argument("-s", "--source", type=str)
     parser.add_argument("--ct", type=str)
     parser.add_argument("--radionuclide", type=str, choices=['Tc99m', 'Lu177'])
-    parser.add_argument("--bs", type=float)
+    parser.add_argument("--batchsize", type=float)
     parser.add_argument("--gan_pth", type=str)
     parser.add_argument("--garf_pth", type=str)
     parser.add_argument("--output_folder", type=str)
