@@ -35,7 +35,7 @@ def main():
     simu.gaga_source.pth_filename = args.gan_pth
     simu.garf_detector.pth_filename = args.garf_pth
     simu.garf_detector.hit_slice_flag = False
-    simu.gaga_source.batch_size = 5e5  # 5e5 best on nvidia linux
+    simu.gaga_source.batch_size = int(args.batchsize)  # 5e5 best on nvidia linux
     simu.gaga_source.backward_distance = 30 * mm # ????
     simu.gaga_source.energy_threshold_MeV = 0.15
 
@@ -48,7 +48,7 @@ if __name__ == '__main__':
     parser.add_argument("-s", "--source", type=str)
     parser.add_argument("--ct", type=str)
     parser.add_argument("--radionuclide", type=str, choices=['Tc99m', 'Lu177'])
-    # parser.add_argument("--data", type=str)
+    parser.add_argument("--bs", type=float)
     parser.add_argument("--gan_pth", type=str)
     parser.add_argument("--garf_pth", type=str)
     parser.add_argument("--output_folder", type=str)
