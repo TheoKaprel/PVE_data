@@ -96,7 +96,7 @@ def generate_sphere(center,X,Y,Z,min_radius, max_radius, prop_radius):
         radius = np.random.rand() * (max_radius - min_radius) + min_radius
     elif prop_radius=='squared_inv':
         radius = min_radius / (1 + np.random.rand() * (min_radius/max_radius - 1))
-
+    print(radius)
     return ((((X - center[0]) / radius) ** 2 + ((Y - center[1]) / radius) ** 2 + ((Z - center[2]) / radius) ** 2) < 1).astype(float)
 
 def generate_convex(X,Y,Z,center,min_radius,max_radius, prop_radius):

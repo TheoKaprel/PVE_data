@@ -84,7 +84,7 @@ def generate(opt):
         list_angles = np.linspace(0,360,opt.nproj+1)
         geometry = rtk.ThreeDCircularProjectionGeometry.New()
         for i in range(opt.nproj):
-            geometry.AddProjection(opt.sid, 0, list_angles[i], offset, offset)
+            geometry.AddProjection(opt.sid, 0, list_angles[i], 0, 0)
         nproj = opt.nproj
     else:
         print('ERROR: give me geom xor (nproj and sid)')
@@ -136,14 +136,10 @@ def generate(opt):
 
     time_per_proj = 20
     min_activity,max_activity = opt.min_activity, opt.max_activity
-    min_count= int(min_activity * 1e6 * time_per_proj * efficiency)
-    max_count= int(max_activity * 1e6 * time_per_proj * efficiency)
+    min_count= int(min_activity*11/100 * 1e6 * time_per_proj * efficiency)
+    max_count= int(max_activity*11/100 * 1e6 * time_per_proj * efficiency)
 
     print(f'Activity between {min_activity} MBq and {max_activity} MBq --> nb of counts between {min_count} and {max_count}')
-    """
-     Attention, ce qu on appelle activite ici c est que les desintegration qui conduisent a des gammas (de 208 kev pour Lu et 140.5 pour Tc) .
-     Donc 100MBq ici, ça signifie 100 * 100/11 = 909 MBq de vrai Lu177
-     """
 
     print(json.dumps(dataset_infos, indent = 3))
 
@@ -362,7 +358,7 @@ def generate(opt):
             print('fp...')
 
         total_counts_per_proj = round(np.random.rand() * (max_count - min_count) + min_count)
-        print(f"{total_counts_per_proj} ({total_counts_per_proj/(1e6 * time_per_proj * efficiency)} MBq)")
+        print(f"{total_counts_per_proj} ({total_counts_per_proj/(1e6 * time_per_proj * efficiency * 11/100)} MBq)")
         src_array_normedToTotalCounts = src_array / np.sum(src_array) * total_counts_per_proj * spacing_proj**2 / (vSpacing[0]*vSpacing[1]*vSpacing[2])
         # src_array_nograd_normedToTotalCounts = src_array_nograd / np.sum(src_array_nograd) * total_counts_per_proj * spacing_proj**2 / (vSpacing[0]*vSpacing[1]*vSpacing[2])
 

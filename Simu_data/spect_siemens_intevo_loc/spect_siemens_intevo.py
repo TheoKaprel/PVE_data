@@ -4,7 +4,7 @@ from opengate.geometry.volumes import unite_volumes
 from opengate.geometry.volumes import RepeatParametrisedVolume, BoxVolume
 from opengate.actors.digitizers import *
 from opengate.managers import Simulation
-from opengate.contrib.spect import genm670
+# from opengate.contrib.spect import genm670
 from box import Box
 import os
 # colors

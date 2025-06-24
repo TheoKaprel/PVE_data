@@ -8,8 +8,9 @@ import os
 # sys.path.append('/export/home/tkaprelian/Desktop/PVE/PVE_data/Simu_data/spect_siemens_intevo_loc/')
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),"../spect_siemens_intevo_loc"))
 import spect_siemens_intevo as gate_intevo
-from opengate.sources.generic import get_rad_gamma_energy_spectrum
-from gaga_phsp import gaga_helpers_gate
+# from opengate.sources.generic import get_rad_gamma_energy_spectrum
+from opengate.sources.utility import __get_rad_gamma_spectrum
+from gaga_phsp import gaga_helpers_spect
 from path import Path
 import inspect
 import numpy as np
@@ -300,13 +301,15 @@ def add_debug_phsp_plane(sim, p):
 
 
 def add_vox_source(sim, p, patient):
-    source = sim.add_source("VoxelsSource", "vox_source")
-    w, e = get_rad_gamma_energy_spectrum(p.radionuclide)
-    source.mother = patient.name
+    source = sim.add_source("VoxelSource", "vox_source")
+    # data_spectrum = __get_rad_gamma_spectrum(p.radionuclide)
+    spectrum = gate.sources.utility.get_spectrum(p.radionuclide, "gamma", database="icrp107")
+    print(spectrum)
+    source.attached_to = patient.name
     source.particle = "gamma"
-    source.energy.type = "spectrum_lines"
-    source.energy.spectrum_weight = w
-    source.energy.spectrum_energy = e
+    source.energy.type = "spectrum_discrete"
+    source.energy.spectrum_energies = spectrum.energies
+    source.energy.spectrum_weights = spectrum.weights
     source.image = p.activity_image
     source.direction.type = "iso"
     # if patient.name != "world" and patient.name != "waterbox":
@@ -319,10 +322,10 @@ def add_vox_source(sim, p, patient):
     sec = gate.g4_units.second
     source.activity = p.activity / ui.number_of_threads
 
-    ne = int((p.activity / Bq) * np.sum(w) * p.duration / sec)
+    ne = int((p.activity / Bq) * np.sum(spectrum.weights) * p.duration / sec)
     print(f"Vox source translation: {source.position.translation}")
-    print(f"Vox source total activity: {source.activity/Bq} Bq")
-    print(f"{p.radionuclide} yield: {np.sum(w)}")
+    print(f"Vox source total activity: {p.activity/Bq} Bq")
+    print(f"{p.radionuclide} yield: {np.sum(spectrum.weights)}")
     print(f"Expected events: {ne}")
     print(f"Number of threads : {ui.number_of_threads}")
     return source

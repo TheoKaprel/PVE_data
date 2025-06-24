@@ -39,8 +39,8 @@ def main():
     # cylinder for phsp
     sim.add_parallel_world("sphere_world")
     sph_surface = sim.add_volume("Sphere", "phase_space_sphere")
-    sph_surface.rmin = 610 * mm
-    sph_surface.rmax = 611 * mm
+    sph_surface.rmin = 350 * mm
+    sph_surface.rmax = 351 * mm
     sph_surface.color = [0, 1, 0, 1]
     sph_surface.material = "G4_AIR"
     sph_surface.mother = "sphere_world"
@@ -50,11 +50,11 @@ def main():
 
     # stats
     stats = sim.add_actor("SimulationStatisticsActor", "stats")
-    stats.output = f"{output_folder}/{simu_name}_stats.txt"
+    stats.output_filename = f"{output_folder}/{simu_name}_stats.txt"
 
     # phsp
     phsp = sim.add_actor("PhaseSpaceActor", "phase_space")
-    phsp.mother = "phase_space_sphere"
+    phsp.attached_to = "phase_space_sphere"
     phsp.attributes = [
         "KineticEnergy",
         "PrePosition",
@@ -65,14 +65,14 @@ def main():
         "EventPosition",
         "EventDirection",
     ]
-    phsp.output = f"{output_folder}/{simu_name}.root"
+    phsp.output_filename = f"{output_folder}/{simu_name}.root"
     # this option allow to store all events even if absorbed
     phsp.store_absorbed_event = True
     f = sim.add_filter("ParticleFilter", "f")
     f.particle = "gamma"
     phsp.filters.append(f)
     print(phsp)
-    print(phsp.output)
+    print(phsp.output_filename)
 
     # physic list
     sim.physics_manager.physics_list_name = "G4EmStandardPhysics_option3"
@@ -81,8 +81,7 @@ def main():
     # run
     sim.run()
 
-    # print results at the end
-    stats = sim.output.get_actor("stats")
+    stats = sim.get_actor("stats")
     print(stats)
 
 
