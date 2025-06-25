@@ -22,7 +22,8 @@ def main():
     simu.ct_image = args.ct  # (needed to position the source)
     simu.activity_image = args.source
     simu.radionuclide = args.radionuclide
-    simu.gantry_angles = [0 * deg, 100 * deg, 230 * deg]
+    # simu.gantry_angles = [0 * deg, 100 * deg, 230 * deg]
+    simu.gantry_angles = [10 * k * deg for k in range(36)]
 
     simu.duration = 30 * sec
     simu.number_of_threads = 1
@@ -35,8 +36,10 @@ def main():
     simu.gaga_source.pth_filename = args.gan_pth
     simu.garf_detector.pth_filename = args.garf_pth
     simu.garf_detector.hit_slice_flag = False
+    simu.garf_detector.radius = args.sid * mm
+
     simu.gaga_source.batch_size = int(args.batchsize)  # 5e5 best on nvidia linux
-    simu.gaga_source.backward_distance = 30 * mm # ????
+    simu.gaga_source.backward_distance = 150 * mm # ????
     simu.gaga_source.energy_threshold_MeV = 0.15
 
     # run the simulation
@@ -51,6 +54,7 @@ if __name__ == '__main__':
     parser.add_argument("--batchsize", type=float)
     parser.add_argument("--gan_pth", type=str)
     parser.add_argument("--garf_pth", type=str)
+    parser.add_argument("--sid", type=float, default = 280)
     parser.add_argument("--output_folder", type=str)
     args = parser.parse_args()
 
