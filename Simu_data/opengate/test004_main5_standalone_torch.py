@@ -36,7 +36,7 @@ def main():
     simu.gaga_source.pth_filename = args.gan_pth
     simu.garf_detector.pth_filename = args.garf_pth
     simu.garf_detector.hit_slice_flag = False
-    simu.garf_detector.radius = args.sid * mm
+    simu.radius = args.sid * mm
 
     simu.gaga_source.batch_size = int(args.batchsize)  # 5e5 best on nvidia linux
     simu.gaga_source.backward_distance = 150 * mm # ????
