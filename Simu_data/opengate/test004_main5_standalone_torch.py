@@ -23,14 +23,14 @@ def main():
     simu.activity_image = args.source
     simu.radionuclide = args.radionuclide
     # simu.gantry_angles = [0 * deg, 100 * deg, 230 * deg]
-    simu.gantry_angles = [10 * k * deg for k in range(36)]
-
-    simu.duration = 30 * sec
+    simu.gantry_angles = [(3 * k + 180) * deg for k in range(120)]
+    simu.axis = args.axis
+    simu.duration = 15 * sec
     simu.number_of_threads = 1
     simu.total_activity = args.activity * Bq
     # simu.visu = True
 
-    simu.image_size = [96, 96]
+    simu.image_size = [128, 128]
     simu.image_spacing = [4.7951998710632 * mm , 4.7951998710632 * mm]
 
     simu.gaga_source.pth_filename = args.gan_pth
@@ -56,6 +56,7 @@ if __name__ == '__main__':
     parser.add_argument("--garf_pth", type=str)
     parser.add_argument("--sid", type=float, default = 280)
     parser.add_argument("--output_folder", type=str)
+    parser.add_argument("--axis", type=str)
     args = parser.parse_args()
 
     main()

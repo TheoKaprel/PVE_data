@@ -50,6 +50,7 @@ def main():
     simu.gaga_source.batch_size = int(args.batchsize)  # 5e5 best on nvidia linux
     simu.gaga_source.backward_distance = 150 * mm # ????
     simu.gaga_source.energy_threshold_MeV = 0.15
+    simu.compile = args.compile
     # simu.gaga_source.gpu_mode = "cpu"
     # simu.garf_detector.gpu_mode = "cpu"
 
@@ -110,6 +111,7 @@ if __name__ == '__main__':
     parser.add_argument("--sid", type=float, default = 280)
     parser.add_argument("--output_folder", type=str)
     parser.add_argument("--axis", type=str)
+    parser.add_argument("--compile", action="store_true")
     args = parser.parse_args()
 
     main()
