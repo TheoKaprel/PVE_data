@@ -126,8 +126,9 @@ if __name__ == '__main__':
 
     host = os.uname()[1]
     if (host !='suillus'):
-        import idr_torch
+        print(f"hello {host}")
         import torch.distributed as dist
+        import idr_torch
 
         # get distributed configuration from Slurm environment
         NODE_ID = os.environ['SLURM_NODEID']
@@ -135,13 +136,13 @@ if __name__ == '__main__':
 
         # display info
         if idr_torch.rank == 0:
-            print(">>> Training on ", len(idr_torch.hostnames), " nodes and ", idr_torch.size,
+            print(">>> Training on ", len(idr_torch.nodelist), " nodes and ", idr_torch.world_size,
                   " processes, master node is ", MASTER_ADDR)
         print("- Process {} corresponds to GPU {} of node {}".format(idr_torch.rank, idr_torch.local_rank, NODE_ID))
 
         dist.init_process_group(backend='nccl',
                                 init_method='env://',
-                                world_size=idr_torch.size,
+                                world_size=idr_torch.world_size,
                                 rank=idr_torch.rank)
         rank=idr_torch.rank
 
