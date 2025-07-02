@@ -126,8 +126,9 @@ if __name__ == '__main__':
 
     host = os.uname()[1]
     if (host !='suillus'):
-        import torch.distributed as dist
         import idr_torch
+        import torch.distributed as dist
+
         # get distributed configuration from Slurm environment
         NODE_ID = os.environ['SLURM_NODEID']
         MASTER_ADDR = os.environ['MASTER_ADDR'] if ("MASTER_ADDR" in os.environ) else os.environ['HOSTNAME']
@@ -138,7 +139,10 @@ if __name__ == '__main__':
                   " processes, master node is ", MASTER_ADDR)
         print("- Process {} corresponds to GPU {} of node {}".format(idr_torch.rank, idr_torch.local_rank, NODE_ID))
 
-        dist.init_process_group(backend='nccl', init_method='env://', world_size=idr_torch.size, rank=idr_torch.rank)
+        dist.init_process_group(backend='nccl',
+                                init_method='env://',
+                                world_size=idr_torch.size,
+                                rank=idr_torch.rank)
         rank=idr_torch.rank
 
         torch.cuda.set_device(idr_torch.local_rank)
