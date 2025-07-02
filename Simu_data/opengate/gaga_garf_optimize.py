@@ -123,7 +123,7 @@ if __name__ == '__main__':
     parser.add_argument("--compile", action="store_true")
     args = parser.parse_args()
 
-
+    print(f"hello ... ?")
     host = os.uname()[1]
     if (host !='suillus'):
         print(f"hello {host}")
