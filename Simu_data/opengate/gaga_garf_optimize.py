@@ -72,19 +72,17 @@ def main():
     image_k_tensor.requires_grad_(True)
     optimizer = torch.optim.Adam([image_k_tensor, ], lr=0.001)
     loss_fct = torch.nn.MSELoss()
+
+    # with torch.no_grad():
+    #     src = torch.from_numpy(like_img_array).to(torch.float32).to(simu.gaga_source.current_gpu_device)
+    #     # src.requires_grad = True
+    #     output_projs = simu.optim_generate_projections_from_source(source_tensor=src)
+    #     itk.imwrite(itk.image_from_array(output_projs[:,4,:,:].detach().cpu().numpy()), os.path.join(args.output_folder, "output_projs_gaga_garf.mha"))
+    #     # loss = loss_fct(output_projs[:2, 4, :, :], measured_projections_torch[:2,:,:])
+    #     # loss.backward()
+    #     # optimizer.step()
     #
-    # # with torch.no_grad():
-    # src = torch.from_numpy(like_img_array).to(torch.float32)
-    # src.requires_grad = True
-    # output_projs = simu.optim_generate_projections_from_source(source_tensor=src)
-    #
-    # itk.imwrite(itk.image_from_array(output_projs[:,4,:,:].detach().cpu().numpy()), os.path.join(args.output_folder, "output_projs_gaga_garf.mha"))
-    #
-    # loss = loss_fct(output_projs[:2, 4, :, :], measured_projections_torch[:2,:,:])
-    # # loss.backward()
-    # # optimizer.step()
-    #
-    # make_dot(loss,show_attrs=True, show_saved=True).render(format="png", filename="torchviz")
+    # # make_dot(loss,show_attrs=True, show_saved=True).render(format="png", filename="torchviz")
     # exit(0)
 
 
@@ -93,8 +91,16 @@ def main():
         t0_epoch = time.time()
         optimizer.zero_grad()
         output_projs = simu.optim_generate_projections_from_source(source_tensor = image_k_tensor)
-        loss = loss_fct(output_projs[:, 4, :, :], measured_projections_torch[:, :, :])
-        print(f"Allocated: {torch.cuda.memory_allocated() / 1024 ** 2:.2f} MiB")
+
+        if ddp:
+            torch.distributed.all_reduce(output_projs, op=torch.distributed.ReduceOp.SUM)
+
+        # normalization
+        output_projs = output_projs[:,4,:,:]/output_projs[:,4,:,:].sum() * measured_projections_torch.sum()
+
+
+        loss = loss_fct(output_projs, measured_projections_torch)
+        print(f"Allocated: {torch.cuda.memory_allocated() / 1024 ** 2:.2f} MiB i.e. {torch.cuda.memory_allocated() / 1024 ** 3:.2f} GiB")
         loss.backward()
         optimizer.step()
         print(f"[Epoch {epoch}/{n_epochs}] Loss = {loss.item():8.4f}            ({time.time()-t0_epoch:.4f} s)")
@@ -116,5 +122,34 @@ if __name__ == '__main__':
     parser.add_argument("--axis", type=str)
     parser.add_argument("--compile", action="store_true")
     args = parser.parse_args()
+
+
+    host = os.uname()[1]
+    if (host !='suillus'):
+        import torch.distributed as dist
+        import idr_torch
+        # get distributed configuration from Slurm environment
+        NODE_ID = os.environ['SLURM_NODEID']
+        MASTER_ADDR = os.environ['MASTER_ADDR'] if ("MASTER_ADDR" in os.environ) else os.environ['HOSTNAME']
+
+        # display info
+        if idr_torch.rank == 0:
+            print(">>> Training on ", len(idr_torch.hostnames), " nodes and ", idr_torch.size,
+                  " processes, master node is ", MASTER_ADDR)
+        print("- Process {} corresponds to GPU {} of node {}".format(idr_torch.rank, idr_torch.local_rank, NODE_ID))
+
+        dist.init_process_group(backend='nccl', init_method='env://', world_size=idr_torch.size, rank=idr_torch.rank)
+        rank=idr_torch.rank
+
+        torch.cuda.set_device(idr_torch.local_rank)
+        if idr_torch.size>1:
+            ddp = True
+        else:
+            ddp = False
+    else:
+        rank=0
+        ddp = False
+
+
 
     main()
