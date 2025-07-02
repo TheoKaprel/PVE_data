@@ -1,67 +1,69 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
 import torch
-import matplotlib.pyplot as plt
+import sys
+sys.setrecursionlimit(10000)
+
+def main():
+    print(args)
+
+    gpu = torch.device("cuda")
+
+    print("Code seems to run")
+    print(f"Local GPU is : {gpu}")
 
 
-class HistoBin(torch.nn.Module):
-    def __init__(self, locations, radius=.2, norm=True):
-        super(HistoBin, self).__init__()
 
-        self.locs = locations
-        self.r = radius
-        self.norm = norm
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-a","--activity", type = float, default = 2e7)
+    parser.add_argument("--like_img", type=str)
+    parser.add_argument("--projections", type=str)
+    parser.add_argument("--ct", type=str)
+    parser.add_argument("--radionuclide", type=str, choices=['Tc99m', 'Lu177'])
+    parser.add_argument("--batchsize", type=float)
+    parser.add_argument("--gan_pth", type=str)
+    parser.add_argument("--garf_pth", type=str)
+    parser.add_argument("--sid", type=float, default = 280)
+    parser.add_argument("--output_folder", type=str)
+    parser.add_argument("--axis", type=str)
+    parser.add_argument("--compile", action="store_true")
+    args = parser.parse_args()
 
-    def forward(self, x):
+    print(f"hello ... ?")
+    host = os.uname()[1]
+    if (host !='suillus'):
+        print(f"hello {host}")
+        import torch.distributed as dist
+        import idr_torch
 
-        counts = []
+        # get distributed configuration from Slurm environment
+        NODE_ID = os.environ['SLURM_NODEID']
+        MASTER_ADDR = os.environ['MASTER_ADDR'] if ("MASTER_ADDR" in os.environ) else os.environ['HOSTNAME']
 
-        for loc in self.locs:
-            dist = torch.abs(x - loc)
-            ct = torch.relu(self.r - dist).sum()
-            counts.append(ct)
+        # display info
+        if idr_torch.rank == 0:
+            print(">>> Training on ", len(idr_torch.nodelist), " nodes and ", idr_torch.world_size,
+                  " processes, master node is ", MASTER_ADDR)
+        print("- Process {} corresponds to GPU {} of node {}".format(idr_torch.rank, idr_torch.local_rank, NODE_ID))
 
-        out = torch.stack(counts)
+        dist.init_process_group(backend='nccl',
+                                init_method='env://',
+                                world_size=idr_torch.world_size,
+                                rank=idr_torch.rank)
+        rank=idr_torch.rank
 
-        if self.norm:
-            summ = out.sum() + .000001
-            return (out / summ)
-        return out
-
-# x = torch.linspace(0,1,1000)
-# distrib_true = x * torch.exp(-4*x)
-# samples_id = torch.multinomial(distrib,Nsamples,replacement=True)
-# samples_id = torch.distributions.Categorical(distrib,Nsamples,replacement=True)
-# samples_id = torch.nn.functional.gumbel_softmax(torch.log(logits + 1e-10))
-
-dev = torch.device("cuda")
-
-Nx = 1000
-x = torch.linspace(-5,5,Nx).to(dev)
-
-mu,sigma = -2,1/2
-dist =  1/sigma / torch.sqrt(torch.Tensor([2*torch.pi]).to(dev)) * torch.exp(-1/2 * ((x-mu)/sigma)**2)
-
-Nsamples = 10000
+        torch.cuda.set_device(idr_torch.local_rank)
+        if idr_torch.size>1:
+            ddp = True
+        else:
+            ddp = False
+    else:
+        rank=0
+        ddp = False
 
 
-sigma0,mu0 = torch.Tensor([1.]).to(dev),torch.Tensor([0.0]).to(dev)
-sigma0.requires_grad=True
-mu0.requires_grad=True
-optimizer = torch.optim.Adam([sigma0,mu0],lr=0.01)
-loss_fct = torch.nn.MSELoss()
-hist2bins = HistoBin(locations=x+(x[1]-x[0])/2)
-for e in range(1000):
-    optimizer.zero_grad()
-    samples_sN = torch.randn(Nsamples,device=dev)*sigma0 + mu0
-    hist = hist2bins(samples_sN)
-    hist = hist / hist.sum() / (x[1]-x[0])
 
-    loss = loss_fct(hist,dist)
-    loss.backward()
-    optimizer.step()
-    print(f"epoch {e}: {round(loss.item(),4)} mu0 = {mu0.item()} / sigma0 = {sigma0.item()}")
-
-    if e%200==0:
-        fig,ax = plt.subplots()
-        ax.plot(x.detach().cpu().numpy(), dist.detach().cpu().numpy())
-        ax.plot(x.detach().cpu().numpy(), hist.detach().cpu().numpy())
-        plt.show()
+    main()
