@@ -11,7 +11,6 @@ import itk
 import time
 import os
 
-# from torchviz import make_dot, make_dot_from_trace
 
 import sys
 sys.setrecursionlimit(10000)
@@ -32,9 +31,12 @@ def main():
     simu.ct_image = args.ct  # (needed to position the source)
     simu.activity_image = args.like_img
     simu.radionuclide = args.radionuclide
-    simu.gantry_angles = [(3 * k + 180) * deg for k in range(120)]
+    if args.viz:
+        simu.gantry_angles = [180 * deg, (180 + 90) * deg]
+    else:
+        simu.gantry_angles = [(3 * k + 180) * deg for k in range(120)]
     # simu.gantry_angles = [(30 * k + 180) * deg for k in range(5)]
-    # simu.gantry_angles = [180 * deg, (180+90) * deg]
+
     simu.axis = args.axis
     simu.duration = 15 * sec
     simu.number_of_threads = 1
@@ -73,40 +75,40 @@ def main():
     optimizer = torch.optim.Adam([image_k_tensor, ], lr=args.lr)
     loss_fct = torch.nn.MSELoss()
 
-    # with torch.no_grad():
-    #     src = torch.from_numpy(like_img_array).to(torch.float32).to(simu.gaga_source.current_gpu_device)
-    #     # src.requires_grad = True
-    #     output_projs = simu.optim_generate_projections_from_source(source_tensor=src)
-    #     itk.imwrite(itk.image_from_array(output_projs[:,4,:,:].detach().cpu().numpy()), os.path.join(args.output_folder, "output_projs_gaga_garf.mha"))
-    #     # loss = loss_fct(output_projs[:2, 4, :, :], measured_projections_torch[:2,:,:])
-    #     # loss.backward()
-    #     # optimizer.step()
-    #
-    # # make_dot(loss,show_attrs=True, show_saved=True).render(format="png", filename="torchviz")
-    # exit(0)
+    if args.viz==True:
+        from torchviz import make_dot
 
+        # src = torch.from_numpy(like_img_array).to(torch.float32).to(simu.gaga_source.current_gpu_device)
+        # src.requires_grad = True
+        output_projs = simu.optim_generate_projections_from_source(source_tensor=image_k_tensor)
+        # itk.imwrite(itk.image_from_array(output_projs[:,4,:,:].detach().cpu().numpy()), os.path.join(args.output_folder, "output_projs_gaga_garf.mha"))
+        loss = loss_fct(output_projs[:2, 4, :, :], measured_projections_torch[:2,:,:])
 
-    n_epochs = args.nepochs
-    for epoch in range(n_epochs):
-        t0_epoch = time.time()
-        optimizer.zero_grad()
-        output_projs = simu.optim_generate_projections_from_source(source_tensor = image_k_tensor)
+        make_dot(loss,show_attrs=True, show_saved=True).render(format="png", filename="torchviz")
+        exit(0)
 
-        if ddp:
-            torch.distributed.all_reduce(output_projs, op=torch.distributed.ReduceOp.SUM)
+    else:
+        n_epochs = args.nepochs
+        for epoch in range(n_epochs):
+            t0_epoch = time.time()
+            optimizer.zero_grad()
+            output_projs = simu.optim_generate_projections_from_source(source_tensor = image_k_tensor)
 
-        # normalization
-        output_projs = output_projs[:,4,:,:]/output_projs[:,4,:,:].sum() * measured_projections_torch.sum()
-        loss = loss_fct(output_projs, measured_projections_torch)
+            if ddp:
+                torch.distributed.all_reduce(output_projs, op=torch.distributed.ReduceOp.SUM)
 
-        print(f"({rank=}) Allocated: {torch.cuda.memory_allocated() / 1024 ** 2:.2f} MiB i.e. {torch.cuda.memory_allocated() / 1024 ** 3:.2f} GiB")
-        loss.backward()
-        optimizer.step()
+            # normalization
+            output_projs = output_projs[:,4,:,:]/output_projs[:,4,:,:].sum() * measured_projections_torch.sum()
+            loss = loss_fct(output_projs, measured_projections_torch)
 
-        print(f"[Epoch {epoch}/{n_epochs}] Loss = {loss.item():8.4f}            ({time.time()-t0_epoch:.4f} s)")
-        rec_k = itk.image_from_array(image_k_tensor.detach().cpu().numpy())
-        rec_k.CopyInformation(like_img)
-        itk.imwrite(rec_k, os.path.join(args.output_folder, f"rec_{epoch}.mha"))
+            print(f"({rank=}) Allocated: {torch.cuda.memory_allocated() / 1024 ** 2:.2f} MiB i.e. {torch.cuda.memory_allocated() / 1024 ** 3:.2f} GiB")
+            loss.backward()
+            optimizer.step()
+
+            print(f"[Epoch {epoch}/{n_epochs}] Loss = {loss.item():8.4f}            ({time.time()-t0_epoch:.4f} s)")
+            rec_k = itk.image_from_array(image_k_tensor.detach().cpu().numpy())
+            rec_k.CopyInformation(like_img)
+            itk.imwrite(rec_k, os.path.join(args.output_folder, f"rec_{epoch}.mha"))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -125,6 +127,7 @@ if __name__ == '__main__':
     parser.add_argument("--compile", action="store_true")
     parser.add_argument("--nepochs", type=int, default = 10)
     parser.add_argument("--lr", type=float, default = 0.001)
+    parser.add_argument("--viz", action="store_true")
     args = parser.parse_args()
 
     host = os.uname()[1]
