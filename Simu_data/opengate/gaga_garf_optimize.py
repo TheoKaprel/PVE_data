@@ -93,9 +93,7 @@ def main():
         output_projs = simu.optim_generate_projections_from_source(source_tensor = image_k_tensor)
 
         if ddp:
-            # torch.distributed.all_reduce(output_projs, op=torch.distributed.ReduceOp.SUM)
-            # torch.distributed.all_reduce(output_projs, op=torch.distributed.ReduceOp.SUM)
-            torch.distributed.nn.functional.all_reduce(output_projs, op=torch.distributed.ReduceOp.SUM)
+            torch.distributed.all_reduce(output_projs, op=torch.distributed.ReduceOp.SUM)
 
         # normalization
         output_projs = output_projs[:,4,:,:]/output_projs[:,4,:,:].sum() * measured_projections_torch.sum()
@@ -106,8 +104,9 @@ def main():
         optimizer.step()
 
         print(f"[Epoch {epoch}/{n_epochs}] Loss = {loss.item():8.4f}            ({time.time()-t0_epoch:.4f} s)")
-
-
+        rec_k = itk.image_from_array(image_k_tensor.detach().cpu().numpy())
+        rec_k.CopyInformation(like_img)
+        itk.imwrite(rec_k, os.path.join(args.output_folder, f"rec_{epoch}.mha"))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
