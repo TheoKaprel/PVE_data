@@ -92,7 +92,7 @@ def main():
         optimizer.zero_grad()
         output_projs = simu.optim_generate_projections_from_source(source_tensor = image_k_tensor)
 
-        output_projs = output_projs[:, 4, :, :]
+        output_projs = output_projs[:, 4, :, :].clone()
         measured_projections_torch = measured_projections_torch / measured_projections_torch.sum() * output_projs.sum() * 4
 
         if ddp:
