@@ -92,14 +92,11 @@ def main():
         optimizer.zero_grad()
         output_projs = simu.optim_generate_projections_from_source(source_tensor = image_k_tensor)
 
-        output_projs = output_projs[:, 4, :, :].clone()
-        measured_projections_torch = measured_projections_torch / measured_projections_torch.sum() * output_projs.sum() * 4
-
         if ddp:
             torch.distributed.all_reduce(output_projs, op=torch.distributed.ReduceOp.SUM)
 
         # normalization
-        # output_projs = output_projs[:,4,:,:]/output_projs[:,4,:,:].sum() * measured_projections_torch.sum()
+        output_projs = output_projs[:,4,:,:]/output_projs[:,4,:,:].sum() * measured_projections_torch.sum()
         loss = loss_fct(output_projs, measured_projections_torch)
 
         print(f"({rank=}) Allocated: {torch.cuda.memory_allocated() / 1024 ** 2:.2f} MiB i.e. {torch.cuda.memory_allocated() / 1024 ** 3:.2f} GiB")
