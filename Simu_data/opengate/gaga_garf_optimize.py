@@ -15,7 +15,7 @@ import os
 
 import sys
 sys.setrecursionlimit(10000)
-torch.autograd.set_detect_anomaly(True)
+# torch.autograd.set_detect_anomaly(True)
 
 def main():
     print(args)
@@ -93,8 +93,9 @@ def main():
         output_projs = simu.optim_generate_projections_from_source(source_tensor = image_k_tensor)
 
         if ddp:
-            torch.distributed.all_reduce(output_projs, op=torch.distributed.ReduceOp.SUM)
-
+            # torch.distributed.all_reduce(output_projs, op=torch.distributed.ReduceOp.SUM)
+            # torch.distributed.all_reduce(output_projs, op=torch.distributed.ReduceOp.SUM)
+            torch.distributed.nn.functional.all_reduce(output_projs, op=torch.distributed.ReduceOp.SUM)
 
         # normalization
         output_projs = output_projs[:,4,:,:]/output_projs[:,4,:,:].sum() * measured_projections_torch.sum()
