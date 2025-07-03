@@ -15,7 +15,7 @@ import os
 
 import sys
 sys.setrecursionlimit(10000)
-# torch.autograd.set_detect_anomaly(True)
+torch.autograd.set_detect_anomaly(True)
 
 def main():
     print(args)
@@ -92,24 +92,18 @@ def main():
         optimizer.zero_grad()
         output_projs = simu.optim_generate_projections_from_source(source_tensor = image_k_tensor)
 
-
-        print(f"({rank=}) Allocated: {torch.cuda.memory_allocated() / 1024 ** 2:.2f} MiB i.e. {torch.cuda.memory_allocated() / 1024 ** 3:.2f} GiB")
-        print(f"({rank=}) (a) {output_projs[:,4,:,:].sum()} / {measured_projections_torch.sum()}")
-
         if ddp:
             torch.distributed.all_reduce(output_projs, op=torch.distributed.ReduceOp.SUM)
 
-        print(f"({rank=}) (b) {output_projs[:, 4, :, :].sum()} / {measured_projections_torch.sum()}")
 
         # normalization
         output_projs = output_projs[:,4,:,:]/output_projs[:,4,:,:].sum() * measured_projections_torch.sum()
-
-        print(f"({rank=}) (c) {output_projs.sum()} / {measured_projections_torch.sum()}")
-
         loss = loss_fct(output_projs, measured_projections_torch)
-        # print(f"Allocated: {torch.cuda.memory_allocated() / 1024 ** 2:.2f} MiB i.e. {torch.cuda.memory_allocated() / 1024 ** 3:.2f} GiB")
+
+        print(f"({rank=}) Allocated: {torch.cuda.memory_allocated() / 1024 ** 2:.2f} MiB i.e. {torch.cuda.memory_allocated() / 1024 ** 3:.2f} GiB")
         loss.backward()
         optimizer.step()
+
         print(f"[Epoch {epoch}/{n_epochs}] Loss = {loss.item():8.4f}            ({time.time()-t0_epoch:.4f} s)")
 
 
