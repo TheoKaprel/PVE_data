@@ -6,6 +6,11 @@ import torch
 import sys
 sys.setrecursionlimit(10000)
 
+os.environ['LD_LIBRARY_PATH']+="/linkhome/rech/gencre01/uyo34ub/.local/lib/python3.11/site-packages/opengate_core.libs:"
+os.environ['LD_PRELOAD']+="/linkhome/rech/gencre01/uyo34ub/.local/lib/python3.11/site-packages/opengate_core.libs/libG4processes-d7125d28.so:"
+
+import opengate as gate
+
 def main():
     print(args)
 
