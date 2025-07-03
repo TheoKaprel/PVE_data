@@ -92,6 +92,9 @@ def main():
         optimizer.zero_grad()
         output_projs = simu.optim_generate_projections_from_source(source_tensor = image_k_tensor)
 
+
+        print(f"({rank=}) Allocated: {torch.cuda.memory_allocated() / 1024 ** 2:.2f} MiB i.e. {torch.cuda.memory_allocated() / 1024 ** 3:.2f} GiB")
+
         if ddp:
             torch.distributed.all_reduce(output_projs, op=torch.distributed.ReduceOp.SUM)
 
@@ -100,7 +103,7 @@ def main():
 
 
         loss = loss_fct(output_projs, measured_projections_torch)
-        print(f"Allocated: {torch.cuda.memory_allocated() / 1024 ** 2:.2f} MiB i.e. {torch.cuda.memory_allocated() / 1024 ** 3:.2f} GiB")
+        # print(f"Allocated: {torch.cuda.memory_allocated() / 1024 ** 2:.2f} MiB i.e. {torch.cuda.memory_allocated() / 1024 ** 3:.2f} GiB")
         loss.backward()
         optimizer.step()
         print(f"[Epoch {epoch}/{n_epochs}] Loss = {loss.item():8.4f}            ({time.time()-t0_epoch:.4f} s)")
@@ -123,10 +126,8 @@ if __name__ == '__main__':
     parser.add_argument("--compile", action="store_true")
     args = parser.parse_args()
 
-    print(f"hello ... ?")
     host = os.uname()[1]
     if (host !='suillus'):
-        print(f"hello {host}")
         import torch.distributed as dist
         import idr_torch
 
@@ -154,7 +155,5 @@ if __name__ == '__main__':
     else:
         rank=0
         ddp = False
-
-
 
     main()
