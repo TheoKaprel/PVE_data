@@ -123,6 +123,7 @@ if __name__ == '__main__':
     parser.add_argument("--axis", type=str)
     parser.add_argument("--compile", action="store_true")
     parser.add_argument("--nepochs", type=int, default = 10)
+    parser.add_argument("--lr", type=int, default = 0.001)
     args = parser.parse_args()
 
     host = os.uname()[1]
