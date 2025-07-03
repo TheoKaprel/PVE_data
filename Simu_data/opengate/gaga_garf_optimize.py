@@ -86,7 +86,7 @@ def main():
     # exit(0)
 
 
-    n_epochs = 10
+    n_epochs = args.nepochs
     for epoch in range(n_epochs):
         t0_epoch = time.time()
         optimizer.zero_grad()
@@ -122,6 +122,7 @@ if __name__ == '__main__':
     parser.add_argument("--output_folder", type=str)
     parser.add_argument("--axis", type=str)
     parser.add_argument("--compile", action="store_true")
+    parser.add_argument("--nepochs", type=int, default = 10)
     args = parser.parse_args()
 
     host = os.uname()[1]
