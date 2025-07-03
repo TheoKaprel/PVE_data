@@ -104,7 +104,7 @@ def main():
         # normalization
         output_projs = output_projs[:,4,:,:]/output_projs[:,4,:,:].sum() * measured_projections_torch.sum()
 
-        print(f"({rank=}) (c) {output_projs[:, 4, :, :].sum()} / {measured_projections_torch.sum()}")
+        print(f"({rank=}) (c) {output_projs.sum()} / {measured_projections_torch.sum()}")
 
         loss = loss_fct(output_projs, measured_projections_torch)
         # print(f"Allocated: {torch.cuda.memory_allocated() / 1024 ** 2:.2f} MiB i.e. {torch.cuda.memory_allocated() / 1024 ** 3:.2f} GiB")
