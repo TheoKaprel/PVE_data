@@ -53,8 +53,8 @@ def main():
     simu.gaga_source.backward_distance = 150 * mm # ????
     simu.gaga_source.energy_threshold_MeV = 0.15
     simu.compile = args.compile
-    # simu.gaga_source.gpu_mode = "cpu"
-    # simu.garf_detector.gpu_mode = "cpu"
+    simu.gaga_source.gpu_mode = args.device
+    simu.garf_detector.gpu_mode = args.device
 
 
 
@@ -121,6 +121,7 @@ if __name__ == '__main__':
     parser.add_argument("--batchsize", type=float)
     parser.add_argument("--gan_pth", type=str)
     parser.add_argument("--garf_pth", type=str)
+    parser.add_argument("--device", type=str, default = "auto")
     parser.add_argument("--sid", type=float, default = 280)
     parser.add_argument("--output_folder", type=str)
     parser.add_argument("--axis", type=str)
