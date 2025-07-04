@@ -94,7 +94,7 @@ def main():
                 torch.distributed.all_reduce(output_projs, op=torch.distributed.ReduceOp.SUM)
 
             # normalization
-            output_projs = output_projs[:,4,:,:]/output_projs[:,4,:,:].sum() * measured_projections_torch.sum()
+            output_projs = output_projs[:,4,:,:]/output_projs[:,4,:,:].max() * measured_projections_torch.max()
             loss = loss_fct(output_projs, measured_projections_torch)
 
             print(f"({rank=}) Allocated: {torch.cuda.memory_allocated() / 1024 ** 2:.2f} MiB i.e. {torch.cuda.memory_allocated() / 1024 ** 3:.2f} GiB")
