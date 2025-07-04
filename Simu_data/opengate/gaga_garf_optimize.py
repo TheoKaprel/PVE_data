@@ -28,8 +28,8 @@ def main():
     simu.activity_image = args.like_img
     simu.radionuclide = args.radionuclide
     if args.viz:
-        simu.gantry_angles = [180 * deg, (180 + 90) * deg]
-        # simu.gantry_angles = [(3 * k + 180) * deg for k in range(120)]
+        # simu.gantry_angles = [180 * deg, (180 + 90) * deg]
+        simu.gantry_angles = [(3 * k + 180) * deg for k in range(120)]
     else:
         simu.gantry_angles = [(3 * k + 180) * deg for k in range(120)]
 
@@ -68,7 +68,7 @@ def main():
     loss_fct = torch.nn.MSELoss()
 
     if args.viz==True:
-        from torchviz import make_dot
+        # from torchviz import make_dot
 
         src = torch.from_numpy(like_img_array).to(torch.float32).to(simu.gaga_source.current_gpu_device)
         # src.requires_grad = True
@@ -87,7 +87,7 @@ def main():
             optimizer.zero_grad()
             output_projs = simu.optim_generate_projections_from_source(source_tensor = image_k_tensor)
 
-            print(f"{image_k_tensor.sum()=}   /   {output_projs[:, 4, :, :].sum()=}")
+            print(f"{image_k_tensor.sum().item()=}   /   {output_projs[:, 4, :, :].sum().item()=}")
 
             if ddp:
                 torch.distributed.all_reduce(output_projs, op=torch.distributed.ReduceOp.SUM)
