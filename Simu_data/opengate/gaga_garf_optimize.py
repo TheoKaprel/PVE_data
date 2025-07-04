@@ -1,24 +1,20 @@
 #!/usr/bin/env python3
-
 import argparse
 import opengate as gate
 import torch
 from gaga_phsp.spect_intevo_helpers import *
-from gaga_phsp.gaga_helpers_tests import get_tests_folder
-import opengate.tests.utility as utility
 from pathlib import Path
 import itk
 import time
 import os
-
-
 import sys
+
+
 sys.setrecursionlimit(10000)
-torch.autograd.set_detect_anomaly(True)
+# torch.autograd.set_detect_anomaly(True)
 
 def main():
     print(args)
-    # units
     mm = gate.g4_units.mm
     Bq = gate.g4_units.Bq
     sec = gate.g4_units.second
@@ -32,17 +28,15 @@ def main():
     simu.activity_image = args.like_img
     simu.radionuclide = args.radionuclide
     if args.viz:
-        # simu.gantry_angles = [180 * deg, (180 + 90) * deg]
-        simu.gantry_angles = [(3 * k + 180) * deg for k in range(120)]
+        simu.gantry_angles = [180 * deg, (180 + 90) * deg]
+        # simu.gantry_angles = [(3 * k + 180) * deg for k in range(120)]
     else:
         simu.gantry_angles = [(3 * k + 180) * deg for k in range(120)]
-    # simu.gantry_angles = [(30 * k + 180) * deg for k in range(5)]
 
     simu.axis = args.axis
     simu.duration = 15 * sec
     simu.number_of_threads = 1
     simu.total_activity = args.activity * Bq
-    # simu.visu = True
 
     simu.image_size = [128, 128]
     simu.image_spacing = [4.7951998710632 * mm , 4.7951998710632 * mm]
@@ -59,9 +53,6 @@ def main():
     simu.gaga_source.gpu_mode = args.device
     simu.garf_detector.gpu_mode = args.device
 
-
-
-    # run the simulation
     simu.optim_initialize()
 
     measured_projections = itk.imread(args.projections)
@@ -95,6 +86,8 @@ def main():
             t0_epoch = time.time()
             optimizer.zero_grad()
             output_projs = simu.optim_generate_projections_from_source(source_tensor = image_k_tensor)
+
+            print(f"{image_k_tensor.sum()=}   /   {output_projs[:, 4, :, :].sum()=}")
 
             if ddp:
                 torch.distributed.all_reduce(output_projs, op=torch.distributed.ReduceOp.SUM)
