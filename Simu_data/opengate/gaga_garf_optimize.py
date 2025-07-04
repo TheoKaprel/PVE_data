@@ -28,8 +28,8 @@ def main():
     simu.activity_image = args.like_img
     simu.radionuclide = args.radionuclide
     if args.viz:
-        simu.gantry_angles = [180 * deg, (180 + 90) * deg]
-        # simu.gantry_angles = [(3 * k + 180) * deg for k in range(120)]
+        # simu.gantry_angles = [180 * deg, (180 + 90) * deg]
+        simu.gantry_angles = [(3 * k + 180) * deg for k in range(120)]
     else:
         simu.gantry_angles = [(3 * k + 180) * deg for k in range(120)]
 
@@ -69,16 +69,16 @@ def main():
     loss_fct = torch.nn.MSELoss()
 
     if args.viz==True:
-        from torchviz import make_dot
+        # from torchviz import make_dot
 
         src = torch.from_numpy(like_img_array).to(torch.float32).to(simu.gaga_source.current_gpu_device)
-        src.requires_grad = True
-        # with torch.no_grad():
-        output_projs = simu.optim_generate_projections_from_source(source_tensor=src)
-        # itk.imwrite(itk.image_from_array(output_projs[:,4,:,:].detach().cpu().numpy()), os.path.join(args.output_folder, "output_projs_gaga_garf.mha"))
-        loss = loss_fct(output_projs[:2, 4, :, :], measured_projections_torch[:2,:,:])
+        # src.requires_grad = True
+        with torch.no_grad():
+            output_projs = simu.optim_generate_projections_from_source(source_tensor=src)
+        itk.imwrite(itk.image_from_array(output_projs[:,4,:,:].detach().cpu().numpy()), os.path.join(args.output_folder, "output_projs_gaga_garf.mha"))
+        # loss = loss_fct(output_projs[:2, 4, :, :], measured_projections_torch[:2,:,:])
 
-        make_dot(loss,show_attrs=True, show_saved=True).render(format="png", filename="torchviz")
+        # make_dot(loss,show_attrs=True, show_saved=True).render(format="png", filename="torchviz")
         exit(0)
 
     else:
@@ -99,6 +99,9 @@ def main():
 
             print(f"({rank=}) Allocated: {torch.cuda.memory_allocated() / 1024 ** 2:.2f} MiB i.e. {torch.cuda.memory_allocated() / 1024 ** 3:.2f} GiB")
             loss.backward()
+
+            print("Image gradient mean: ", image_k_tensor.grad.abs().mean())
+
             optimizer.step()
 
             print(f"[Epoch {epoch}/{n_epochs}] Loss = {loss.item():8.4f}            ({time.time()-t0_epoch:.4f} s)")
