@@ -63,7 +63,7 @@ def main():
     like_img = itk.imread(args.like_img)
     like_img_array = itk.array_from_image(like_img)
     # image_k_tensor = torch.ones_like(torch.from_numpy(like_img_array)).to(torch.float32).to(simu.gaga_source.current_gpu_device)
-    image_k_tensor = 10*torch.rand_like(torch.from_numpy(like_img_array)).to(torch.float32).to(simu.gaga_source.current_gpu_device)
+    image_k_tensor = 1+0.1*torch.rand_like(torch.from_numpy(like_img_array)).to(torch.float32).to(simu.gaga_source.current_gpu_device)
     image_k_tensor.requires_grad_(True)
     optimizer = torch.optim.Adam([image_k_tensor,], lr=args.lr)
     loss_fct = torch.nn.MSELoss()
@@ -100,7 +100,8 @@ def main():
             print(f"({rank=}) Allocated: {torch.cuda.memory_allocated() / 1024 ** 2:.2f} MiB i.e. {torch.cuda.memory_allocated() / 1024 ** 3:.2f} GiB")
             loss.backward()
 
-            print("Image gradient mean: ", image_k_tensor.grad.abs().mean())
+            print("Image gradient abs mean: ", image_k_tensor.grad.abs().mean())
+            print("Image gradient abs max: ", image_k_tensor.grad.abs().max())
 
             optimizer.step()
 
