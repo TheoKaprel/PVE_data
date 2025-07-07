@@ -11,7 +11,7 @@ import sys
 
 
 sys.setrecursionlimit(10000)
-# torch.autograd.set_detect_anomaly(True)
+torch.autograd.set_detect_anomaly(True)
 
 def main():
     print(args)
