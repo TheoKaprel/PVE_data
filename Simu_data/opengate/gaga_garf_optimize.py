@@ -89,7 +89,6 @@ def main():
         n_epochs = args.nepochs
         for epoch in range(n_epochs):
             t0_epoch = time.time()
-            optimizer.zero_grad()
             output_projs = simu.optim_generate_projections_from_source(source_tensor = image_k_tensor)
 
             print(f"{image_k_tensor.sum().item()=}   /   {output_projs[:, 4, :, :].sum().item()=}")
@@ -107,7 +106,11 @@ def main():
             print("Image gradient abs mean: ", image_k_tensor.grad.abs().mean())
             print("Image gradient abs max: ", image_k_tensor.grad.abs().max())
 
-            optimizer.step()
+            if (epoch + 1) % args.accum_steps == 0:
+                optimizer.step()
+                optimizer.zero_grad()
+                print("-> OPT.STEP() !")
+
 
             print(f"[Epoch {epoch}/{n_epochs}] Loss = {loss.item():8.4f}            ({time.time()-t0_epoch:.4f} s)")
             rec_k = itk.image_from_array(image_k_tensor.detach().cpu().numpy())
@@ -135,6 +138,7 @@ if __name__ == '__main__':
     parser.add_argument("--compile", action="store_true")
     parser.add_argument("--nepochs", type=int, default = 10)
     parser.add_argument("--lr", type=float, default = 0.001)
+    parser.add_argument("--accum_steps", type=int, default = 1)
     parser.add_argument("--torchviz", action="store_true")
     parser.add_argument("--fp", action="store_true")
     args = parser.parse_args()
