@@ -98,7 +98,7 @@ def main():
 
             # normalization
             output_projs = output_projs[:,4,:,:]/output_projs[:,4,:,:].max() * measured_projections_torch.max()
-            loss = loss_fct(output_projs, measured_projections_torch)
+            loss = loss_fct(output_projs, measured_projections_torch) / args.accum_steps
 
             print(f"({rank=}) Allocated: {torch.cuda.memory_allocated() / 1024 ** 2:.2f} MiB i.e. {torch.cuda.memory_allocated() / 1024 ** 3:.2f} GiB")
             loss.backward()
