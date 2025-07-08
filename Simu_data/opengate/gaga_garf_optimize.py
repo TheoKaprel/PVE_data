@@ -26,9 +26,8 @@ def main():
     simu.ct_image = args.ct  # (needed to position the source)
     simu.activity_image = args.like_img
     simu.radionuclide = args.radionuclide
-    if args.viz:
-        # simu.gantry_angles = [180 * deg, (180 + 90) * deg]
-        simu.gantry_angles = [(3 * k + 180) * deg for k in range(120)]
+    if args.torchviz:
+        simu.gantry_angles = [180 * deg, (180 + 90) * deg]
     else:
         simu.gantry_angles = [(3 * k + 180) * deg for k in range(120)]
 
@@ -67,17 +66,23 @@ def main():
     optimizer = torch.optim.Adam([image_k_tensor,], lr=args.lr)
     loss_fct = torch.nn.MSELoss()
 
-    if args.viz==True:
-        # from torchviz import make_dot
+    if args.torchviz==True:
+        from torchviz import make_dot
 
         src = torch.from_numpy(like_img_array).to(torch.float32).to(simu.gaga_source.current_gpu_device)
-        # src.requires_grad = True
+        src.requires_grad = True
+        output_projs = simu.optim_generate_projections_from_source(source_tensor=src)
+        itk.imwrite(itk.image_from_array(output_projs[:,4,:,:].detach().cpu().numpy()), os.path.join(args.output_folder, "output_projs_gaga_garf.mha"))
+        loss = loss_fct(output_projs[:2, 4, :, :], measured_projections_torch[:2,:,:])
+
+        make_dot(loss,show_attrs=True, show_saved=True).render(format="png", filename="torchviz")
+        exit(0)
+
+    elif args.fp==True:
+        src = torch.from_numpy(like_img_array).to(torch.float32).to(simu.gaga_source.current_gpu_device)
         with torch.no_grad():
             output_projs = simu.optim_generate_projections_from_source(source_tensor=src)
         itk.imwrite(itk.image_from_array(output_projs[:,4,:,:].detach().cpu().numpy()), os.path.join(args.output_folder, "output_projs_gaga_garf.mha"))
-        # loss = loss_fct(output_projs[:2, 4, :, :], measured_projections_torch[:2,:,:])
-
-        # make_dot(loss,show_attrs=True, show_saved=True).render(format="png", filename="torchviz")
         exit(0)
 
     else:
@@ -109,6 +114,10 @@ def main():
             rec_k.CopyInformation(like_img)
             itk.imwrite(rec_k, os.path.join(args.output_folder, f"rec_{epoch}.mha"))
 
+            output_projs_itk = itk.image_from_array(output_projs.detach().cpu().numpy())
+            output_projs_itk.CopyInformation(measured_projections)
+            itk.imwrite(output_projs_itk, os.path.join(args.output_folder, f"projs_{epoch}.mha"))
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-a","--activity", type = float, default = 2e7)
@@ -126,7 +135,8 @@ if __name__ == '__main__':
     parser.add_argument("--compile", action="store_true")
     parser.add_argument("--nepochs", type=int, default = 10)
     parser.add_argument("--lr", type=float, default = 0.001)
-    parser.add_argument("--viz", action="store_true")
+    parser.add_argument("--torchviz", action="store_true")
+    parser.add_argument("--fp", action="store_true")
     args = parser.parse_args()
 
     host = os.uname()[1]
