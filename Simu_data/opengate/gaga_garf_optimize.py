@@ -93,14 +93,11 @@ def main():
 
             print(f"{image_k_tensor.sum().item()=}   /   {output_projs[:, 4, :, :].sum().item()=}")
 
-            if ddp:
-                torch.distributed.all_reduce(output_projs, op=torch.distributed.ReduceOp.SUM)
-
             # normalization
             output_projs = output_projs[:,4,:,:]/output_projs[:,4,:,:].max() * measured_projections_torch.max()
             loss = loss_fct(output_projs, measured_projections_torch) / args.accum_steps
 
-            print(f"({rank=}) Allocated: {torch.cuda.memory_allocated() / 1024 ** 2:.2f} MiB i.e. {torch.cuda.memory_allocated() / 1024 ** 3:.2f} GiB")
+            print(f"Allocated: {torch.cuda.memory_allocated() / 1024 ** 2:.2f} MiB i.e. {torch.cuda.memory_allocated() / 1024 ** 3:.2f} GiB")
             loss.backward()
 
             print("Image gradient abs mean: ", image_k_tensor.grad.abs().mean())
@@ -142,35 +139,5 @@ if __name__ == '__main__':
     parser.add_argument("--torchviz", action="store_true")
     parser.add_argument("--fp", action="store_true")
     args = parser.parse_args()
-
-    host = os.uname()[1]
-    if (host !='suillus'):
-        import torch.distributed as dist
-        import idr_torch
-
-        # get distributed configuration from Slurm environment
-        NODE_ID = os.environ['SLURM_NODEID']
-        MASTER_ADDR = os.environ['MASTER_ADDR'] if ("MASTER_ADDR" in os.environ) else os.environ['HOSTNAME']
-
-        # display info
-        if idr_torch.rank == 0:
-            print(">>> Training on ", len(idr_torch.nodelist), " nodes and ", idr_torch.world_size,
-                  " processes, master node is ", MASTER_ADDR)
-        print("- Process {} corresponds to GPU {} of node {}".format(idr_torch.rank, idr_torch.local_rank, NODE_ID))
-
-        dist.init_process_group(backend='nccl',
-                                init_method='env://',
-                                world_size=idr_torch.world_size,
-                                rank=idr_torch.rank)
-        rank=idr_torch.rank
-
-        torch.cuda.set_device(idr_torch.local_rank)
-        if idr_torch.size>1:
-            ddp = True
-        else:
-            ddp = False
-    else:
-        rank=0
-        ddp = False
 
     main()
