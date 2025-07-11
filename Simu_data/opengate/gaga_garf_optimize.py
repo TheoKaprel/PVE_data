@@ -88,6 +88,8 @@ def main():
     else:
         n_epochs = args.nepochs
         for epoch in range(n_epochs):
+            optimizer.zero_grad()
+
             t0_epoch = time.time()
             output_projs = simu.optim_generate_projections_from_source(source_tensor = image_k_tensor)
 
@@ -95,7 +97,7 @@ def main():
 
             # normalization
             output_projs = output_projs[:,4,:,:]/output_projs[:,4,:,:].max() * measured_projections_torch.max()
-            loss = loss_fct(output_projs, measured_projections_torch) / args.accum_steps
+            loss = loss_fct(output_projs, measured_projections_torch)
 
             print(f"Allocated: {torch.cuda.memory_allocated() / 1024 ** 2:.2f} MiB i.e. {torch.cuda.memory_allocated() / 1024 ** 3:.2f} GiB")
             loss.backward()
@@ -103,11 +105,7 @@ def main():
             print("Image gradient abs mean: ", image_k_tensor.grad.abs().mean())
             print("Image gradient abs max: ", image_k_tensor.grad.abs().max())
 
-            if (epoch + 1) % args.accum_steps == 0:
-                optimizer.step()
-                optimizer.zero_grad()
-                print("-> OPT.STEP() !")
-
+            optimizer.step()
 
             print(f"[Epoch {epoch}/{n_epochs}] Loss = {loss.item():8.4f}            ({time.time()-t0_epoch:.4f} s)")
             rec_k = itk.image_from_array(image_k_tensor.detach().cpu().numpy())
@@ -135,7 +133,7 @@ if __name__ == '__main__':
     parser.add_argument("--compile", action="store_true")
     parser.add_argument("--nepochs", type=int, default = 10)
     parser.add_argument("--lr", type=float, default = 0.001)
-    parser.add_argument("--accum_steps", type=int, default = 1)
+    # parser.add_argument("--accum_steps", type=int, default = 1)
     parser.add_argument("--torchviz", action="store_true")
     parser.add_argument("--fp", action="store_true")
     args = parser.parse_args()
