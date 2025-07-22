@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 
 def gemini_differentiable_histogram(
         input_tensor: torch.Tensor,
+        weight_tensor: torch.Tensor,
         min_val: float,
         max_val: float,
         num_bins: int,
@@ -52,6 +53,8 @@ def gemini_differentiable_histogram(
         # This ensures each input value adds exactly 1 (or its own weight if input_tensor had weights)
         weights = weights / (weights.sum(dim=1, keepdim=True) + 1e-6)
 
+    weights = weights * weight_tensor[:,None]
+
     # Sum contributions into histogram bins
     histogram = torch.sum(weights, dim=0)
 
@@ -76,37 +79,37 @@ def gumbel_softmax_sample(logits, tau=1.0, hard=False):
         return (y_hard - y_soft).detach() + y_soft
 
 
-src =torch.tensor([[0., 6., 1., 9., 8., 9., 8., 6., 5., 8.],
-                   [0., 6., 8., 6., 8., 6., 3., 9., 4., 9.]], dtype=torch.float64)
+src =torch.tensor([0., 6., 1., 9., 8., 9., 8., 6., 5., 8.], dtype=torch.float64)
 src_est = torch.ones_like(src)
 src_est.requires_grad = True
-Npart = 1e4
+Npart = 1e3
+Npart_per_voxel = int(Npart / src.shape[0])
 li = torch.arange(0,10).to(torch.float64)
 
-optimizer = torch.optim.Adam([src_est, ], lr=0.001)
+optimizer = torch.optim.Adam([src_est, ], lr=0.01)
 loss_fct = torch.nn.MSELoss()
 
 training_loss = []
-for e in range(5000):
+for e in range(200):
     optimizer.zero_grad()
 
     src_est_ = torch.nn.functional.relu(src_est,inplace=False)
 
     pdf = (src_est_ / src_est_.sum()).to(torch.float64)
 
-    logits = torch.log(pdf + 1e-10)
+    # logits = torch.log(pdf + 1e-10)
     # logits = logits.repeat((int(Npart),1))
-    logits = logits[None,:,:].repeat((int(Npart),1,1))
-    samples = gumbel_softmax_sample(logits=logits,hard=True,tau=max(0.1, 1.0 * (0.999**e)))
+    # samples = gumbel_softmax_sample(logits=logits,hard=True,tau=max(0.1, 1.0 * (0.999**e)))
+    # a =  samples @ li
+
+    with torch.no_grad():
+        a = li.repeat_interleave(Npart_per_voxel)
+
+    weight_tensor = pdf.repeat_interleave(Npart_per_voxel)
 
 
-
-    a =  samples @ li
-    print(samples[:3,:,:])
-    print(a.shape)
-    print(a[:3,:])
-    exit(0)
-    x = gemini_differentiable_histogram(input_tensor=a+0.001,min_val=-0.5,max_val=9.5,num_bins=10,sigma = 0.5)
+    x = gemini_differentiable_histogram(input_tensor=a+0.001,weight_tensor=weight_tensor,
+                                        min_val=-0.5,max_val=9.5,num_bins=10,sigma = 0.5)
     # x = gemini_differentiable_histogram(input_tensor=a+0.001,min_val=-0.5,max_val=9.5,num_bins=10)
     x = x / x.sum() * src.sum()
 

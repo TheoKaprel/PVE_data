@@ -87,27 +87,34 @@ def main():
 
     else:
         n_epochs = args.nepochs
+        nprojs_per_subsets = 120//args.nsubsets
         for epoch in range(n_epochs):
-            optimizer.zero_grad()
+            for subset in range(args.nsubsets):
+                subset_ids = [subset+8*k for k in range(nprojs_per_subsets)]
+                print(f"{subset_ids=}")
 
-            t0_epoch = time.time()
-            output_projs = simu.optim_generate_projections_from_source(source_tensor = image_k_tensor)
+                optimizer.zero_grad()
 
-            print(f"{image_k_tensor.sum().item()=}   /   {output_projs[:, 4, :, :].sum().item()=}")
+                t0_epoch = time.time()
+                simu.garf_detector.detector_planes_subset = [simu.garf_detector.detector_planes[k] for k in subset_ids]
 
-            # normalization
-            output_projs = output_projs[:,4,:,:]/output_projs[:,4,:,:].max() * measured_projections_torch.max()
-            loss = loss_fct(output_projs, measured_projections_torch)
+                output_projs = simu.optim_generate_projections_from_source(source_tensor = image_k_tensor)
 
-            print(f"Allocated: {torch.cuda.memory_allocated() / 1024 ** 2:.2f} MiB i.e. {torch.cuda.memory_allocated() / 1024 ** 3:.2f} GiB")
-            loss.backward()
 
-            print("Image gradient abs mean: ", image_k_tensor.grad.abs().mean())
-            print("Image gradient abs max: ", image_k_tensor.grad.abs().max())
+                # normalization
+                output_projs = output_projs[:nprojs_per_subsets,4,:,:]/output_projs[:nprojs_per_subsets,4,:,:].max() * measured_projections_torch[subset_ids,:,:].max()
+                loss = loss_fct(output_projs, measured_projections_torch[subset_ids,:,:])
 
-            optimizer.step()
+                print(f"Allocated: {torch.cuda.memory_allocated() / 1024 ** 2:.2f} MiB i.e. {torch.cuda.memory_allocated() / 1024 ** 3:.2f} GiB")
+                loss.backward()
 
-            print(f"[Epoch {epoch}/{n_epochs}] Loss = {loss.item():8.4f}            ({time.time()-t0_epoch:.4f} s)")
+                print("Image gradient abs mean: ", image_k_tensor.grad.abs().mean())
+                print("Image gradient abs max: ", image_k_tensor.grad.abs().max())
+
+                optimizer.step()
+
+                print(f"[Epoch {epoch}/{n_epochs}] [Subset {subset}/{args.nsubsets}] Loss = {loss.item():8.4f}            ({time.time()-t0_epoch:.4f} s)")
+
             rec_k = itk.image_from_array(image_k_tensor.detach().cpu().numpy())
             rec_k.CopyInformation(like_img)
             itk.imwrite(rec_k, os.path.join(args.output_folder, f"rec_{epoch}.mha"))
@@ -128,6 +135,7 @@ if __name__ == '__main__':
     parser.add_argument("--garf_pth", type=str)
     parser.add_argument("--device", type=str, default = "auto")
     parser.add_argument("--sid", type=float, default = 280)
+    parser.add_argument("--nsubsets", type=int, default = 8)
     parser.add_argument("--output_folder", type=str)
     parser.add_argument("--axis", type=str)
     parser.add_argument("--compile", action="store_true")
