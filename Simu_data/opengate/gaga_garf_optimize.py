@@ -14,6 +14,7 @@ sys.setrecursionlimit(10000)
 
 def main():
     print(args)
+    # torch.autograd.set_detect_anomaly(True)
     mm = gate.g4_units.mm
     Bq = gate.g4_units.Bq
     sec = gate.g4_units.second
@@ -55,13 +56,14 @@ def main():
 
     measured_projections = itk.imread(args.projections)
     measured_projections_torch = torch.from_numpy(
-        itk.array_from_image(measured_projections)).to(simu.gaga_source.current_gpu_device)
+        itk.array_from_image(measured_projections)).to(simu.gaga_source.current_gpu_device).to(torch.float64)
 
 
     like_img = itk.imread(args.like_img)
     like_img_array = itk.array_from_image(like_img)
     # image_k_tensor = torch.ones_like(torch.from_numpy(like_img_array)).to(torch.float32).to(simu.gaga_source.current_gpu_device)
-    image_k_tensor = 1+0.1*torch.rand_like(torch.from_numpy(like_img_array)).to(torch.float32).to(simu.gaga_source.current_gpu_device)
+    # image_k_tensor = 1+0.1*torch.rand_like(torch.from_numpy(like_img_array)).to(torch.float32).to(simu.gaga_source.current_gpu_device)
+    image_k_tensor = torch.randint(0,20,torch.from_numpy(like_img_array).shape).to(torch.float32).to(simu.gaga_source.current_gpu_device)
     image_k_tensor.requires_grad_(True)
     optimizer = torch.optim.Adam([image_k_tensor,], lr=args.lr)
     loss_fct = torch.nn.MSELoss()
@@ -80,6 +82,8 @@ def main():
 
     elif args.fp==True:
         src = torch.from_numpy(like_img_array).to(torch.float32).to(simu.gaga_source.current_gpu_device)
+        simu.garf_detector.detector_planes_subset = simu.garf_detector.detector_planes
+
         with torch.no_grad():
             output_projs = simu.optim_generate_projections_from_source(source_tensor=src)
         itk.imwrite(itk.image_from_array(output_projs[:,4,:,:].detach().cpu().numpy()), os.path.join(args.output_folder, "output_projs_gaga_garf.mha"))
@@ -88,6 +92,11 @@ def main():
     else:
         n_epochs = args.nepochs
         nprojs_per_subsets = 120//args.nsubsets
+
+        import numpy as np
+        losses_np = []
+        np.save(os.path.join(args.output_folder,"losses.npy"), losses_np)
+
         for epoch in range(n_epochs):
             for subset in range(args.nsubsets):
                 subset_ids = [subset+8*k for k in range(nprojs_per_subsets)]
@@ -100,16 +109,21 @@ def main():
 
                 output_projs = simu.optim_generate_projections_from_source(source_tensor = image_k_tensor)
 
+                output_projs_itk = itk.image_from_array(output_projs.detach().cpu().numpy())
+                output_projs_itk.CopyInformation(measured_projections)
+                itk.imwrite(output_projs_itk, os.path.join(args.output_folder, f"projs_{epoch}_{subset}.mha"))
 
                 # normalization
-                output_projs = output_projs[:nprojs_per_subsets,4,:,:]/output_projs[:nprojs_per_subsets,4,:,:].max() * measured_projections_torch[subset_ids,:,:].max()
                 loss = loss_fct(output_projs, measured_projections_torch[subset_ids,:,:])
+                # loss = torch.sum(output_projs - measured_projections_torch[subset_ids] * torch.log(output_projs + 1e-8))
 
                 print(f"Allocated: {torch.cuda.memory_allocated() / 1024 ** 2:.2f} MiB i.e. {torch.cuda.memory_allocated() / 1024 ** 3:.2f} GiB")
                 loss.backward()
 
                 print("Image gradient abs mean: ", image_k_tensor.grad.abs().mean())
                 print("Image gradient abs max: ", image_k_tensor.grad.abs().max())
+                losses_np.append(loss.item())
+                np.save(os.path.join(args.output_folder, "losses.npy"), losses_np)
 
                 optimizer.step()
 
@@ -122,6 +136,11 @@ def main():
             output_projs_itk = itk.image_from_array(output_projs.detach().cpu().numpy())
             output_projs_itk.CopyInformation(measured_projections)
             itk.imwrite(output_projs_itk, os.path.join(args.output_folder, f"projs_{epoch}.mha"))
+
+            grad_k = itk.image_from_array(image_k_tensor.grad.detach().cpu().numpy())
+            grad_k.CopyInformation(like_img)
+            itk.imwrite(grad_k, os.path.join(args.output_folder, f"grad_{epoch}.mha"))
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -141,7 +160,6 @@ if __name__ == '__main__':
     parser.add_argument("--compile", action="store_true")
     parser.add_argument("--nepochs", type=int, default = 10)
     parser.add_argument("--lr", type=float, default = 0.001)
-    # parser.add_argument("--accum_steps", type=int, default = 1)
     parser.add_argument("--torchviz", action="store_true")
     parser.add_argument("--fp", action="store_true")
     args = parser.parse_args()
