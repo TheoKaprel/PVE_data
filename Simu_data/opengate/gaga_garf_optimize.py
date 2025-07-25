@@ -109,6 +109,8 @@ def main():
 
                 output_projs = simu.optim_generate_projections_from_source(source_tensor = image_k_tensor)
 
+                output_projs = output_projs/output_projs.sum()*measured_projections_torch[subset_ids,:,:].sum()
+
                 output_projs_itk = itk.image_from_array(output_projs.detach().cpu().numpy())
                 output_projs_itk.CopyInformation(measured_projections)
                 itk.imwrite(output_projs_itk, os.path.join(args.output_folder, f"projs_{epoch}_{subset}.mha"))
