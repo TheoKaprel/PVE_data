@@ -8,6 +8,8 @@ import itk
 import time
 import os
 import sys
+from itk import RTK as rtk
+import numpy as np
 
 
 sys.setrecursionlimit(10000)
@@ -30,7 +32,20 @@ def main():
     if args.torchviz:
         simu.gantry_angles = [180 * deg, (180 + 90) * deg]
     else:
-        simu.gantry_angles = [(3 * k + 180) * deg for k in range(120)]
+        if args.geom is not None:
+            xmlReader = rtk.ThreeDCircularProjectionGeometryXMLFileReader.New()
+            xmlReader.SetFilename(args.geom)
+            xmlReader.GenerateOutputInformation()
+            geometry = xmlReader.GetOutputObject()
+            list_sid = list(geometry.GetSourceToIsocenterDistances())
+            list_angles_rad = list(geometry.GetGantryAngles())
+            simu.gantry_angles = [angle_rad * 360 / (2 * np.pi) * deg for angle_rad in list_angles_rad]
+            print(simu.gantry_angles)
+            simu.radius = [sid * mm for sid in list_sid]
+        else:
+            simu.gantry_angles = [(3 * k + 180) * deg for k in range(args.nprojs)]
+            simu.radius = [args.sid * mm for _ in range(args.nprojs)]
+
 
     simu.axis = args.axis
     simu.duration = 15 * sec
@@ -38,15 +53,15 @@ def main():
     simu.total_activity = args.activity * Bq
 
     simu.image_size = [128, 128]
-    simu.image_spacing = [4.7951998710632 * mm , 4.7951998710632 * mm]
+    simu.image_spacing = [4.7952 * mm , 4.7952 * mm]
 
     simu.gaga_source.pth_filename = args.gan_pth
     simu.garf_detector.pth_filename = args.garf_pth
     simu.garf_detector.hit_slice_flag = False
-    simu.radius = args.sid * mm
+
 
     simu.gaga_source.batch_size = int(args.batchsize)  # 5e5 best on nvidia linux
-    simu.gaga_source.backward_distance = 150 * mm # ????
+    simu.gaga_source.backward_distance = 330 * mm # ????
     simu.gaga_source.energy_threshold_MeV = 0.15
     simu.compile = args.compile
     simu.gaga_source.gpu_mode = args.device
@@ -86,14 +101,17 @@ def main():
 
         with torch.no_grad():
             output_projs = simu.optim_generate_projections_from_source(source_tensor=src)
-        itk.imwrite(itk.image_from_array(output_projs[:,4,:,:].detach().cpu().numpy()), os.path.join(args.output_folder, "output_projs_gaga_garf.mha"))
+
+        output_projs_itk = itk.image_from_array(output_projs.detach().cpu().numpy())
+        output_projs_itk.CopyInformation(measured_projections)
+        itk.imwrite(output_projs_itk, os.path.join(args.output_folder, "output_projs_gaga_garf.mha"))
         exit(0)
 
     else:
         n_epochs = args.nepochs
         nprojs_per_subsets = 120//args.nsubsets
 
-        import numpy as np
+
         losses_np = []
         np.save(os.path.join(args.output_folder,"losses.npy"), losses_np)
 
@@ -156,6 +174,8 @@ if __name__ == '__main__':
     parser.add_argument("--garf_pth", type=str)
     parser.add_argument("--device", type=str, default = "auto")
     parser.add_argument("--sid", type=float, default = 280)
+    parser.add_argument("--nprojs", type=int, default = 120)
+    parser.add_argument("--geom", type=str)
     parser.add_argument("--nsubsets", type=int, default = 8)
     parser.add_argument("--output_folder", type=str)
     parser.add_argument("--axis", type=str)
