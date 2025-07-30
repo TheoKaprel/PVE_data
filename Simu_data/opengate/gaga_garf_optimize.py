@@ -31,6 +31,7 @@ def main():
     simu.radionuclide = args.radionuclide
     if args.torchviz:
         simu.gantry_angles = [180 * deg, (180 + 90) * deg]
+        simu.radius = [280*mm, 280*mm]
     else:
         if args.geom is not None:
             xmlReader = rtk.ThreeDCircularProjectionGeometryXMLFileReader.New()
@@ -40,7 +41,6 @@ def main():
             list_sid = list(geometry.GetSourceToIsocenterDistances())
             list_angles_rad = list(geometry.GetGantryAngles())
             simu.gantry_angles = [angle_rad * 360 / (2 * np.pi) * deg for angle_rad in list_angles_rad]
-            print(simu.gantry_angles)
             simu.radius = [sid * mm for sid in list_sid]
         else:
             simu.gantry_angles = [(3 * k + 180) * deg for k in range(args.nprojs)]
@@ -91,10 +91,12 @@ def main():
 
         src = torch.from_numpy(like_img_array).to(torch.float32).to(simu.gaga_source.current_gpu_device)
         src.requires_grad = True
-        output_projs = simu.optim_generate_projections_from_source(source_tensor=src)
-        itk.imwrite(itk.image_from_array(output_projs[:,4,:,:].detach().cpu().numpy()), os.path.join(args.output_folder, "output_projs_gaga_garf.mha"))
-        loss = loss_fct(output_projs[:2, 4, :, :], measured_projections_torch[:2,:,:])
+        simu.garf_detector.detector_planes_subset = simu.garf_detector.detector_planes
 
+
+        output_projs = simu.optim_generate_projections_from_source(source_tensor=src)
+        output_projs = output_projs / output_projs.sum() * measured_projections_torch[:2, :, :].sum()
+        loss = loss_fct(output_projs, measured_projections_torch[:2, :, :])
         make_dot(loss,show_attrs=True, show_saved=True).render(format="png", filename="torchviz")
         exit(0)
 
@@ -146,15 +148,19 @@ def main():
 
                 optimizer.step()
 
-                print(f"[Epoch {epoch}/{n_epochs}] [Subset {subset}/{args.nsubsets}] Loss = {loss.item():8.4f}            ({time.time()-t0_epoch:.4f} s)")
+                print(f"[Epoch {epoch+1}/{n_epochs}] [Subset {subset+1}/{args.nsubsets}] Loss = {loss.item():8.4f}            ({time.time()-t0_epoch:.4f} s)")
+
+                rec_k = itk.image_from_array(image_k_tensor.detach().cpu().numpy())
+                rec_k.CopyInformation(like_img)
+                itk.imwrite(rec_k, os.path.join(args.output_folder, f"rec_{epoch + 1}_{subset+1}.mha"))
 
             rec_k = itk.image_from_array(image_k_tensor.detach().cpu().numpy())
             rec_k.CopyInformation(like_img)
-            itk.imwrite(rec_k, os.path.join(args.output_folder, f"rec_{epoch}.mha"))
+            itk.imwrite(rec_k, os.path.join(args.output_folder, f"rec_{epoch+1}.mha"))
 
             output_projs_itk = itk.image_from_array(output_projs.detach().cpu().numpy())
             output_projs_itk.CopyInformation(measured_projections)
-            itk.imwrite(output_projs_itk, os.path.join(args.output_folder, f"projs_{epoch}.mha"))
+            itk.imwrite(output_projs_itk, os.path.join(args.output_folder, f"projs_{epoch+1}.mha"))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
