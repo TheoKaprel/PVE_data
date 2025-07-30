@@ -79,7 +79,12 @@ def main():
     image_k_tensor = torch.randint(1,20,torch.from_numpy(like_img_array).shape).to(torch.float32).to(simu.gaga_source.current_gpu_device)
     image_k_tensor.requires_grad_(True)
     optimizer = torch.optim.Adam([image_k_tensor,], lr=args.lr)
-    loss_fct = torch.nn.MSELoss()
+
+    if args.loss == "mse":
+        loss_fct = torch.nn.MSELoss()
+    elif args.loss=="poisson":
+        loss_fct = torch.nn.PoissonNLLLoss(log_input=False, reduction="mean")
+
 
     if args.torchviz==True:
         from torchviz import make_dot
@@ -125,11 +130,11 @@ def main():
 
                 output_projs = simu.optim_generate_projections_from_source(source_tensor = image_k_tensor)
 
+                # normalization
                 output_projs = output_projs/output_projs.sum()*measured_projections_torch[subset_ids,:,:].sum()
 
-                # normalization
+
                 loss = loss_fct(output_projs, measured_projections_torch[subset_ids,:,:])
-                # loss = torch.sum(output_projs - measured_projections_torch[subset_ids] * torch.log(output_projs + 1e-8))
 
                 print(f"Allocated: {torch.cuda.memory_allocated() / 1024 ** 2:.2f} MiB i.e. {torch.cuda.memory_allocated() / 1024 ** 3:.2f} GiB")
                 loss.backward()
@@ -171,6 +176,7 @@ if __name__ == '__main__':
     parser.add_argument("--compile", action="store_true")
     parser.add_argument("--nepochs", type=int, default = 10)
     parser.add_argument("--lr", type=float, default = 0.001)
+    parser.add_argument("--loss", type=str, default = "mse", choices=["mse", "poisson"])
     parser.add_argument("--torchviz", action="store_true")
     parser.add_argument("--fp", action="store_true")
     args = parser.parse_args()
