@@ -76,9 +76,7 @@ def main():
 
     like_img = itk.imread(args.like_img)
     like_img_array = itk.array_from_image(like_img)
-    # image_k_tensor = torch.ones_like(torch.from_numpy(like_img_array)).to(torch.float32).to(simu.gaga_source.current_gpu_device)
-    # image_k_tensor = 1+0.1*torch.rand_like(torch.from_numpy(like_img_array)).to(torch.float32).to(simu.gaga_source.current_gpu_device)
-    image_k_tensor = torch.randint(0,20,torch.from_numpy(like_img_array).shape).to(torch.float32).to(simu.gaga_source.current_gpu_device)
+    image_k_tensor = torch.randint(1,20,torch.from_numpy(like_img_array).shape).to(torch.float32).to(simu.gaga_source.current_gpu_device)
     image_k_tensor.requires_grad_(True)
     optimizer = torch.optim.Adam([image_k_tensor,], lr=args.lr)
     loss_fct = torch.nn.MSELoss()
@@ -129,10 +127,6 @@ def main():
 
                 output_projs = output_projs/output_projs.sum()*measured_projections_torch[subset_ids,:,:].sum()
 
-                output_projs_itk = itk.image_from_array(output_projs.detach().cpu().numpy())
-                output_projs_itk.CopyInformation(measured_projections)
-                itk.imwrite(output_projs_itk, os.path.join(args.output_folder, f"projs_{epoch}_{subset}.mha"))
-
                 # normalization
                 loss = loss_fct(output_projs, measured_projections_torch[subset_ids,:,:])
                 # loss = torch.sum(output_projs - measured_projections_torch[subset_ids] * torch.log(output_projs + 1e-8))
@@ -156,11 +150,6 @@ def main():
             output_projs_itk = itk.image_from_array(output_projs.detach().cpu().numpy())
             output_projs_itk.CopyInformation(measured_projections)
             itk.imwrite(output_projs_itk, os.path.join(args.output_folder, f"projs_{epoch}.mha"))
-
-            grad_k = itk.image_from_array(image_k_tensor.grad.detach().cpu().numpy())
-            grad_k.CopyInformation(like_img)
-            itk.imwrite(grad_k, os.path.join(args.output_folder, f"grad_{epoch}.mha"))
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
