@@ -76,9 +76,15 @@ def main():
 
     like_img = itk.imread(args.like_img)
     like_img_array = itk.array_from_image(like_img)
-    image_k_tensor = torch.randint(1,20,torch.from_numpy(like_img_array).shape).to(torch.float32).to(simu.gaga_source.current_gpu_device)
-    image_k_tensor.requires_grad_(True)
-    optimizer = torch.optim.Adam([image_k_tensor,], lr=args.lr)
+    like_img_tensor = torch.from_numpy(like_img_array)
+    # image_k_tensor = (20*torch.rand(like_img_tensor.shape,
+    #                                dtype=torch.float32,
+    #                                device = simu.gaga_source.current_gpu_device)).requires_grad_()
+    image_k_tensor = (torch.ones(like_img_tensor.shape,
+                                   dtype=torch.float32,
+                                   device = simu.gaga_source.current_gpu_device)).requires_grad_()
+
+    # optimizer = torch.optim.Adam([image_k_tensor,], lr=args.lr)
 
     if args.loss == "mse":
         loss_fct = torch.nn.MSELoss()
@@ -122,10 +128,14 @@ def main():
 
         for epoch in range(n_epochs):
             for subset in range(args.nsubsets):
+                image_k_tensor.requires_grad_(True)
+                if image_k_tensor.grad is not None:
+                    image_k_tensor.grad.zero_()
+
                 subset_ids = [subset+8*k for k in range(nprojs_per_subsets)]
                 print(f"{subset_ids=}")
 
-                optimizer.zero_grad()
+                # optimizer.zero_grad()
 
                 t0_epoch = time.time()
                 simu.garf_detector.detector_planes_subset = [simu.garf_detector.detector_planes[k] for k in subset_ids]
@@ -133,26 +143,44 @@ def main():
                 output_projs = simu.optim_generate_projections_from_source(source_tensor = image_k_tensor)
 
                 # normalization
-                output_projs = output_projs/output_projs.sum()*measured_projections_torch[subset_ids,:,:].sum()
+                # output_projs = (output_projs/output_projs.sum()*measured_projections_torch[subset_ids,:,:]).sum()
 
 
-                loss = loss_fct(output_projs, measured_projections_torch[subset_ids,:,:])
+                # loss = loss_fct(output_projs, measured_projections_torch[subset_ids,:,:])
+                loss = (output_projs - measured_projections_torch[subset_ids,:,:] * torch.log(output_projs+1e-8)).sum()
 
                 print(f"Allocated: {torch.cuda.memory_allocated() / 1024 ** 2:.2f} MiB i.e. {torch.cuda.memory_allocated() / 1024 ** 3:.2f} GiB")
                 loss.backward()
 
-                print("Image gradient abs mean: ", image_k_tensor.grad.abs().mean())
-                print("Image gradient abs max: ", image_k_tensor.grad.abs().max())
+                # image_k_tensor = image_k_tensor - image_k_tensor*image_k_tensor.grad
+                # mask_sensitivity = simu.garf_detector.sensitivity_image>0
+                # image_k_tensor.grad[mask_sensitivity] = image_k_tensor.grad[mask_sensitivity] * image_k_tensor[mask_sensitivity]/simu.garf_detector.sensitivity_image[mask_sensitivity]
+
+                # n_event_per_voxels = simu.number_of_events / (image_k_tensor.shape[0]*image_k_tensor.shape[1]*image_k_tensor.shape[2])
+                # simu.garf_detector.sensitivity_image = simu.garf_detector.sensitivity_image / n_event_per_voxels
+                simu.garf_detector.sensitivity_image[simu.garf_detector.sensitivity_image < 1e-8] = 1
+
+                with torch.no_grad():
+                    update = image_k_tensor * image_k_tensor.grad / simu.garf_detector.sensitivity_image
+                    image_k_tensor -= update
+
+                # optimizer.step()
+                # print("Image gradient abs mean: ", image_k_tensor.grad.abs().mean())
+                # print("Image gradient abs max: ", image_k_tensor.grad.abs().max())
+
                 losses_np.append(loss.item())
                 np.save(os.path.join(args.output_folder, "losses.npy"), losses_np)
-
-                optimizer.step()
 
                 print(f"[Epoch {epoch+1}/{n_epochs}] [Subset {subset+1}/{args.nsubsets}] Loss = {loss.item():8.4f}            ({time.time()-t0_epoch:.4f} s)")
 
                 rec_k = itk.image_from_array(image_k_tensor.detach().cpu().numpy())
                 rec_k.CopyInformation(like_img)
                 itk.imwrite(rec_k, os.path.join(args.output_folder, f"rec_{epoch + 1}_{subset+1}.mha"))
+
+                # sens_k = itk.image_from_array(simu.garf_detector.sensitivity_image.detach().cpu().numpy())
+                # sens_k.CopyInformation(like_img)
+                # itk.imwrite(sens_k, os.path.join(args.output_folder, f"sens_{epoch + 1}_{subset+1}.mha"))
+
 
             rec_k = itk.image_from_array(image_k_tensor.detach().cpu().numpy())
             rec_k.CopyInformation(like_img)
