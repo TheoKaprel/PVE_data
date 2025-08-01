@@ -139,7 +139,7 @@ def main():
 
                 t0_epoch = time.time()
                 simu.garf_detector.detector_planes_subset = [simu.garf_detector.detector_planes[k] for k in subset_ids]
-
+                # print(f"1. {torch.cuda.memory_allocated() / 1024 ** 3:.2f} GiB")
                 output_projs = simu.optim_generate_projections_from_source(source_tensor = image_k_tensor)
 
                 # normalization
