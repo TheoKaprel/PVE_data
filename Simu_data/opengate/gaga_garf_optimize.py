@@ -173,13 +173,17 @@ def main():
 
                 print(f"[Epoch {epoch+1}/{n_epochs}] [Subset {subset+1}/{args.nsubsets}] Loss = {loss.item():8.4f}            ({time.time()-t0_epoch:.4f} s)")
 
+                proj_k = itk.image_from_array(output_projs.detach().cpu().numpy())
+                proj_k.CopyInformation(measured_projections)
+                itk.imwrite(proj_k, os.path.join(args.output_folder, f"proj_{epoch + 1}_{subset+1}.mha"))
+
                 rec_k = itk.image_from_array(image_k_tensor.detach().cpu().numpy())
                 rec_k.CopyInformation(like_img)
                 itk.imwrite(rec_k, os.path.join(args.output_folder, f"rec_{epoch + 1}_{subset+1}.mha"))
 
-                # sens_k = itk.image_from_array(simu.garf_detector.sensitivity_image.detach().cpu().numpy())
-                # sens_k.CopyInformation(like_img)
-                # itk.imwrite(sens_k, os.path.join(args.output_folder, f"sens_{epoch + 1}_{subset+1}.mha"))
+                sens_k = itk.image_from_array(simu.garf_detector.sensitivity_image.detach().cpu().numpy())
+                sens_k.CopyInformation(like_img)
+                itk.imwrite(sens_k, os.path.join(args.output_folder, f"sens_{epoch + 1}_{subset+1}.mha"))
 
 
             rec_k = itk.image_from_array(image_k_tensor.detach().cpu().numpy())
