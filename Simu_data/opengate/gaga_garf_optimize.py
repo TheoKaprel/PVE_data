@@ -141,6 +141,9 @@ def main():
                 simu.garf_detector.detector_planes_subset = [simu.garf_detector.detector_planes[k] for k in subset_ids]
                 # print(f"1. {torch.cuda.memory_allocated() / 1024 ** 3:.2f} GiB")
                 output_projs = simu.optim_generate_projections_from_source(source_tensor = image_k_tensor)
+                n_event_per_voxels = simu.gaga_source.final_N_generated / (image_k_tensor.shape[0]*image_k_tensor.shape[1]*image_k_tensor.shape[2])
+
+                # output_projs = output_projs/n_event_per_voxels
 
                 # normalization
                 # output_projs = (output_projs/output_projs.sum()*measured_projections_torch[subset_ids,:,:]).sum()
@@ -156,7 +159,6 @@ def main():
                 # mask_sensitivity = simu.garf_detector.sensitivity_image>0
                 # image_k_tensor.grad[mask_sensitivity] = image_k_tensor.grad[mask_sensitivity] * image_k_tensor[mask_sensitivity]/simu.garf_detector.sensitivity_image[mask_sensitivity]
 
-                # n_event_per_voxels = simu.number_of_events / (image_k_tensor.shape[0]*image_k_tensor.shape[1]*image_k_tensor.shape[2])
                 # simu.garf_detector.sensitivity_image = simu.garf_detector.sensitivity_image / n_event_per_voxels
                 simu.garf_detector.sensitivity_image[simu.garf_detector.sensitivity_image < 1e-8] = 1
 
