@@ -108,11 +108,16 @@ def main():
 
     elif args.fp==True:
         src = torch.from_numpy(like_img_array).to(torch.float32).to(simu.gaga_source.current_gpu_device)
-        simu.garf_detector.detector_planes_subset = simu.garf_detector.detector_planes
+        # simu.garf_detector.detector_planes_subset = simu.garf_detector.detector_planes
+        subset_ids = [8 * k for k in range(120//8)]
+        simu.garf_detector.detector_planes_subset = [simu.garf_detector.detector_planes[k] for k in subset_ids]
 
         with torch.no_grad():
             output_projs = simu.optim_generate_projections_from_source(source_tensor=src)
+            n_event_per_voxels = simu.gaga_source.final_N_generated / (
+                    image_k_tensor.shape[0] * image_k_tensor.shape[1] * image_k_tensor.shape[2])
 
+            output_projs = output_projs / n_event_per_voxels
         output_projs_itk = itk.image_from_array(output_projs.detach().cpu().numpy())
         output_projs_itk.CopyInformation(measured_projections)
         itk.imwrite(output_projs_itk, os.path.join(args.output_folder, "output_projs_gaga_garf.mha"))
@@ -139,11 +144,10 @@ def main():
 
                 t0_epoch = time.time()
                 simu.garf_detector.detector_planes_subset = [simu.garf_detector.detector_planes[k] for k in subset_ids]
-                # print(f"1. {torch.cuda.memory_allocated() / 1024 ** 3:.2f} GiB")
                 output_projs = simu.optim_generate_projections_from_source(source_tensor = image_k_tensor)
                 n_event_per_voxels = simu.gaga_source.final_N_generated / (image_k_tensor.shape[0]*image_k_tensor.shape[1]*image_k_tensor.shape[2])
-
-                # output_projs = output_projs/n_event_per_voxels
+                print(f"{n_event_per_voxels=}")
+                output_projs = output_projs/n_event_per_voxels
 
                 # normalization
                 # output_projs = (output_projs/output_projs.sum()*measured_projections_torch[subset_ids,:,:]).sum()
@@ -158,13 +162,15 @@ def main():
                 # image_k_tensor = image_k_tensor - image_k_tensor*image_k_tensor.grad
                 # mask_sensitivity = simu.garf_detector.sensitivity_image>0
                 # image_k_tensor.grad[mask_sensitivity] = image_k_tensor.grad[mask_sensitivity] * image_k_tensor[mask_sensitivity]/simu.garf_detector.sensitivity_image[mask_sensitivity]
+                CF = (4.7952**3)*0.001 * 1e6 * 15 * 0.11
 
-                # simu.garf_detector.sensitivity_image = simu.garf_detector.sensitivity_image / n_event_per_voxels
+                simu.garf_detector.sensitivity_image = simu.garf_detector.sensitivity_image / n_event_per_voxels * CF
                 simu.garf_detector.sensitivity_image[simu.garf_detector.sensitivity_image < 1e-8] = 1
+
 
                 with torch.no_grad():
                     update = image_k_tensor * image_k_tensor.grad / simu.garf_detector.sensitivity_image
-                    image_k_tensor -= update
+                    image_k_tensor = image_k_tensor - update
 
                 # optimizer.step()
                 # print("Image gradient abs mean: ", image_k_tensor.grad.abs().mean())
