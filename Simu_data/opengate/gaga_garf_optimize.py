@@ -69,9 +69,13 @@ def main():
 
     simu.optim_initialize()
 
+
+    dtype = torch.float32
+
+
     measured_projections = itk.imread(args.projections)
     measured_projections_torch = torch.from_numpy(
-        itk.array_from_image(measured_projections)).to(simu.gaga_source.current_gpu_device).to(torch.float64)
+        itk.array_from_image(measured_projections)).to(simu.gaga_source.current_gpu_device).to(dtype)
 
 
     like_img = itk.imread(args.like_img)
@@ -81,7 +85,7 @@ def main():
     #                                dtype=torch.float32,
     #                                device = simu.gaga_source.current_gpu_device)).requires_grad_()
     image_k_tensor = (torch.ones(like_img_tensor.shape,
-                                   dtype=torch.float32,
+                                   dtype=dtype,
                                    device = simu.gaga_source.current_gpu_device)).requires_grad_()
 
     # optimizer = torch.optim.Adam([image_k_tensor,], lr=args.lr)
