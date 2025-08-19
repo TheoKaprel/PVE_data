@@ -112,10 +112,11 @@ def main():
 
     elif args.fp==True:
         src = torch.from_numpy(like_img_array).to(torch.float32).to(simu.gaga_source.current_gpu_device)
-        # simu.garf_detector.detector_planes_subset = simu.garf_detector.detector_planes
-        subset_ids = [8 * k for k in range(120//8)]
+        nprojs_per_subsets = 120 // args.nsubsets
+        subset = 0
+        subset_ids = [subset + 8 * k for k in range(nprojs_per_subsets)]
         simu.garf_detector.detector_planes_subset = [simu.garf_detector.detector_planes[k] for k in subset_ids]
-
+        
         with torch.no_grad():
             output_projs = simu.optim_generate_projections_from_source(source_tensor=src)
             n_event_per_voxels = simu.gaga_source.final_N_generated / (
@@ -127,8 +128,10 @@ def main():
         output_projs_itk = itk.image_from_array(output_projs.detach().cpu().numpy())
         output_projs_itk.CopyInformation(measured_projections)
         itk.imwrite(output_projs_itk, os.path.join(args.output_folder, "output_projs_gaga_garf.mha"))
+        print("\n")
+        print("--------")
         print(f"Loss = {loss.item():8.4f}")
-        
+
         exit(0)
 
     else:
