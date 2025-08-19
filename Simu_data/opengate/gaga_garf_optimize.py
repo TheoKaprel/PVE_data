@@ -114,9 +114,9 @@ def main():
         src = torch.from_numpy(like_img_array).to(torch.float32).to(simu.gaga_source.current_gpu_device)
         nprojs_per_subsets = 120 // args.nsubsets
         subset = 0
-        subset_ids = [subset + 8 * k for k in range(nprojs_per_subsets)]
+        subset_ids = [subset + int(args.nsubsets) * k for k in range(nprojs_per_subsets)]
         simu.garf_detector.detector_planes_subset = [simu.garf_detector.detector_planes[k] for k in subset_ids]
-        
+
         with torch.no_grad():
             output_projs = simu.optim_generate_projections_from_source(source_tensor=src)
             n_event_per_voxels = simu.gaga_source.final_N_generated / (
@@ -148,7 +148,7 @@ def main():
                 if image_k_tensor.grad is not None:
                     image_k_tensor.grad.zero_()
 
-                subset_ids = [subset+8*k for k in range(nprojs_per_subsets)]
+                subset_ids = [subset+int(args.nsubsets)*k for k in range(nprojs_per_subsets)]
                 print(f"{subset_ids=}")
 
                 # optimizer.zero_grad()
