@@ -122,9 +122,13 @@ def main():
                     image_k_tensor.shape[0] * image_k_tensor.shape[1] * image_k_tensor.shape[2])
 
             output_projs = output_projs / n_event_per_voxels
+            loss = (output_projs - measured_projections_torch[subset_ids, :, :] * torch.log(output_projs + 1e-8)).sum()
+
         output_projs_itk = itk.image_from_array(output_projs.detach().cpu().numpy())
         output_projs_itk.CopyInformation(measured_projections)
         itk.imwrite(output_projs_itk, os.path.join(args.output_folder, "output_projs_gaga_garf.mha"))
+        print(f"Loss = {loss.item():8.4f}")
+        
         exit(0)
 
     else:
@@ -175,10 +179,6 @@ def main():
                 with torch.no_grad():
                     update = image_k_tensor * image_k_tensor.grad / simu.garf_detector.sensitivity_image
                     image_k_tensor = image_k_tensor - update
-
-                # optimizer.step()
-                # print("Image gradient abs mean: ", image_k_tensor.grad.abs().mean())
-                # print("Image gradient abs max: ", image_k_tensor.grad.abs().max())
 
                 losses_np.append(loss.item())
                 np.save(os.path.join(args.output_folder, "losses.npy"), losses_np)
