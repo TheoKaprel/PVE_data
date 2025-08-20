@@ -26,7 +26,7 @@ def main():
     # spect options
     simu = SpectIntevoSimulator('standalone_torch', "test004_main5_standalone_torch")
     simu.output_folder = Path(args.output_folder)
-    simu.ct_image = args.ct  # (needed to position the source)
+    simu.ct_image = args.ct
     simu.activity_image = args.like_img
     simu.radionuclide = args.radionuclide
     if args.torchviz:
@@ -60,8 +60,8 @@ def main():
     simu.garf_detector.hit_slice_flag = False
 
 
-    simu.gaga_source.batch_size = int(args.batchsize)  # 5e5 best on nvidia linux
-    simu.gaga_source.backward_distance = 330 * mm # ????
+    simu.gaga_source.batch_size = int(args.batchsize)
+    simu.gaga_source.backward_distance = 330 * mm
     simu.gaga_source.energy_threshold_MeV = 0.15
     simu.compile = args.compile
     simu.gaga_source.gpu_mode = args.device
@@ -78,23 +78,21 @@ def main():
         itk.array_from_image(measured_projections)).to(simu.gaga_source.current_gpu_device).to(dtype)
 
 
-    like_img = itk.imread(args.like_img)
-    like_img_array = itk.array_from_image(like_img)
-    like_img_tensor = torch.from_numpy(like_img_array)
-    # image_k_tensor = (20*torch.rand(like_img_tensor.shape,
-    #                                dtype=torch.float32,
-    #                                device = simu.gaga_source.current_gpu_device)).requires_grad_()
-    image_k_tensor = (torch.ones(like_img_tensor.shape,
-                                   dtype=dtype,
-                                   device = simu.gaga_source.current_gpu_device)).requires_grad_()
+    if args.input_img is not None:
+        input_img = itk.imread(args.input_img)
+        input_img_array = itk.array_from_image(input_img)
+        input_img_tensor = torch.from_numpy(input_img_array)
+        image_k_tensor = input_img_tensor.to(dtype).to(simu.gaga_source.current_gpu_device).requires_grad_()
 
-    # optimizer = torch.optim.Adam([image_k_tensor,], lr=args.lr)
-
-    if args.loss == "mse":
-        loss_fct = torch.nn.MSELoss()
-    elif args.loss=="poisson":
-        loss_fct = torch.nn.PoissonNLLLoss(log_input=False, reduction="mean")
-
+        like_img = input_img
+        like_img_array = input_img_array
+    else:
+        like_img = itk.imread(args.like_img)
+        like_img_array = itk.array_from_image(like_img)
+        like_img_tensor = torch.from_numpy(like_img_array)
+        image_k_tensor = (torch.ones(like_img_tensor.shape,
+                                       dtype=dtype,
+                                       device = simu.gaga_source.current_gpu_device)).requires_grad_()
 
     if args.torchviz==True:
         from torchviz import make_dot
@@ -102,7 +100,7 @@ def main():
         src = torch.from_numpy(like_img_array).to(torch.float32).to(simu.gaga_source.current_gpu_device)
         src.requires_grad = True
         simu.garf_detector.detector_planes_subset = simu.garf_detector.detector_planes
-
+        loss_fct = torch.nn.PoissonNLLLoss(log_input=False, reduction="mean")
 
         output_projs = simu.optim_generate_projections_from_source(source_tensor=src)
         output_projs = output_projs / output_projs.sum() * measured_projections_torch[:2, :, :].sum()
@@ -138,7 +136,6 @@ def main():
         n_epochs = args.nepochs
         nprojs_per_subsets = 120//args.nsubsets
 
-
         losses_np = []
         np.save(os.path.join(args.output_folder,"losses.npy"), losses_np)
 
@@ -151,8 +148,6 @@ def main():
                 subset_ids = [subset+int(args.nsubsets)*k for k in range(nprojs_per_subsets)]
                 print(f"{subset_ids=}")
 
-                # optimizer.zero_grad()
-
                 t0_epoch = time.time()
                 simu.garf_detector.detector_planes_subset = [simu.garf_detector.detector_planes[k] for k in subset_ids]
                 output_projs = simu.optim_generate_projections_from_source(source_tensor = image_k_tensor)
@@ -160,21 +155,12 @@ def main():
                 print(f"{n_event_per_voxels=}")
                 output_projs = output_projs/n_event_per_voxels
 
-                # normalization
-                # output_projs = (output_projs/output_projs.sum()*measured_projections_torch[subset_ids,:,:]).sum()
-
-
-                # loss = loss_fct(output_projs, measured_projections_torch[subset_ids,:,:])
                 loss = (output_projs - measured_projections_torch[subset_ids,:,:] * torch.log(output_projs+1e-8)).sum()
 
                 print(f"Allocated: {torch.cuda.memory_allocated() / 1024 ** 2:.2f} MiB i.e. {torch.cuda.memory_allocated() / 1024 ** 3:.2f} GiB")
                 loss.backward()
 
-                # image_k_tensor = image_k_tensor - image_k_tensor*image_k_tensor.grad
-                # mask_sensitivity = simu.garf_detector.sensitivity_image>0
-                # image_k_tensor.grad[mask_sensitivity] = image_k_tensor.grad[mask_sensitivity] * image_k_tensor[mask_sensitivity]/simu.garf_detector.sensitivity_image[mask_sensitivity]
                 CF = (4.7952**3)*0.001 * 1e6 * 15 * 0.11
-
                 simu.garf_detector.sensitivity_image = simu.garf_detector.sensitivity_image / n_event_per_voxels * CF
                 simu.garf_detector.sensitivity_image[simu.garf_detector.sensitivity_image < 1e-8] = 1
 
@@ -213,6 +199,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-a","--activity", type = float, default = 2e7)
     parser.add_argument("--like_img", type=str)
+    parser.add_argument("--input_img", type=str)
     parser.add_argument("--projections", type=str)
     parser.add_argument("--ct", type=str)
     parser.add_argument("--radionuclide", type=str, choices=['Tc99m', 'Lu177'])
@@ -228,8 +215,6 @@ if __name__ == '__main__':
     parser.add_argument("--axis", type=str)
     parser.add_argument("--compile", action="store_true")
     parser.add_argument("--nepochs", type=int, default = 10)
-    parser.add_argument("--lr", type=float, default = 0.001)
-    parser.add_argument("--loss", type=str, default = "mse", choices=["mse", "poisson"])
     parser.add_argument("--torchviz", action="store_true")
     parser.add_argument("--fp", action="store_true")
     args = parser.parse_args()
