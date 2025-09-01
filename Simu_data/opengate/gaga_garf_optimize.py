@@ -93,6 +93,8 @@ def main():
         image_k_tensor = (torch.ones(like_img_tensor.shape,
                                        dtype=dtype,
                                        device = simu.gaga_source.current_gpu_device)).requires_grad_()
+        # image_k_tensor[30:71,30:51,30:71]=0
+        # image_k_tensor.requires_grad_()
 
     if args.torchviz==True:
         from torchviz import make_dot
@@ -160,9 +162,10 @@ def main():
                 print(f"Allocated: {torch.cuda.memory_allocated() / 1024 ** 2:.2f} MiB i.e. {torch.cuda.memory_allocated() / 1024 ** 3:.2f} GiB")
                 loss.backward()
 
-                CF = (4.7952**3)*0.001 * 1e6 * 15 * 0.11
+                CF = (4.7952**3)*0.001 * 1e6 * 15 * 0.1038
                 simu.garf_detector.sensitivity_image = simu.garf_detector.sensitivity_image / n_event_per_voxels * CF
-                simu.garf_detector.sensitivity_image[simu.garf_detector.sensitivity_image < 1e-8] = 1
+                # simu.garf_detector.sensitivity_image[simu.garf_detector.sensitivity_image < 1e-8] = 1
+                simu.garf_detector.sensitivity_image[simu.garf_detector.sensitivity_image < 1e-5] = torch.inf
 
 
                 with torch.no_grad():

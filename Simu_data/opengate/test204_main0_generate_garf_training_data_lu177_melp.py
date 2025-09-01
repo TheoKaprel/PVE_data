@@ -5,8 +5,11 @@ import opengate as gate
 from opengate.actors.digitizers import energy_windows_peak_scatter
 
 import sys
-sys.path.append('/export/home/tkaprelian/Desktop/PVE/PVE_data/Simu_data/spect_siemens_intevo/')
-import spect_siemens_intevo as gate_intevo
+# sys.path.append('/export/home/tkaprelian/Desktop/PVE/PVE_data/Simu_data/spect_siemens_intevo_loc/')
+# import spect_siemens_intevo as gate_intevo
+
+from opengate.contrib.spect import siemens_intevo as gate_intevo
+
 import os
 import argparse
 
