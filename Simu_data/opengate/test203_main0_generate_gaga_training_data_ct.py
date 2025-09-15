@@ -65,7 +65,7 @@ def main():
         "EventPosition",
         "EventDirection",
     ]
-    phsp.output_filename = f"{output_folder}/{simu_name}_crop.root"
+    phsp.output_filename = f"{output_folder}/{simu_name}.root"
     # this option allow to store all events even if absorbed
     phsp.store_absorbed_event = True
     f = sim.add_filter("ParticleFilter", "f")

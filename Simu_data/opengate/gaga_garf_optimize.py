@@ -43,7 +43,7 @@ def main():
             simu.gantry_angles = [angle_rad * 360 / (2 * np.pi) * deg for angle_rad in list_angles_rad]
             simu.radius = [sid * mm for sid in list_sid]
         else:
-            simu.gantry_angles = [(3 * k + 180) * deg for k in range(args.nprojs)]
+            simu.gantry_angles = [(3 * k) * deg for k in range(args.nprojs)]
             simu.radius = [args.sid * mm for _ in range(args.nprojs)]
 
 
@@ -68,10 +68,12 @@ def main():
     simu.garf_detector.gpu_mode = args.device
 
     simu.optim_initialize()
+    simu.gaga_source.with_gan = False
 
+    acquisition_time = args.acquisition_time
+    simu.garf_detector.acquisition_time = acquisition_time
 
     dtype = torch.float32
-
 
     measured_projections = itk.imread(args.projections)
     measured_projections_torch = torch.from_numpy(
@@ -142,6 +144,7 @@ def main():
         np.save(os.path.join(args.output_folder,"losses.npy"), losses_np)
 
         for epoch in range(n_epochs):
+            estimated_projs = torch.zeros_like(measured_projections_torch,device=simu.gaga_source.current_gpu_device)
             for subset in range(args.nsubsets):
                 image_k_tensor.requires_grad_(True)
                 if image_k_tensor.grad is not None:
@@ -153,6 +156,11 @@ def main():
                 t0_epoch = time.time()
                 simu.garf_detector.detector_planes_subset = [simu.garf_detector.detector_planes[k] for k in subset_ids]
                 output_projs = simu.optim_generate_projections_from_source(source_tensor = image_k_tensor)
+
+                # conversion_factor = (0.001*(4.7952**3)) * 1e6 * acquisition_time * 0.1038 # (Voxel Volume in mL) * (MBq) * (acquisition time) * (208keV branching ratio)
+                conversion_factor = 1e6 * acquisition_time * 0.1038 # (Voxel Volume in mL) * (MBq) * (acquisition time) * (208keV branching ratio)
+                output_projs = output_projs * conversion_factor
+
                 n_event_per_voxels = simu.gaga_source.final_N_generated / (image_k_tensor.shape[0]*image_k_tensor.shape[1]*image_k_tensor.shape[2])
                 print(f"{n_event_per_voxels=}")
                 output_projs = output_projs/n_event_per_voxels
@@ -162,10 +170,8 @@ def main():
                 print(f"Allocated: {torch.cuda.memory_allocated() / 1024 ** 2:.2f} MiB i.e. {torch.cuda.memory_allocated() / 1024 ** 3:.2f} GiB")
                 loss.backward()
 
-                CF = (4.7952**3)*0.001 * 1e6 * 15 * 0.1038
-                simu.garf_detector.sensitivity_image = simu.garf_detector.sensitivity_image / n_event_per_voxels * CF
-                # simu.garf_detector.sensitivity_image[simu.garf_detector.sensitivity_image < 1e-8] = 1
-                simu.garf_detector.sensitivity_image[simu.garf_detector.sensitivity_image < 1e-5] = torch.inf
+                simu.garf_detector.sensitivity_image = simu.garf_detector.sensitivity_image / n_event_per_voxels * conversion_factor
+                simu.garf_detector.sensitivity_image[simu.garf_detector.sensitivity_image < 1e-5] = torch.inf # or 1
 
 
                 with torch.no_grad():
@@ -189,12 +195,13 @@ def main():
                 sens_k.CopyInformation(like_img)
                 itk.imwrite(sens_k, os.path.join(args.output_folder, f"sens_{epoch + 1}_{subset+1}.mha"))
 
+                estimated_projs[subset_ids,:,:] = output_projs
 
             rec_k = itk.image_from_array(image_k_tensor.float().detach().cpu().numpy())
             rec_k.CopyInformation(like_img)
             itk.imwrite(rec_k, os.path.join(args.output_folder, f"rec_{epoch+1}.mha"))
 
-            output_projs_itk = itk.image_from_array(output_projs.float().detach().cpu().numpy())
+            output_projs_itk = itk.image_from_array(estimated_projs.float().detach().cpu().numpy())
             output_projs_itk.CopyInformation(measured_projections)
             itk.imwrite(output_projs_itk, os.path.join(args.output_folder, f"projs_{epoch+1}.mha"))
 
@@ -206,6 +213,7 @@ if __name__ == '__main__':
     parser.add_argument("--projections", type=str)
     parser.add_argument("--ct", type=str)
     parser.add_argument("--radionuclide", type=str, choices=['Tc99m', 'Lu177'])
+    parser.add_argument("--acquisition_time", type=float, default=1)
     parser.add_argument("--batchsize", type=float)
     parser.add_argument("--gan_pth", type=str)
     parser.add_argument("--garf_pth", type=str)
