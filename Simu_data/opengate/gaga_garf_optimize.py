@@ -68,7 +68,7 @@ def main():
     simu.garf_detector.gpu_mode = args.device
 
     simu.optim_initialize()
-    simu.gaga_source.with_gan = False
+    simu.gaga_source.with_gan = args.with_gan
 
     acquisition_time = args.acquisition_time
     simu.garf_detector.acquisition_time = acquisition_time
@@ -225,6 +225,7 @@ if __name__ == '__main__':
     parser.add_argument("--output_folder", type=str)
     parser.add_argument("--axis", type=str)
     parser.add_argument("--compile", action="store_true")
+    parser.add_argument("--with_gan", action="store_true")
     parser.add_argument("--nepochs", type=int, default = 10)
     parser.add_argument("--torchviz", action="store_true")
     parser.add_argument("--fp", action="store_true")
