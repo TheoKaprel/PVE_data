@@ -63,6 +63,7 @@ def main():
     simu.gaga_source.batch_size = int(args.batchsize)
     simu.gaga_source.backward_distance = 330 * mm
     simu.gaga_source.energy_threshold_MeV = 0.15
+    simu.gaga_source.activity_threshold_MBq = 1e-3
     simu.compile = args.compile
     simu.gaga_source.gpu_mode = args.device
     simu.garf_detector.gpu_mode = args.device
@@ -158,7 +159,7 @@ def main():
                 output_projs = simu.optim_generate_projections_from_source(source_tensor = image_k_tensor)
 
                 # conversion_factor = (0.001*(4.7952**3)) * 1e6 * acquisition_time * 0.1038 # (Voxel Volume in mL) * (MBq) * (acquisition time) * (208keV branching ratio)
-                conversion_factor = 1e6 * acquisition_time * 0.1038 # (Voxel Volume in mL) * (MBq) * (acquisition time) * (208keV branching ratio)
+                conversion_factor = 1e6 * acquisition_time * 0.1038 # (MBq) * (acquisition time) * (208keV branching ratio)
                 output_projs = output_projs * conversion_factor
 
                 n_event_per_voxels = simu.gaga_source.final_N_generated / (image_k_tensor.shape[0]*image_k_tensor.shape[1]*image_k_tensor.shape[2])
