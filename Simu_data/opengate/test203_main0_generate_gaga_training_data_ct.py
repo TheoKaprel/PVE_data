@@ -17,6 +17,8 @@ def main():
     mm = gate.g4_units.mm
     Bq = gate.g4_units.Bq
     sec = gate.g4_units.second
+    keV = gate.g4_units.keV
+    MeV = gate.g4_units.MeV
 
     # options
     ui = sim.user_info
@@ -46,7 +48,25 @@ def main():
     sph_surface.mother = "sphere_world"
 
     # source uniform (limited FOV)
-    source = add_vox_source(sim, p, patient)
+    # source = add_vox_source(sim, p, patient)
+    source = sim.add_source("VoxelSource", "vox_source")
+    source.attached_to = patient.name
+    source.particle = "gamma"
+    source.energy.type = "mono"
+    source.energy.mono = 0.208366 * MeV
+    source.image = p.activity_image
+    source.direction.type = "iso"
+
+
+    Bq = gate.g4_units.Bq
+    ui = sim.user_info
+    sec = gate.g4_units.second
+    source.activity = p.activity / ui.number_of_threads
+
+    ne = int((p.activity / Bq)) * p.duration / sec
+    print(f"Vox source translation: {source.position.translation}")
+    print(f"Vox source total activity: {p.activity/Bq} Bq")
+    print(f"Expected events: {ne}")
 
     # stats
     stats = sim.add_actor("SimulationStatisticsActor", "stats")
@@ -59,24 +79,30 @@ def main():
         "KineticEnergy",
         "PrePosition",
         "PreDirection",
-        "TimeFromBeginOfEvent",
-        "EventID",
-        "EventKineticEnergy",
+        # "TimeFromBeginOfEvent",
+        # "EventID",
+        # "EventKineticEnergy",
         "EventPosition",
         "EventDirection",
     ]
     phsp.output_filename = f"{output_folder}/{simu_name}.root"
     # this option allow to store all events even if absorbed
-    phsp.store_absorbed_event = True
+    phsp.store_absorbed_event = False
     f = sim.add_filter("ParticleFilter", "f")
     f.particle = "gamma"
     phsp.filters.append(f)
+    fk = sim.add_filter("KineticEnergyFilter", "fk")
+    fk.energy_min = 150 * keV
+    phsp.filters.append(fk)
     print(phsp)
     print(phsp.output_filename)
 
     # physic list
     sim.physics_manager.physics_list_name = "G4EmStandardPhysics_option3"
-    sim.physics_manager.set_production_cut("world", "all", 1 * mm)
+    sim.physics_manager.set_production_cut("world", "all", 1 * gate.g4_units.km)
+
+    # sim.physics_manager.energy_range_min = 150 * gate.g4_units.keV
+    # sim.physics_manager.energy_range_max = 210 * gate.g4_units.keV
 
     # run
     sim.run()
