@@ -172,14 +172,15 @@ def main():
                 loss = (output_projs - measured_projections_torch[subset_ids,:,:] * torch.log(output_projs+1e-8)).sum()
 
                 print(f"Allocated: {torch.cuda.memory_allocated() / 1024 ** 2:.2f} MiB i.e. {torch.cuda.memory_allocated() / 1024 ** 3:.2f} GiB")
-                loss.backward()
 
-                simu.garf_detector.sensitivity_image = simu.garf_detector.sensitivity_image / n_event_per_voxels * conversion_factor
-                simu.garf_detector.sensitivity_image[simu.garf_detector.sensitivity_image < 1e-5] = torch.inf # or 1
+                grad_l = torch.autograd.grad(loss, image_k_tensor, retain_graph=True)[0]
 
+                loss_for_sensitivity = output_projs.sum()
+                sensitivity = torch.autograd.grad(loss_for_sensitivity, image_k_tensor, retain_graph=False)[0]
+                sensitivity[sensitivity<1e-5] = torch.inf
 
                 with torch.no_grad():
-                    update = image_k_tensor * image_k_tensor.grad / simu.garf_detector.sensitivity_image
+                    update = image_k_tensor *  grad_l / sensitivity
                     image_k_tensor = image_k_tensor - update
 
                 losses_np.append(loss.item())
@@ -195,7 +196,7 @@ def main():
                 rec_k.CopyInformation(like_img)
                 itk.imwrite(rec_k, os.path.join(args.output_folder, f"rec_{epoch + 1}_{subset+1}.mha"))
 
-                sens_k = itk.image_from_array(simu.garf_detector.sensitivity_image.float().detach().cpu().numpy())
+                sens_k = itk.image_from_array(sensitivity.float().detach().cpu().numpy())
                 sens_k.CopyInformation(like_img)
                 itk.imwrite(sens_k, os.path.join(args.output_folder, f"sens_{epoch + 1}_{subset+1}.mha"))
 
