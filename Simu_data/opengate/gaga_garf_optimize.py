@@ -63,7 +63,7 @@ def main():
     simu.gaga_source.batch_size = int(args.batchsize)
     simu.gaga_source.backward_distance = 330 * mm
     simu.gaga_source.energy_threshold_MeV = 0.15
-    simu.gaga_source.activity_threshold_MBq = 1e-3
+    simu.gaga_source.activity_threshold_MBq = 0
     simu.compile = args.compile
     simu.gaga_source.gpu_mode = args.device
     simu.garf_detector.gpu_mode = args.device
