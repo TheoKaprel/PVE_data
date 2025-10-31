@@ -169,16 +169,15 @@ def main():
                 simu.garf_detector.detector_planes_subset = [simu.garf_detector.detector_planes[k] for k in subset_ids]
                 output_projs = simu.optim_generate_projections_from_source(source_tensor = image_k_tensor)
 
-                # conversion_factor = (0.001*(4.7952**3)) * 1e6 * acquisition_time * 0.1038 # (Voxel Volume in mL) * (MBq) * (acquisition time) * (208keV branching ratio)
-
-
-                conversion_factor = 1e6 * acquisition_time * 0.1038 # (MBq) * (acquisition duration time) * (208keV branching ratio)
-                output_projs = output_projs * conversion_factor
-
                 n_event_per_voxels = simu.gaga_source.final_N_generated / (image_k_tensor.shape[0]*image_k_tensor.shape[1]*image_k_tensor.shape[2])
                 print(f"{n_event_per_voxels=}")
                 output_projs = output_projs/n_event_per_voxels
 
+                lambda_lu = np.log(2) / (6.7 * 24 * 60 * 60)  # in second
+                time_before_injection = 25 * 60 * 60  # in second
+                decay = np.exp(-lambda_lu * time_before_injection)
+                conversion_factor = 1e6 * acquisition_time * 0.1038 * decay / 1.8663234  # (MBq) * (acquisition duration time) * (208keV branching ratio) * (activity decay between injection&acquisition)
+                output_projs = output_projs * conversion_factor
                 loss = (output_projs - measured_projections_torch[subset_ids,:,:] * torch.log(output_projs+1e-8)).sum()
 
                 print(f"Allocated: {torch.cuda.memory_allocated() / 1024 ** 2:.2f} MiB i.e. {torch.cuda.memory_allocated() / 1024 ** 3:.2f} GiB")
