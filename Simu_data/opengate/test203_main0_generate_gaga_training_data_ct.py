@@ -79,30 +79,24 @@ def main():
         "KineticEnergy",
         "PrePosition",
         "PreDirection",
-        # "TimeFromBeginOfEvent",
-        # "EventID",
-        # "EventKineticEnergy",
+        "TimeFromBeginOfEvent",
+        "EventID",
+        "EventKineticEnergy",
         "EventPosition",
         "EventDirection",
     ]
     phsp.output_filename = f"{output_folder}/{simu_name}.root"
     # this option allow to store all events even if absorbed
-    phsp.store_absorbed_event = False
+    phsp.store_absorbed_event = True
     f = sim.add_filter("ParticleFilter", "f")
     f.particle = "gamma"
     phsp.filters.append(f)
-    fk = sim.add_filter("KineticEnergyFilter", "fk")
-    fk.energy_min = 150 * keV
-    phsp.filters.append(fk)
     print(phsp)
     print(phsp.output_filename)
 
     # physic list
     sim.physics_manager.physics_list_name = "G4EmStandardPhysics_option3"
-    sim.physics_manager.set_production_cut("world", "all", 1 * gate.g4_units.km)
-
-    # sim.physics_manager.energy_range_min = 150 * gate.g4_units.keV
-    # sim.physics_manager.energy_range_max = 210 * gate.g4_units.keV
+    sim.physics_manager.set_production_cut("world", "all", 1 * gate.g4_units.mm)
 
     # run
     sim.run()

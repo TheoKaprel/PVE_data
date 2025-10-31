@@ -41,6 +41,7 @@ def main():
             list_sid = list(geometry.GetSourceToIsocenterDistances())
             list_angles_rad = list(geometry.GetGantryAngles())
             simu.gantry_angles = [angle_rad * 360 / (2 * np.pi) * deg for angle_rad in list_angles_rad]
+            print(f"ANGLES: {[alpha * 360 / (2*np.pi) for alpha in simu.gantry_angles]}")
             simu.radius = [sid * mm for sid in list_sid]
         else:
             simu.gantry_angles = [(3 * k) * deg for k in range(args.nprojs)]
@@ -61,9 +62,10 @@ def main():
 
 
     simu.gaga_source.batch_size = int(args.batchsize)
-    simu.gaga_source.backward_distance = 330 * mm
+    simu.gaga_source.backward_distance = 250 * mm
     simu.gaga_source.energy_threshold_MeV = 0.15
-    simu.gaga_source.activity_threshold_MBq = 0
+    simu.gaga_source.activity_threshold_MBq = 0.0001
+    # simu.gaga_source.activity_threshold_MBq = -1
     simu.compile = args.compile
     simu.gaga_source.gpu_mode = args.device
     simu.garf_detector.gpu_mode = args.device
@@ -129,6 +131,12 @@ def main():
                     image_k_tensor.shape[0] * image_k_tensor.shape[1] * image_k_tensor.shape[2])
 
             output_projs = output_projs / n_event_per_voxels
+            lambda_lu = np.log(2)/(6.7*24*60*60) # in second
+            time_before_injection = 25*60*60 # in second
+            decay = np.exp(-lambda_lu*time_before_injection)
+            conversion_factor = 1e6 * acquisition_time * 0.1038 * decay / 1.8663234  # (MBq) * (acquisition duration time) * (208keV branching ratio) * (activity decay between injection&acquisition)
+
+            output_projs = output_projs * conversion_factor
             loss = (output_projs - measured_projections_torch[subset_ids, :, :] * torch.log(output_projs + 1e-8)).sum()
 
         output_projs_itk = itk.image_from_array(output_projs.detach().cpu().numpy())
@@ -162,7 +170,9 @@ def main():
                 output_projs = simu.optim_generate_projections_from_source(source_tensor = image_k_tensor)
 
                 # conversion_factor = (0.001*(4.7952**3)) * 1e6 * acquisition_time * 0.1038 # (Voxel Volume in mL) * (MBq) * (acquisition time) * (208keV branching ratio)
-                conversion_factor = 1e6 * acquisition_time * 0.1038 # (MBq) * (acquisition time) * (208keV branching ratio)
+
+
+                conversion_factor = 1e6 * acquisition_time * 0.1038 # (MBq) * (acquisition duration time) * (208keV branching ratio)
                 output_projs = output_projs * conversion_factor
 
                 n_event_per_voxels = simu.gaga_source.final_N_generated / (image_k_tensor.shape[0]*image_k_tensor.shape[1]*image_k_tensor.shape[2])
