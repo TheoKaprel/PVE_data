@@ -94,6 +94,7 @@ def main():
 
         like_img = input_img
         like_img_array = input_img_array
+        first_n = args.firstit
     else:
         like_img = itk.imread(args.like_img)
         like_img_array = itk.array_from_image(like_img)
@@ -103,6 +104,7 @@ def main():
                                        device = simu.gaga_source.current_gpu_device)).requires_grad_()
         # image_k_tensor[30:71,30:51,30:71]=0
         # image_k_tensor.requires_grad_()
+        first_n = 1
 
     if args.torchviz==True:
         from torchviz import make_dot
@@ -155,7 +157,7 @@ def main():
         losses_np = []
         np.save(os.path.join(args.output_folder,"losses.npy"), losses_np)
 
-        for epoch in range(n_epochs):
+        for epoch in range(first_n,n_epochs+1):
             estimated_projs = torch.zeros_like(measured_projections_torch,device=simu.gaga_source.current_gpu_device)
             for subset in range(args.nsubsets):
                 image_k_tensor.requires_grad_(True)
@@ -178,6 +180,7 @@ def main():
                 decay = np.exp(-lambda_lu * time_before_injection)
                 conversion_factor = 1e6 * acquisition_time * 0.1038 * decay / 1.8663234  # (MBq) * (acquisition duration time) * (208keV branching ratio) * (activity decay between injection&acquisition)
                 output_projs = output_projs * conversion_factor
+
                 loss = (output_projs - measured_projections_torch[subset_ids,:,:] * torch.log(output_projs+1e-8)).sum()
 
                 print(f"Allocated: {torch.cuda.memory_allocated() / 1024 ** 2:.2f} MiB i.e. {torch.cuda.memory_allocated() / 1024 ** 3:.2f} GiB")
@@ -195,35 +198,36 @@ def main():
                 losses_np.append(loss.item())
                 np.save(os.path.join(args.output_folder, "losses.npy"), losses_np)
 
-                print(f"[Epoch {epoch+1}/{n_epochs}] [Subset {subset+1}/{args.nsubsets}] Loss = {loss.item():8.4f}            ({time.time()-t0_epoch:.4f} s)")
+                print(f"[Epoch {epoch}/{n_epochs}] [Subset {subset+1}/{args.nsubsets}] Loss = {loss.item():8.4f}            ({time.time()-t0_epoch:.4f} s)")
 
                 proj_k = itk.image_from_array(output_projs.float().detach().cpu().numpy())
                 proj_k.CopyInformation(measured_projections)
-                itk.imwrite(proj_k, os.path.join(args.output_folder, f"proj_{epoch + 1}_{subset+1}.mha"))
+                itk.imwrite(proj_k, os.path.join(args.output_folder, f"proj_{epoch}_{subset+1}.mha"))
 
                 rec_k = itk.image_from_array(image_k_tensor.float().detach().cpu().numpy())
                 rec_k.CopyInformation(like_img)
-                itk.imwrite(rec_k, os.path.join(args.output_folder, f"rec_{epoch + 1}_{subset+1}.mha"))
+                itk.imwrite(rec_k, os.path.join(args.output_folder, f"rec_{epoch}_{subset+1}.mha"))
 
                 sens_k = itk.image_from_array(sensitivity.float().detach().cpu().numpy())
                 sens_k.CopyInformation(like_img)
-                itk.imwrite(sens_k, os.path.join(args.output_folder, f"sens_{epoch + 1}_{subset+1}.mha"))
+                itk.imwrite(sens_k, os.path.join(args.output_folder, f"sens_{epoch}_{subset+1}.mha"))
 
                 estimated_projs[subset_ids,:,:] = output_projs
 
             rec_k = itk.image_from_array(image_k_tensor.float().detach().cpu().numpy())
             rec_k.CopyInformation(like_img)
-            itk.imwrite(rec_k, os.path.join(args.output_folder, f"rec_{epoch+1}.mha"))
+            itk.imwrite(rec_k, os.path.join(args.output_folder, f"rec_{epoch}.mha"))
 
             output_projs_itk = itk.image_from_array(estimated_projs.float().detach().cpu().numpy())
             output_projs_itk.CopyInformation(measured_projections)
-            itk.imwrite(output_projs_itk, os.path.join(args.output_folder, f"projs_{epoch+1}.mha"))
+            itk.imwrite(output_projs_itk, os.path.join(args.output_folder, f"projs_{epoch}.mha"))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-a","--activity", type = float, default = 2e7)
     parser.add_argument("--like_img", type=str)
     parser.add_argument("--input_img", type=str)
+    parser.add_argument("--firstit", type=int)
     parser.add_argument("--projections", type=str)
     parser.add_argument("--ct", type=str)
     parser.add_argument("--radionuclide", type=str, choices=['Tc99m', 'Lu177'])

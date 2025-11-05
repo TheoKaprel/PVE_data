@@ -15,19 +15,21 @@ from generate_dataset_helpers import get_dtype,strParamToArray,chooseRandomRef,g
 
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--nb_data','-n', type = int, required = True, help = 'number of samples to generate')
-parser.add_argument('--size_volume', type = str, default = "150", help = 'Size of the desired image i.e. number of voxels per dim')
-parser.add_argument('--spacing_volume', type = str, default = "4", help = 'Spacing of the desired image i.e phyisical length of a voxels (mm)')
-parser.add_argument('--type', default = 'mha', help = "Create mha, mhd,npy image")
+parser.add_argument('--nb_data','-n', type = int, required = True, help = 'Number of samples to generate')
+parser.add_argument('--size_volume', type = str, default = "150", help = 'If not attmap given, size of the desired image i.e. number of voxels per dim')
+parser.add_argument('--spacing_volume', type = str, default = "4", help = 'If not attmap given, Spacing of the desired image i.e phyisical length of a voxels (mm)')
+parser.add_argument('--like', default = None, help = "If not attmap given, and instead of specifying spacing/size, you can specify an image as a metadata model")
+parser.add_argument('--type', default = 'mha', help = "Output extension  (mha, mhd,npy)")
 parser.add_argument('--dtype', default = 'float64', help = "if npy, image dtype")
-parser.add_argument('--like', default = None, help = "Instead of specifying spacing/size, you can specify an image as a metadata model")
-parser.add_argument('--min_radius', default = 4,type = float, help = 'minimum radius of the random spheres')
-parser.add_argument('--max_radius', default = 32,type = float, help = 'max radius of the random spheres')
-parser.add_argument('--prop_radius', default = "uniform", choices=['uniform', 'squared_inv'], help = 'proportion of radius between min/max')
-parser.add_argument('--min_ratio', default = 10,type = float, help = 'min bg:src ratio. If no background, it is the min activity')
-parser.add_argument('--max_ratio', default = 20,type = float, help = 'max bg:src ratio. If no background, it is the max activity')
-parser.add_argument('--min_activity', default = 10, type = float, help = "minimum activity in MBq. Then, N_min = A_min * 1e6 * 20s * efficiency ")
-parser.add_argument('--max_activity', default = 100, type = float, help = "maximal activity in MBq. Then, N_min = A_max * 1e6 * 20s * efficiency")
+parser.add_argument('--min_radius', default = 4,type = float, help = 'minimum radius of the random spheres (in mm)')
+parser.add_argument('--max_radius', default = 32,type = float, help = 'max radius of the random spheres (in mm)')
+parser.add_argument('--prop_radius', default = "uniform", choices=['uniform', 'squared_inv'], help = 'If uniform, then uniform sampling of the radium between min/max. If squared_inv, the probability to sample a radius will be proportional to 1/r^2.')
+parser.add_argument('--min_ratio', default = 10,type = float, help = 'min bg:src ratio for the lesions. If no background, it is the min activity')
+parser.add_argument('--max_ratio', default = 20,type = float, help = 'max bg:src ratio for the lesions. If no background, it is the max activity')
+parser.add_argument('--min_activity', default = 10, type = float, help = "minimum activity in MBq. Then, N gammas simulated = min_activity * 1e6 * acquisition time * efficiency * branching_ratio")
+parser.add_argument('--max_activity', default = 100, type = float, help = "maximal activity in MBq. Then, N gammas simulated = max_activity * 1e6 * acquisition time * efficiency * branching_ratio")
+parser.add_argument('--acquisition_time', default = 20, type = float, help = "Acquisition time (s)")
+parser.add_argument('--radionuclide', default = "Lu177",type = str, choices = ["Lu177", "Tc99"], help = "Radionuclide (Lu177 or Tc99) to set the branching ratio.")
 parser.add_argument('--nspheres', default = 1,type = int, help = 'max number of spheres to generate on each source')
 parser.add_argument('--background', action= 'store_true', help = 'If you want background add --background')
 parser.add_argument('--sphere',type = float, default = 0, help = "if --sphere p, activity sources are spheres with proba p")
@@ -43,14 +45,15 @@ parser.add_argument('--attenuationmapfolder',default = None, help = 'path to the
 parser.add_argument('--attmapaugmentation', action="store_true", help = "add this if data augmentation is needed for the attenuation map. Max rotation : (5,360,5) and max translation : (50,50,50) ")
 parser.add_argument('--organlabels', type = str, help = "use --organlabels if you want to assign different activity ratios to main organs. For now: body, liver, kidneys, and bones.")
 parser.add_argument('--organratios', type = str, help = "if --organlabels is specified, you have to also specify min/ma ratios for each organ in organlabels")
-parser.add_argument('--organproba', type = float, default = 1, help= "Proba for each organ in labels to have uptake")
-parser.add_argument('--output_folder','-o', default = './dataset', help = " Absolute or relative path to the output folder")
+parser.add_argument('--organproba', type = float, default = 1, help= "Probability that each organ in labels is selected to have an uptake")
 parser.add_argument('--spect_system', default = "ge-discovery", choices=['ge-discovery', 'siemens-intevo-lehr', "siemens-intevo-megp"], help = 'SPECT system simulated for PVE projections')
 parser.add_argument('--save_src',action ="store_true", help = "if you want to also save the source that will be forward projected")
-parser.add_argument('--lesion_mask',action ="store_true", help = "if you want to also save the source that will be forward projected")
-parser.add_argument('--rec_fp',type = int, default = 0, help = "noisy projections are reconstructed with 1 osem-rm iter and forward-projected w/o rm to obtain ABCDE_rec_fp.mha")
+parser.add_argument('--lesion_mask',action ="store_true", help = "if you want to also save & project the lesion mask.")
+parser.add_argument('--rec_fp',type = int, default = 0, help = "Number of iterations for the reconstruction of noisy projections with OSEM-RM, before a forward-projection w/o RM of the result to obtain ABCDE_rec_fp.mha. Choose --rec_fp 0 if no rec_fp is needed.")
 parser.add_argument('--project',action= 'store_true', help = "wheter or not to project the created source")
+parser.add_argument('--output_folder','-o', default = './dataset', help = " Absolute or relative path to the output folder")
 parser.add_argument("-v", "--verbose", action="store_true")
+
 def generate(opt):
     print(opt)
     current_date = time.strftime("%d_%m_%Y_%Hh_%Mm_%Ss", time.localtime())
@@ -132,12 +135,18 @@ def generate(opt):
                                             'std_xzy': f'({background_radius_x_std},{background_radius_z_std},{background_radius_y_std})'}
 
     p_sphere,p_ellipse,p_cylinder,p_convex = opt.sphere,opt.ellipse,opt.cylinder,opt.convex
-    assert(p_sphere+p_ellipse+p_cylinder+p_convex==1)
+    assert(p_sphere+p_ellipse+p_cylinder+p_convex>0)
+    assert(round(p_sphere+p_ellipse+p_cylinder+p_convex,5)==1.0)
 
     time_per_proj = 20
     min_activity,max_activity = opt.min_activity, opt.max_activity
-    min_count= int(min_activity*11/100 * 1e6 * time_per_proj * efficiency)
-    max_count= int(max_activity*11/100 * 1e6 * time_per_proj * efficiency)
+    if opt.radionuclide == "Lu177":
+        branching_ratio = 10.36/100
+    elif opt.radionuclide=="Tc99":
+        branching_ratio = 87.8/100
+
+    min_count= int(min_activity*branching_ratio * 1e6 * time_per_proj * efficiency)
+    max_count= int(max_activity*branching_ratio * 1e6 * time_per_proj * efficiency)
 
     print(f'Activity between {min_activity} MBq and {max_activity} MBq --> nb of counts between {min_count} and {max_count}')
 
@@ -219,12 +228,15 @@ def generate(opt):
             forward_projector_attmap.Update()
             attmap_fp = forward_projector_attmap.GetOutput()
             attmap_fp.DisconnectPipeline()
+
             if fov_is_set:
                 fov_maskmult.SetInput2(attmap_fp)
+                fov_maskmult.Update()
                 attmap_fp = fov_maskmult.GetOutput()
 
             save_me(img=attmap_fp,ftype=opt.type,output_folder=opt.output_folder, src_ref=source_ref,
                     ref="attmap_fp",dtype=dtype)
+            print("OKKK")
 
             attmap_np = itk.array_from_image(attmap)
             vSpacing = np.array(attmap.GetSpacing())[::-1]
