@@ -46,3 +46,9 @@ The --organratios json file should contain [minTBR, maxTBR] values, in the follo
     }
 
 
+# SPECT reconstruction with GAN/nnARF
+
+
+    python Simu_data/opengate/gaga_garf_optimize.py -a 5e8 --like_img data/source_4mm_MBq.mha --projections data/FantomeSpheresSansBDF_PW_minus_y.mha --ct data/ct_4mm.mha --radionuclide Lu177 --batchsize 2e5 --gan_pth output_gan_training_1e8/gan_1e8_200epochs_1e5b.pth --garf_pth output_garf_training_2e9_rr5000/garf_lu177_melp_rr5000_JZ_2000_5L_512H.pth --device gpu --geom data/geom_dicom.xml --nprojs 120 --nsubsets 8 --output_folder output_rec_gaga_garf/ --axis y --acquisition_time 15 --with_gan
+
+
